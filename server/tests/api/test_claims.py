@@ -50,3 +50,20 @@ def test_import_then_claim(tmp_path, db, seat):
     assert db.get(Board, board.id).chair_id != placeholder_id
     assert db.get(Person, placeholder_id) is None
     assert db.query(Result).count() == 3
+
+
+def test_a_reimport_files_new_messages_to_whoever_claimed_the_seat(tmp_path, db, seat):
+    export = tmp_path / "chat.txt"
+    export.write_text(CHAT, encoding="utf-8")
+    import_chat.run(db, export, "soup", {}, "Asia/Kolkata")
+    db.commit()
+    a = seat("mallory.k")
+    a.post("/boards/join", {"code": db.query(Board).one().invite_code})
+    a.post("/boards/soup/claim", {"username": "mallory"})
+    # the chat goes on; mallory posts again, then it's exported and imported again
+    export.write_text(CHAT + "31/10/26, 09:40 - Mallory: Krillion #108 🦐\n410\n\n🐟🦑🫧\n", encoding="utf-8")
+    stats = import_chat.run(db, export, "soup", {}, "Asia/Kolkata")
+    db.commit()
+    assert (stats["filed"], stats["duplicate"]) == (1, 3)
+    assert not db.query(Person).filter_by(kind="placeholder", username="mallory").first()
+    assert sorted(x["puzzle"] for x in a.get("/results").json) == ["106", "108"]

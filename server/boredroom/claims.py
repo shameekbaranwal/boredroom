@@ -59,6 +59,9 @@ def claim(s: Session, board: Board, claimer: Person, username: str) -> int:
 
     # every board the placeholder sat on (an import makes one, but don't assume)
     for m in s.scalars(select(Membership).where(Membership.person_id == seat.id)).all():
+        # remember whose chat name this was, so a later import files their new messages to them
+        b = s.get(Board, m.board_id)
+        b.settings = {**b.settings, "claimed": {**b.settings.get("claimed", {}), m.nickname: claimer.id}}
         own = s.get(Membership, (m.board_id, claimer.id))
         if own is None:
             s.add(Membership(board_id=m.board_id, person_id=claimer.id, nickname=m.nickname,
