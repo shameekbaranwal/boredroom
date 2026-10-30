@@ -8,12 +8,14 @@ import argparse
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from flask import Flask, jsonify, request, send_file
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from boredroom.parser import REGISTRY, forward_text, parse  # noqa: E402
+from boredroom.parser import REGISTRY, forward_text, merge, parse  # noqa: E402
 from boredroom.parser import games  # noqa: E402,F401
+from boredroom.parser.forward import PADDING  # noqa: E402
 
 app = Flask(__name__)
 HERE = Path(__file__).resolve().parent
@@ -42,21 +44,60 @@ def list_games():
     return jsonify(sorted(out, key=lambda x: x["name"]))
 
 
-@app.post("/api/parse")
-def api_parse():
-    body = request.get_json(force=True)
+def _when(body):
     tz = body.get("tz") or "Asia/Kolkata"
     now = datetime.fromisoformat(body["now"]) if body.get("now") else datetime.now(timezone.utc)
     if now.tzinfo is None:
-        from zoneinfo import ZoneInfo
         now = now.replace(tzinfo=ZoneInfo(tz))
+    return now, tz
+
+
+def _view(r):
+    d = r.to_dict()
+    d["name"] = REGISTRY[r.game].name
+    d["forward"] = forward_text(r).replace(PADDING, "[4000 invisible characters]")
+    d["units"] = {m.name: m.unit for m in REGISTRY[r.game].metrics if m.unit}
+    return d
+
+
+@app.post("/api/parse")
+def api_parse():
+    body = request.get_json(force=True)
+    now, tz = _when(body)
     parsed = parse(body.get("text", ""), now=now, tz=tz)
     out = parsed.to_dict()
-    for d, r in zip(out["results"], parsed.results):
-        d["name"] = REGISTRY[r.game].name
-        d["forward"] = forward_text(r).replace("​" * 4000, "[4000 invisible characters]")
-        d["units"] = {m.name: m.unit for m in REGISTRY[r.game].metrics if m.unit}
+    out["results"] = [_view(r) for r in parsed.results]
     return jsonify(out)
+
+
+@app.post("/api/file")
+def api_file():
+    """Replays one member's pastes in order, the way filing will work: a repeat of a
+    puzzle merges, is ignored as a duplicate, or asks to replace. `replace` holds the
+    member's answers to those prompts, keyed by paste index."""
+    body = request.get_json(force=True)
+    now, tz = _when(body)
+    answers = body.get("replace", {})
+    filed, events = {}, []
+    for i, text in enumerate(body.get("pastes", [])):
+        for r in parse(text, now=now, tz=tz).results:
+            key = (r.game, str(r.puzzle))
+            ev = {"paste": i, "game": REGISTRY[r.game].name, "puzzle": str(r.puzzle), "added": []}
+            if key not in filed:
+                filed[key] = r
+                ev["kind"] = "filed"
+            else:
+                m = merge(filed[key], r)
+                ev["kind"], ev["added"] = m.kind, m.added
+                if m.kind == "enrich":
+                    filed[key] = m.result
+                elif m.kind == "conflict":
+                    ev["answer"] = answers.get(str(i))
+                    if ev["answer"] == "replace":
+                        r.warnings.append("amended")
+                        filed[key] = r
+            events.append(ev)
+    return jsonify({"filed": [_view(r) for r in filed.values()], "events": events})
 
 
 if __name__ == "__main__":

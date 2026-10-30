@@ -52,6 +52,20 @@ details summary { cursor:pointer; padding:6px 12px; font-size:12.5px; color:var(
 details pre { padding:8px 12px 12px; }
 .empty { color:var(--muted); border:1px dashed var(--line); padding:18px; }
 .unk .top { background:var(--hl); }
+.right { display:flex; flex-direction:column; gap:10px; min-width:0; }
+.actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.btn.primary { background:var(--accent); color:var(--bg); border-color:var(--accent); font-size:14px; padding:6px 14px; }
+.btn.primary:hover { color:var(--bg); filter:brightness(1.1); }
+.muted { color:var(--muted); font-size:13px; }
+.filedhead { display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding-top:12px; border-top:2px solid var(--fg); }
+#log { display:flex; flex-direction:column; border:1px solid var(--line); }
+#log:empty { display:none; }
+#log div { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; padding:6px 12px; border-bottom:1px solid var(--line); font-size:13.5px; }
+#log div:last-child { border-bottom:0; }
+#log .n { font-family:var(--f-mono); color:var(--muted); font-size:12px; }
+#log .k { font-weight:700; }
+#log .k.enrich { color:var(--accent); } #log .k.conflict { color:var(--warn); } #log .k.duplicate { color:var(--muted); }
+#board { display:flex; flex-direction:column; gap:14px; }
 code { font-family:var(--f-mono); font-size:.9em; }
 </style>
 </head>
@@ -68,10 +82,18 @@ code { font-family:var(--f-mono); font-size:.9em; }
   <section class="left">
     <span class="label">paste one or more results</span>
     <textarea id="paste" spellcheck="false" placeholder="paste a share text here — it parses as you type"></textarea>
+    <div class="actions"><button class="btn primary" id="file" type="button">file it</button>
+      <span class="muted" id="filehint">files what you pasted as you. paste the same puzzle again to see it merge.</span></div>
     <span class="label">or try a sample</span>
     <div class="samples" id="samples"></div>
   </section>
-  <section id="out"><div class="empty">results show up here.</div></section>
+  <section class="right">
+    <span class="label">preview</span>
+    <div id="out"><div class="empty">results show up here.</div></div>
+    <div class="filedhead"><span class="label">filed by you</span><button class="btn" id="clear" type="button">clear</button></div>
+    <div id="log"></div>
+    <div id="board"><div class="empty">nothing filed yet.</div></div>
+  </section>
 </main>
 <script>
 const SAMPLES = {
@@ -86,6 +108,9 @@ const SAMPLES = {
   "unknown game": "Perceptle2 #12 — 7/10\n🟩🟩🟥🟩🟩\nhttps://perceptle2.example",
   "broken krillion": "Krillion #107 🦐\n\n🐟🐟🐟🐟🦑🌟🐟",
   "just chat": "connections today has a jojo ref",
+  "wiki, no route": "Seawater ➡️ Babe Ruth ⏰ 02:09 🦶5 🔗 https://www.thewikigamedaily.com",
+  "wiki, with route": "Seawater ➡️ Babe Ruth ⏰ 02:10 🦶5 (Seawater ➡️ ASTM International ➡️ West Conshohocken, Pennsylvania ➡️ Philadelphia ➡️ Major League Baseball ➡️ Babe Ruth) 🔗 https://www.thewikigamedaily.com",
+  "wiki, re-done": "Seawater ➡️ Babe Ruth ⏰ 01:40 🦶4 (Seawater ➡️ Water ➡️ Baseball ➡️ Major League Baseball ➡️ Babe Ruth) 🔗 https://www.thewikigamedaily.com",
 };
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -128,8 +153,20 @@ async function run() {
   const res = await fetch("/api/parse", { method:"POST", headers:{ "content-type":"application/json" },
     body: JSON.stringify({ text, tz: $("#tz").value, now: $("#now").value }) });
   const d = await res.json();
-  const cards = [];
-  for (const r of d.results) {
+  const cards = d.results.map(card);
+  for (const u of d.unknown) {
+    cards.push(`<article class="card unk">
+      <div class="top"><span class="g">new game?</span><span class="pill">pre-filled form</span></div>
+      <div class="grid"><div>name</div><div>${esc(u.name ?? "—")}</div><div>link</div><div>${esc(u.link ?? "—")}</div>
+      <div>puzzle</div><div>${esc(u.puzzle ?? "—")}</div><div>score</div><div>${esc(u.score ?? "—")} <span class="vis">suggested</span></div></div>
+      <details><summary>json</summary><pre>${esc(JSON.stringify(u, null, 2))}</pre></details></article>`);
+  }
+  if (d.ignored.length) cards.push(`<div class="empty">ignored on purpose: ${d.ignored.map(esc).join(", ")}</div>`);
+  if (!cards.length) cards.push(`<div class="empty">not a result — reads as chat.</div>`);
+  $("#out").innerHTML = cards.join("");
+}
+
+function card(r) {
     const pills = [
       `<span class="pill ${r.status}">${r.status === "current" ? "today's" : r.status === "late" ? "filed late" : r.status === "ahead" ? "not out yet" : "puzzle date set by board"}</span>`,
       r.outcome !== "solved" ? `<span class="pill ${r.outcome}">${r.outcome}</span>` : "",
@@ -146,23 +183,40 @@ async function run() {
     for (const [k, v] of Object.entries(r.extras)) rows.push(`<div>${esc(k)}</div><div>${fmtValue(v)}<span class="vis">extra</span></div>`);
     if (r.comment) rows.push(`<div>comment</div><div><em>${esc(r.comment).replace(/\n/g, "<br>")}</em></div>`);
     if (r.warnings.length) rows.push(`<div>notes</div><div class="warn">${r.warnings.map(esc).join("<br>")}</div>`);
-    cards.push(`<article class="card">
+    return `<article class="card">
       <div class="top"><span class="g">${esc(r.name)}</span><span class="pk">${typeof r.puzzle === "number" ? "#" + r.puzzle : esc(r.puzzle ?? "")}</span>${pills}</div>
       <div class="grid">${rows.join("")}</div>
       <details><summary>send to soup (what gets forwarded)</summary><pre>${esc(r.forward)}</pre></details>
       <details><summary>json</summary><pre>${esc(JSON.stringify(r, null, 2))}</pre></details>
-    </article>`);
-  }
-  for (const u of d.unknown) {
-    cards.push(`<article class="card unk">
-      <div class="top"><span class="g">new game?</span><span class="pill">pre-filled form</span></div>
-      <div class="grid"><div>name</div><div>${esc(u.name ?? "—")}</div><div>link</div><div>${esc(u.link ?? "—")}</div>
-      <div>puzzle</div><div>${esc(u.puzzle ?? "—")}</div><div>score</div><div>${esc(u.score ?? "—")} <span class="vis">suggested</span></div></div>
-      <details><summary>json</summary><pre>${esc(JSON.stringify(u, null, 2))}</pre></details></article>`);
-  }
-  if (d.ignored.length) cards.push(`<div class="empty">ignored on purpose: ${d.ignored.map(esc).join(", ")}</div>`);
-  if (!cards.length) cards.push(`<div class="empty">not a result — reads as chat.</div>`);
-  $("#out").innerHTML = cards.join("");
+    </article>`;
+}
+
+// filing: the server replays every paste in order, so merges and prompts are real
+let pastes = [], answers = {};
+const KIND = { filed: "filed", enrich: "merged", duplicate: "already filed — ignored", conflict: "different result" };
+$("#file").onclick = () => {
+  const text = $("#paste").value.trim();
+  if (!text) return;
+  pastes.push(text);
+  $("#paste").value = "";
+  run(); refresh();
+};
+$("#clear").onclick = () => { pastes = []; answers = {}; refresh(); };
+async function answer(i, a) { answers[i] = a; refresh(); }
+async function refresh() {
+  if (!pastes.length) { $("#log").innerHTML = ""; $("#board").innerHTML = '<div class="empty">nothing filed yet.</div>'; return; }
+  const res = await fetch("/api/file", { method:"POST", headers:{ "content-type":"application/json" },
+    body: JSON.stringify({ pastes, replace: answers, tz: $("#tz").value, now: $("#now").value }) });
+  const d = await res.json();
+  $("#log").innerHTML = d.events.map(e => {
+    let extra = "";
+    if (e.kind === "enrich") extra = `added ${e.added.map(esc).join(", ")}`;
+    if (e.kind === "conflict") extra = e.answer
+      ? (e.answer === "replace" ? "replaced (amended)" : "kept the first")
+      : `replace? <button class="btn" onclick="answer(${e.paste}, 'replace')">replace</button> <button class="btn" onclick="answer(${e.paste}, 'keep')">keep first</button>`;
+    return `<div><span class="n">paste ${e.paste + 1}</span><b>${esc(e.game)}</b><span class="pk">${esc(e.puzzle)}</span><span class="k ${e.kind}">${KIND[e.kind]}</span>${extra}</div>`;
+  }).join("");
+  $("#board").innerHTML = d.filed.map(card).join("");
 }
 </script>
 </body>

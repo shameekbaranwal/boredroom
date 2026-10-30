@@ -183,3 +183,9 @@ See docs/UX-NOTES.md for the functional requirements that came with this.
 - DailyOrbs: played only for now (ranking proposal pending a look at the game).
 - Connections 3x3 Bonus dropped. Noillirk: bigger distance is better. Pyra games are
   three games. All tier-2 games ship in v1.
+
+## 2026-10-30 — Repeat pastes merge
+
+- Pasting a puzzle you've already filed merges when it's the same play with more detail
+  (the Wiki route posted after the plain share). Duplicates are ignored, and a
+  different result asks to replace. See docs/PARSER.md part 1.

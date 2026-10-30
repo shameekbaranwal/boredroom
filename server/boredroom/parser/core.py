@@ -192,6 +192,8 @@ class Game:
     ranker: ClassVar[tuple[str, ...]] = ()
     # header matched -> drop the block silently (e.g. connections bonus puzzles)
     ignore: ClassVar[bool] = False
+    # how far a metric may differ between two pastes of the same play (see merge.py)
+    tolerance: ClassVar[dict[str, float]] = {}
 
     def __init_subclass__(cls, **kw):
         super().__init_subclass__(**kw)

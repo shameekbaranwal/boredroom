@@ -15,6 +15,8 @@ class WikiGame(Game):
         Metric("time", "duration", "low", unit="s"),
     )
     ranker = ("steps", "time")
+    # the route share is often copied a few seconds after the plain one
+    tolerance = {"time": 10}
 
     def extract(self, b, r, ctx):
         m = b.find(r"^(.+?) ➡️ (.+?) ⏰ (\d+:\d+(?::\d+)?) 🦶\s*(\d+)(?:\s*\((.*)\))?")

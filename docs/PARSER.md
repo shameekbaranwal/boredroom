@@ -33,7 +33,24 @@ paste ──► normalise ──► split ──► detect game ──► extrac
 5. **Key:** work out which puzzle it is (part 3).
 6. **Check:** values must be in range (anno ≤ 500, maptap ≤ 1000, wordle ≤ 6 guesses).
    A filing for a puzzle more than one day ahead of that game's current puzzle is
-   rejected. Re-filing the same (member, game, puzzle) asks to replace, as decided.
+   rejected. Re-filing the same (member, game, puzzle) goes through the merge below.
+
+**Repeat pastes merge.** When a member pastes a puzzle they've already filed, `merge()`
+compares the two:
+
+- **enrich:** the same play with more detail. It merges silently: new fields such as the
+  Wiki route are added, missing metrics are filled in, and the score the board already
+  saw stays. The richer text is what gets forwarded from then on.
+- **duplicate:** nothing new, so it's ignored.
+- **conflict:** a different result (a re-do or a re-play). This asks "replace?", and a
+  replacement is stamped "amended".
+
+"Same play" means the same puzzle and outcome, with every metric both pastes have
+agreeing within the game's `tolerance`. The Wiki Game allows 10 s, because the route
+share is copied a few seconds after the plain one; every other game needs exact scores.
+In the export, 25 Wiki repeats merge (+route) and 5 are real re-dos (4 wiki, 1
+krillion). Once merged, the route is a spoiler field like any other, so other members
+see it after filing that puzzle themselves.
 
 Text that matches no game goes to the unknown-game flow (part 6, choice 6): a form
 pre-filled from the paste, and a request to add a parser for the game.
