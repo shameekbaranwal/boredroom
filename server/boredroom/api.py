@@ -52,7 +52,8 @@ def new_guest():
 @api.get("/config")
 def client_config():
     """What a client needs before signing in. The google client id is public by design."""
-    return jsonify({"google_client_id": current_app.config["BOREDROOM"].google_client_id})
+    cfg = current_app.config["BOREDROOM"]
+    return jsonify({"google_client_id": cfg.google_client_id, "environment": cfg.environment})
 
 
 @api.post("/auth/google")

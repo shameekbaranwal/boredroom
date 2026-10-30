@@ -301,3 +301,8 @@ a { color: var(--accent); }
   .app > .nav { height: calc(100dvh / 1.45); }
   .bd { min-height: calc(100dvh / 1.45 - 110px); }
 }
+
+/* non-production instances wear a badge */
+.env-badge { position: fixed; z-index: 50; top: calc(env(safe-area-inset-top, 0px) + 8px); left: 50%; transform: translateX(-50%);
+  background: #c55a11; color: #fff; font: 700 12px "IBM Plex Mono", monospace; letter-spacing: .08em; padding: 3px 10px;
+  border-radius: 0 0 6px 6px; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,.25); }

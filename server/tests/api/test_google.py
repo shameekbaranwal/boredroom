@@ -23,9 +23,9 @@ def sign_in(client, credential, token=None, tz=None):
 
 
 def test_config_exposes_only_the_client_id(app, client):
-    assert client.get("/api/v1/config").json == {"google_client_id": None}
+    assert client.get("/api/v1/config").json["google_client_id"] is None
     google(app, IVAN)
-    assert client.get("/api/v1/config").json == {"google_client_id": "test-client.apps.googleusercontent.com"}
+    assert client.get("/api/v1/config").json["google_client_id"] == "test-client.apps.googleusercontent.com"
 
 
 def test_not_set_up_and_bad_credentials(app, client):

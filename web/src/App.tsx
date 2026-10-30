@@ -13,7 +13,22 @@ const LAST = 'boredroom.board'
 const remember = (slug: string) => { try { localStorage.setItem(LAST, slug) } catch { /* fine */ } }
 const lastBoard = () => { try { return localStorage.getItem(LAST) } catch { return null } }
 
+/** A corner badge on every non-production instance, so stage is never mistaken for the real thing. */
+function EnvBadge() {
+  const [env, setEnv] = useState<string | null>(null)
+  useEffect(() => {
+    api.config().then(c => {
+      if (c.environment !== 'production') { setEnv(c.environment); document.title = `${c.environment} · boredroom` }
+    }).catch(() => {})
+  }, [])
+  return env ? <div className="env-badge" role="note">{env}</div> : null
+}
+
 export default function App() {
+  return <><Shell /><EnvBadge /></>
+}
+
+function Shell() {
   const path = usePath()
   const [me, setMe] = useState<Me | null>(null)
   const [games, setGames] = useState<Record<string, Game>>({})

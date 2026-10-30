@@ -18,3 +18,5 @@ class Config:
     # sign-in only needs the client id; the client secret is never read
     google_client_id: str | None = os.environ.get("GOOGLE_OAUTH_CLIENT_ID") or None
     web_dist: str = os.environ.get("BOREDROOM_WEB_DIST", DEV_WEB_DIST)
+    # "production", "stage" or "dev"; the app badges anything that isn't production
+    environment: str = os.environ.get("BOREDROOM_ENV", "dev")

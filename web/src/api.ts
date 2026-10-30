@@ -68,7 +68,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
 const tz = () => Intl.DateTimeFormat().resolvedOptions().timeZone
 
 export const api = {
-  config: () => call<{ google_client_id: string | null }>('GET', '/config'),
+  config: () => call<{ google_client_id: string | null; environment: string }>('GET', '/config'),
   games: () => call<Game[]>('GET', '/games'),
   me: () => call<Me>('GET', '/me'),
   updateMe: (b: Partial<{ tz: string; username: string }>) => call<Me>('PATCH', '/me', b),
