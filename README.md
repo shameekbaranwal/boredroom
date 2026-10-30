@@ -18,6 +18,7 @@ server/          Flask backend (a uv project)
   scripts/       dev scripts (corpus.py: measure the parser against an export)
   demo/          paste-box playground for the parser
 web/             the PWA frontend (not started); its tests live inside it
+build/           Dockerfiles and build scripts
 tests/           end-to-end tests across server and web (none yet)
 docs/            decisions, specs, UX
 research/        private source material (gitignored)
@@ -29,6 +30,10 @@ uv run pytest                          # tests
 uv run python scripts/corpus.py        # parser report over ../research/soup_export.txt
 uv run python demo/app.py              # demo at http://127.0.0.1:5077
 ```
+
+**Deploy (homeserver):** `bea build boredroom` builds `boredroom:latest` via
+`build/build-docker-image.sh`. It runs as the `boredroom` service in yams on port 5077
+(172.60.0.60), public at boredroom.shmk.dev through the Cloudflare tunnel.
 
 - [`docs/ux/boredroom-ux.html`](docs/ux/boredroom-ux.html) — design philosophy, UX
   requirements, core flows and screen mockups (also published as an artifact)

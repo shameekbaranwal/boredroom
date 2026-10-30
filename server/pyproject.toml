@@ -3,7 +3,10 @@ name = "boredroom"
 version = "0.1.0"
 description = "Daily puzzle leaderboard for friends"
 requires-python = ">=3.12"
-dependencies = ["flask>=3.0"]
+dependencies = [
+    "flask>=3.0",
+    "gunicorn>=26.2.0",
+]
 
 [dependency-groups]
 dev = [

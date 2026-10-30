@@ -1,6 +1,8 @@
 """Paste-box demo for the parser.
 
     cd server && uv run python demo/app.py [--host 0.0.0.0] [--port 5077]
+
+In the container it runs under gunicorn (see Dockerfile), published on port 5077.
 """
 from __future__ import annotations
 
@@ -18,7 +20,14 @@ from boredroom.parser import games  # noqa: E402,F401
 from boredroom.parser.forward import PADDING  # noqa: E402
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 256 * 1024  # it's public: pastes are small
 HERE = Path(__file__).resolve().parent
+MAX_PASTES = 100
+
+
+@app.get("/health")
+def health():
+    return {"ok": True}
 
 
 @app.get("/")
@@ -79,7 +88,7 @@ def api_file():
     now, tz = _when(body)
     answers = body.get("replace", {})
     filed, events = {}, []
-    for i, text in enumerate(body.get("pastes", [])):
+    for i, text in enumerate(body.get("pastes", [])[:MAX_PASTES]):
         for r in parse(text, now=now, tz=tz).results:
             key = (r.game, str(r.puzzle))
             ev = {"paste": i, "game": REGISTRY[r.game].name, "puzzle": str(r.puzzle), "added": []}
