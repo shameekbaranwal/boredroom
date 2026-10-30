@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { api, setToken, type Invite } from '../api'
 import { ThemeToggle, Wordmark } from '../brand'
-import { useTheme } from '../theme'
 
 declare global {
   interface Window {
@@ -25,12 +24,12 @@ function loadGsi(): Promise<void> {
   return gsi
 }
 
-/** Google's own button, drawn by Google: full width (it caps at 400 px), pill-shaped,
- *  and redrawn in Google's dark style when the page is dark. Signed in as a guest,
+/** Google's own button, drawn by Google: full width (it caps at 400 px) and pill-shaped.
+ *  Both of Google's styles are drawn up front and the stylesheet shows the one that matches
+ *  the page, so a theme change never redraws Google's frames. Signed in as a guest,
  *  signing in turns the seat into the account. */
 export function GoogleButton({ onToken, onError }: { onToken: (t: string) => void; onError: (m: string) => void }) {
   const el = useRef<HTMLDivElement>(null)
-  const [, shown] = useTheme()
   const [clientId, setClientId] = useState<string | null | undefined>(undefined)
   const box = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
@@ -51,24 +50,30 @@ export function GoogleButton({ onToken, onError }: { onToken: (t: string) => voi
     let live = true
     loadGsi().then(() => {
       if (!live || !el.current || !window.google) return
-      window.google.accounts.id.initialize({
+      const gid = window.google.accounts.id
+      gid.initialize({
         client_id: clientId,
         callback: r => api.google(r.credential).then(x => cb.current.onToken(x.token)).catch(e => cb.current.onError(e.message)),
       })
-      // draw the new button in a fresh layer on top, and drop the old one once google's
-      // frame has loaded; clearing first made the button collapse and jump
+      // draw the new pair in a fresh layer on top, and drop the old one once google's
+      // frames have loaded; clearing first made the button collapse and jump
       const host = el.current
       const layer = document.createElement('div')
       layer.className = 'glayer'
+      for (const theme of ['outline', 'filled_black']) {
+        const b = document.createElement('div')
+        b.className = theme === 'outline' ? 'g-light' : 'g-dark'
+        layer.appendChild(b)
+        gid.renderButton(b, {
+          theme, size: 'large', shape: 'pill', text: 'continue_with', logo_alignment: 'center',
+          width: Math.max(200, Math.min(400, width)),
+        })
+      }
       host.appendChild(layer)
-      window.google.accounts.id.renderButton(layer, {
-        theme: shown === 'dark' ? 'filled_black' : 'outline', size: 'large', shape: 'pill',
-        text: 'continue_with', logo_alignment: 'center', width: Math.max(200, Math.min(400, width)),
-      })
       setTimeout(() => { if (live) for (const old of [...host.children]) if (old !== layer) old.remove() }, 700)
     }).catch(e => live && cb.current.onError(e.message))
     return () => { live = false }
-  }, [clientId, shown, width])
+  }, [clientId, width])
 
   if (clientId === null) return <div className="muted">google sign-in isn't set up on this server.</div>
   return <div className="gbtn keep" ref={box}><div ref={el} /></div>
@@ -102,7 +107,7 @@ export default function SignIn({ invite, onSignedIn }: { invite?: Invite | null;
           ? <><h1>{invite.chair ?? 'someone'} saved you a seat on {invite.name}.</h1>
               <p>{invite.members} members{invite.library.length ? `, playing ${invite.library.slice(0, 3).join(', ')}${invite.library.length > 3 ? ` and ${invite.library.length - 3} more` : ''}` : ''}. sign in to take your seat.</p></>
           : <><h1>there's an empty chair at your friends' table.</h1>
-              <p>paste your daily puzzles like you always do. boredroom keeps the minutes, the scores, and the receipts.</p></>}
+              <p>paste your daily puzzles like you always do.<br />boredroom keeps the minutes, the scores, and the receipts.</p></>}
         <div className="acts">
           <GoogleButton onToken={done} onError={setErr} />
           {!guestOpen

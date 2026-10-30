@@ -237,7 +237,15 @@ a { color: var(--accent); }
 .pitch .acts { margin-top: auto; display: flex; flex-direction: column; gap: 12px; padding-top: 18px; }
 .gbtn { width: 100%; min-height: 44px; display: flex; justify-content: center; color-scheme: light; } /* else chrome paints the dark-page iframe white */
 .gbtn > div { width: 100%; position: relative; display: grid; min-height: 44px; }
-.gbtn .glayer { grid-area: 1 / 1; display: flex; justify-content: center; }
+.gbtn .glayer { grid-area: 1 / 1; display: grid; }
+/* both of google's styles sit in one cell; the page theme picks one, in the same frame as everything else */
+.gbtn .glayer > div { grid-area: 1 / 1; display: flex; justify-content: center; align-items: center; }
+.gbtn .g-dark, :root[data-theme="dark"] .gbtn .g-light { visibility: hidden; }
+:root[data-theme="dark"] .gbtn .g-dark { visibility: visible; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .gbtn .g-light { visibility: hidden; }
+  :root:not([data-theme="light"]) .gbtn .g-dark { visibility: visible; }
+}
 .alt { background: none; border: 0; color: var(--accent); font-weight: 700; font-size: 16px; padding: 10px; cursor: pointer; }
 .guest { display: flex; gap: 8px; }
 .guest .input { flex: 1; min-width: 0; height: 46px; }
