@@ -74,8 +74,10 @@ def _apply(row: Result, r: Parsed) -> None:
 def _puzzle_day(s: Session, person: Person, r: Parsed, key: str, now: datetime) -> date | None:
     game = REGISTRY[r.game]
     day = game.puzzle_day(r.puzzle)
-    if day is not None or game.key != "pair":
+    if day is not None:
         return day
+    if game.key != "pair":  # a numbered game with no anchor yet: the day it was filed
+        return game.reset.game_day(now, person.tz)
     # a page pair belongs to the day it was first filed (docs/PARSER.md choice 4)
     known = s.get(PuzzleDay, (r.game, key))
     if known:

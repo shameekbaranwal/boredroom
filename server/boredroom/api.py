@@ -4,12 +4,13 @@ Handlers commit; services (filing, boards) only flush.
 """
 from __future__ import annotations
 
+from datetime import date
 from typing import Any
 
 from flask import Blueprint, current_app, g, jsonify, request
 from sqlalchemy import select
 
-from . import boards, claims, filing
+from . import boards, claims, filing, reads
 from . import auth
 from .auth import auth_required, create_guest, valid_tz, USERNAME
 from .errors import fail
@@ -113,7 +114,9 @@ def update_me():
 @api.get("/games")
 def games():
     return jsonify([{"id": c.id, "name": c.name, "key": c.key, "ranked": c.ranked(),
-                     "links": list(c.links)}
+                     "links": list(c.links), "ranker": list(c.ranker),
+                     "metrics": [{"name": m.name, "kind": m.kind, "better": m.better, "max": m.max,
+                                  "unit": m.unit} for m in c.metrics]}
                     for c in sorted(REGISTRY.values(), key=lambda c: c.name) if not c.ignore])
 
 
@@ -154,6 +157,27 @@ def board_me(slug):
     m.nickname = nick
     g.db.commit()
     return jsonify(boards.board_json(g.db, b, m))
+
+
+@api.get("/boards/<slug>/today")
+@auth_required
+def board_today(slug):
+    board, _ = boards.get_board(g.db, slug, g.person)
+    return jsonify(reads.today(g.db, board, g.person))
+
+
+@api.get("/boards/<slug>/minutes/<game>")
+@auth_required
+def board_minutes(slug, game):
+    """?day=YYYY-MM-DD, the puzzle's day; default is the game's current puzzle for you."""
+    board, _ = boards.get_board(g.db, slug, g.person)
+    boards.check_game(game)
+    day = request.args.get("day")
+    try:
+        day = date.fromisoformat(day) if day else None
+    except ValueError:
+        fail(400, "day is YYYY-MM-DD")
+    return jsonify(reads.minutes(g.db, board, g.person, game, day))
 
 
 @api.post("/boards/<slug>/claim")
