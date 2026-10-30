@@ -1,11 +1,10 @@
-# Parser spec (draft 1, 2026-10-30)
+# Parser spec (draft 2, 2026-10-30)
 
 The parser turns a pasted share text into a filed result. The same parser runs the paste
 box and the internal chat-export import. Everything below is grounded in the soup export
 (`research/soup_export.txt`): **about 780 results across 24 games** from 11 members.
 
-Part 6 lists the open choices, numbered so they can be answered by number. Each one says
-what I'd pick.
+Part 6 records the choices made on draft 1. Only DailyOrbs scoring is still open.
 
 ## 1. What the parser does
 
@@ -36,8 +35,13 @@ paste ──► normalise ──► split ──► detect game ──► extrac
    A filing for a puzzle more than one day ahead of that game's current puzzle is
    rejected. Re-filing the same (member, game, puzzle) asks to replace, as decided.
 
-Text that matches no game goes to the unknown-game flow in the UX ("add *perceptle* to
-the agenda?").
+Text that matches no game goes to the unknown-game flow (part 6, choice 6): a form
+pre-filled from the paste, and a request to add a parser for the game.
+
+**Confidence:** every result is `exact` (header and body parsed), `inferred` (body parsed,
+game confirmed by another signal such as the link) or `partial` (known game, but a metric
+couldn't be read). The preview says it quietly ("read as anno"). A `partial` result opens
+as a form with the parsed values filled in, so the member supplies what's missing.
 
 ## 2. The result record
 
@@ -52,6 +56,7 @@ extras      {game_streak: 20}
 comment     "low score but i got a krill, so"
 raw         the original paste
 parser      "krillion@1"     extractor version, so old results can be re-parsed
+confidence  exact | inferred | partial
 ```
 
 **Metric types**: a small fixed set, so rankers stay generic.
@@ -74,6 +79,8 @@ played. `played` is for games with no score (DailyOrbs).
 **Rankers** sit in the game definition, not the extractor: an ordered list of
 `(metric, direction)`, with outcome always first. For example, the Wiki Game is
 `[outcome, steps asc, time asc]`, and the chair can reorder it. Equal on every key = tie.
+A metric that only one of the two results has is skipped for that pair (Minute Cryptic
+time).
 
 **Visibility of fields**: three levels, from the decisions:
 
@@ -82,7 +89,7 @@ played. `played` is for games with no score (DailyOrbs).
 - **detail:** shown once you've filed this puzzle. Grids, per-round scores, the Strands
   theme, the Wiki start → end pages.
 - **spoiler:** a detail that gives away the answer. It's hidden behind a tap even after
-  you've filed, and wrapped when forwarded (option 9). The Minute Cryptic clue and the
+  you've filed, and always wrapped when forwarded (choice 9). The Minute Cryptic clue and the
   Wiki route.
 
 ## 3. Puzzle keys and "today"
@@ -96,7 +103,7 @@ current for them now.
 - **Date keys** (MapTap, Globle, Minute Cryptic, DailyOrbs, the Pyra games, the Mini).
   There are six formats in the export: `October 12`, `Oct 12, 2026`, `12 October, 2026`,
   `Sat, 10/24/2026`, `10/13/2026`, and the ISO date in the DailyOrbs link. MapTap has no
-  year (option 5). Stored as an ISO date.
+  year (choice 5). Stored as an ISO date.
 - **Reset rules** per game, either a fixed UTC time (one puzzle for the world) or the
   player's local midnight. Observed in IST:
   - krillion: 9:30 (04:00 UTC)
@@ -141,121 +148,82 @@ which was played enough to join them. **Tier 2** were seen only a few times.
 | maptap | 98 | `www.maptap.gg October 12` | date, no year | points /1000 ↓ | — | 5 round scores |
 | krillion | 94 | `Krillion #89 🦐` | number | points /700 ↓ | — | rarity grid (🫧🐟🏮🦑🌟) |
 | pindrop | 79 | `📍 PlayPinDrop Day #223` | number | points /1000 ↓ | — | 5 round markers |
-| wiki game | 75 | `A ➡️ B ⏰ 02:09 🦶5` (no title) | none in text (option 4) | steps ↑, time ↑ | "I gave up after 12 steps" | start → end; *route* |
+| wiki game | 75 | `A ➡️ B ⏰ 02:09 🦶5` (no title) | page pair (choice 4) | steps ↑, time ↑ | "I gave up after 12 steps" | start → end; *route* |
 | anno | 74 | `ANNO №284`; sometimes only `229/500` | number | points /500 ↓ | — | 5 round scores |
 | fermi | 67 | `Fermi · No. 77` | number | ratio ↑ (1× is perfect) | — | 3 question ratios |
 | connections | 53 | `Connections` / `Puzzle #1219` | number | mistakes ↑ | 4 mistakes, <4 groups | grid (solve order) |
 | metazooa | 47 | `🐋 Animal #1169 🐉` (random emoji) | number | guesses ↑ (max 20) | "I was stumped" | grid |
-| strands | 34 | `Strands #953` | number | hints ↑, spangram position ↑ (option 7) | — | theme, grid |
+| strands | 34 | `Strands #953` | number | hints ↑, spangram position ↑ | — | theme, grid |
 | globle | 33 | `🌎 Oct 12, 2026 🌍`, sometimes `Globle Stats` first | date | guesses ↑ | — | grid |
-| minute cryptic | 24 | `Minute Cryptic - 12 October, 2026` | date | hints ↑ (option 8) | — | *clue*, grid, time, par |
+| minute cryptic | 24 | `Minute Cryptic - 12 October, 2026` | date | hints ↑, time ↑ when both have it | — | *clue*, grid, time, par |
 | perceptle | 20 | `Perceptle #100 - B (76)`, sometimes `🃏` | number | score /100 ↓ | — | grade, 5 sub-scores |
 | travle | 19 | `#travle #1405 +3` | number | over-par ↑ | not seen yet | grid |
 | system design daily | 15 | `System Design Daily #1001` | number | correct /5 ↓ (🟩 count) | — | grid |
 | daily red | 14 | `Daily Red #2: Beat Red` / `Red won` | number | outcome, left ↓, turns ↑ | "Red won … KO'd" | grid |
-| dailyorbs | 5 | `DailyOrbs October 11 2026` | date | none, played only (option 10) | — | orb row |
+| dailyorbs | 5 | `DailyOrbs October 11 2026` | date | played only for now (choice 10) | — | orb row |
 
 ↓ = higher is better, ↑ = lower is better.
 
 Notes:
 - **Connections:** mistakes = rows that aren't one colour. The `Connections 3x3 Bonus`
-  is a different puzzle (option 11).
+  is a different puzzle and is ignored: not a result, not an unknown game.
 - **Strands:** 💡 = a hint used, 🟡 = the spangram, 🔵 = a theme word. The theme line is
   not a spoiler, as decided.
 - **Fermi:** numbers have thousands separators (`195,288,089×`). The percentile is
   sometimes missing.
-- **Anno, headerless:** `229/500` plus five emoji rounds plus the anno link. Accept it
-  when the link is present (option 3).
+- **Anno, headerless:** `229/500` plus five emoji rounds plus the anno link. Accepted as
+  `inferred` when the link is present.
 
 ### Tier 2
 
+All of these ship in v1.
+
 | game | n | header | key | metrics |
 |---|---|---|---|---|
-| noillirk | 7 | `Noillirk daily #30 - 6,763m` | number | distance; direction unknown (option 12) |
-| pyragrams / pyraphemes / pyrithmetic | 9 | `Pyragrams: Sat, 10/24/2026 ✅` | date | 🎯 ?, 🔀 moves, 🕓 time (option 13) |
+| noillirk | 7 | `Noillirk daily #30 - 6,763m` | number | distance ↓ (bigger is better) |
+| pyragrams, pyraphemes, pyrithmetic (three games) | 9 | `Pyragrams: Sat, 10/24/2026 ✅` | date | 🔀 moves ↑, 🕓 time ↑; 🎯 kept as a field until we know what it counts |
 | wordle | 3 | `Wordle 1,953 6/6` | number | guesses /6 ↑, X = fail |
 | nyt mini | 3 | `I solved the 10/13/2026 New York Times Mini Crossword in 1:32!` | date | time ↑ |
 | layers | 3 | `🏆 Layers #347` + `🗓 Oct 25, 2026` | number | guesses /6 ↑ |
 | historydle | 2 | `Historydle #1031 - Classic` | number + mode | rows ↑ |
 | petguessr | 1 | `PetGuessr #106 — 5/10` | number | correct /10 ↓ |
 
-## 6. Open choices
+## 6. Choices (answered 2026-10-30)
 
-1. **How games are defined.**
-   - (a) Pure data: YAML with regexes per field. Easy to add games, but it falls apart on
-     grids and derived values.
-   - (b) One Python module per game.
-   - (c) **Hybrid:** each game is a small Python class with declared metadata (name,
-     header pattern, key type, reset, metrics, ranker, field visibility). Its
-     `extract()` handles only the text, and a shared library does dates, numbers and
-     grids.
-
-   I'd pick (c). It keeps games as data where that's easy, and in code where they aren't.
-
-2. **Where parsing runs.**
-   - (a) **Server only:** the paste goes up and the preview comes back, about 100 ms.
-   - (b) Also in the browser for instant preview, which means writing it twice.
-
-   I'd pick (a); a JS port can come later if the preview feels slow.
-
-3. **How strict.** Accept a paste with a recognised body but a missing header (the
-   headerless anno) when another signal confirms the game, like the link? I'd say yes,
-   and mark it `confidence: inferred` so the preview says "read as anno".
-
-4. **Wiki Game puzzle key.** The text has no number or date, only the start → end pages.
-   - (a) **Key by the page pair**, mapped to a date from whoever filed it first that
-     day. Same pair, same puzzle.
-   - (b) Key by filing date and reset only.
-
-   I'd pick (a), with (b) as the fallback when the pair is new. It also catches someone
-   pasting yesterday's route.
-
-5. **MapTap has no year.** Pick the year that puts the date nearest to now (never more
-   than one day ahead). That's safe for a daily game; a year-old MapTap would be misread,
-   which is fine.
-
-6. **Unknown games.**
-   - (a) Store the raw text, count it as played, and give it no score until a parser
-     exists.
-   - (b) Also guess a score with a generic "first N/M or number" rule.
-
-   I'd pick (a). Wrong guesses would put wrong numbers on the board. The unknown pastes
-   also become the queue of parsers to write.
-
-7. **Strands ranking.**
-   - (a) Hints only.
-   - (b) **Hints, then how early the spangram was found** (what the UX uses).
-   - (c) Logged, not ranked.
-
-   I'd pick (b). The chat treats Strands as "not much competitive", so (c) as the chair's
-   default is also reasonable.
-
-8. **Minute Cryptic ranking.** Hints, then time? Time is missing from some shares, as in
-   Mallory's. I'd rank by hints only, with par as a highlight and time as a tiebreak only
-   when both have it.
-
-9. **Spoiler wrapping on forward.** People already hand-wrap Wiki results as
-   `[WIKI SPOILER]` plus invisible padding, so WhatsApp folds them under "read more".
-   "Send to soup" could do that automatically for any result with a spoiler field.
-   Options: (a) **always**, (b) a per-board rule for the chair, (c) never. I'd pick (a)
-   now, with (b) as a later chair rule.
-
-10. **Games with no score** (DailyOrbs). Is "played" enough, or should we count something
-    from the grid (orbs, the 🏆)? I'd keep it at played until someone in soup says what
-    a good orbs result is.
-
-11. **Connections 3x3 Bonus.** Treat it as its own game ("connections bonus"), or drop it?
-    I'd make it its own tier-2 game; it showed up once.
-
-12. **Noillirk direction.** Is a bigger distance better or worse? The one "what" after
-    45 m suggests 45 m is bad, so bigger is better. That needs a soup member to confirm.
-
-13. **Pyra games.** Are they three games or one with three modes? What does 🎯 count? I'd
-    make them three games, ranked by 🔀 moves, then 🕓 time, until we know.
-
-14. **Which tier-2 games ship in v1?** I'd ship all of them. Each is about 20 lines on top
-    of the shared library, and the export has fixtures for them. Anything new goes
-    through the unknown-game flow.
+1. **Games are defined as hybrids.** Each game is a small Python class with declared
+   metadata (name, header pattern, key type, reset, metrics, ranker, field visibility).
+   Its `extract()` handles only the text, and a shared library does dates, numbers and
+   grids.
+2. **Parsing runs on the server only.** A JS port can come later if the preview feels
+   slow.
+3. **Lenient, with a confidence field.** A recognised body with a missing header is
+   accepted as `inferred` when another signal confirms the game. When confidence is too
+   low on a known game, the member fills in the missing details (part 1).
+4. **The Wiki Game is keyed by its page pair,** mapped to a date from whoever filed it
+   first that day. Filing date plus reset is the fallback when the pair is new.
+5. **MapTap's year** is the one that puts the date nearest to now, never more than one day
+   ahead.
+6. **Unknown games** open a form pre-filled from the paste: the name and link from the
+   header, and any obvious number as a suggested score the member confirms. Filing it
+   counts as played. The same step sends "add this game" to us with the raw text, which
+   becomes the queue of parsers to write. Nothing is ranked until a parser exists.
+7. **Strands:** hints, then how early the spangram was found.
+8. **Minute Cryptic:** hints, then time when both results have it.
+9. **Spoilers are always wrapped on forward.** It can become a chair rule later.
+10. **DailyOrbs is played only** for now. *Still open:* a proposed ranking, from what
+    people say in the chat (the site couldn't be read; low confidence):
+    - each colour is a category; a circle (🟠🟢🔵🟣) is an orb won, and a heart in the
+      same colour (🧡💚💙💜) is a lost life ("heart = mistake")
+    - proposal: most orbs, then fewest hearts. A run with no hearts would be a highlight
+    - unknown: what 🏆 means (it sometimes sits mid-row, and appears on runs with lost
+      lives), what a loss looks like, and the exact reset (about 2:30 pm IST, from "new
+      daily orbs at 2:30pm")
+    - to settle it: a screenshot of the how-to-play or end screen. The parser stores
+      circle and heart counts from day one, so turning ranking on later needs no re-parse
+11. **The Connections 3x3 Bonus is dropped.**
+12. **Noillirk:** a bigger distance is better.
+13. **The Pyra games are three games** on one site.
+14. **All tier-2 games ship in v1.**
 
 ## 7. Testing
 

@@ -167,3 +167,19 @@ See docs/UX-NOTES.md for the functional requirements that came with this.
   the period token in the formula bar. Charts and the member × day grid are gone; a
   game opens as a drill-in (ranking by average, head-to-head, a 30-day strip).
 - **Chair settings** need another pass later.
+
+## 2026-10-30 — Parser spec, draft 1 review (see docs/PARSER.md part 6)
+
+- Games are Python classes with declared metadata plus a small `extract()`; parsing runs
+  on the server only for now.
+- Lenient parsing with a confidence field (exact / inferred / partial). A partial result
+  on a known game opens as a pre-filled form for the member to complete.
+- Unknown games open a pre-filled form, count as played, and send us an "add this game"
+  request.
+- Wiki Game keyed by its page pair; MapTap's missing year = nearest to now.
+- Strands: hints, then spangram position. Minute Cryptic: hints, then time when both
+  have it.
+- Spoiler fields are always wrapped when forwarded to WhatsApp.
+- DailyOrbs: played only for now (ranking proposal pending a look at the game).
+- Connections 3x3 Bonus dropped. Noillirk: bigger distance is better. Pyra games are
+  three games. All tier-2 games ship in v1.
