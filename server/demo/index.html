@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#217346">
 <title>Boredroom Parser Demo</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap">
 <style>
@@ -12,14 +13,23 @@
 @media (prefers-color-scheme: dark) { :root { --bg:#0b0f19; --surface:#141a29; --fg:#e6e9f2; --muted:#8f98ad; --line:#232b3f; --accent:#5ee6a8; --accent-soft:rgba(94,230,168,.12); --hl:#3a2f12; --warn:#f5a524; --bad:#f97066; color-scheme:dark; } }
 * { box-sizing:border-box; }
 body { margin:0; background:var(--bg); color:var(--fg); font-family:var(--f-ui); font-size:15px; line-height:1.5; padding:20px max(16px, 3vw) 60px; }
-header { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 18px; margin-bottom:14px; }
+header { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:10px 18px; margin-bottom:16px; }
+.titles { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.titles p { margin:0; }
 h1 { margin:0; font-size:22px; font-weight:900; letter-spacing:-.01em; }
+h1 span { color:var(--muted); font-weight:700; }
+.when { min-width:0; }
+.when summary { cursor:pointer; font-family:var(--f-mono); font-size:12.5px; color:var(--muted); border:1px solid var(--line); padding:5px 10px; list-style:none; }
+.when summary::-webkit-details-marker { display:none; }
+.when summary i { color:var(--accent); font-style:normal; font-weight:600; }
+.when[open] summary { border-bottom:0; }
+.when .fx { border-top:0; }
 .fx { font-family:var(--f-mono); font-size:12.5px; color:var(--muted); border:1px solid var(--line); padding:4px 9px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
 .fx i { color:var(--accent); font-style:normal; font-weight:600; }
 .fx input, .fx select { font:inherit; color:var(--fg); background:var(--bg); border:1px solid var(--line); padding:2px 5px; }
 main { display:grid; grid-template-columns:minmax(0, 5fr) minmax(0, 7fr); gap:18px; align-items:start; }
-@media (max-width: 860px) { main { grid-template-columns:1fr; } }
-.left { display:flex; flex-direction:column; gap:10px; position:sticky; top:12px; }
+@media (max-width: 860px) { main { grid-template-columns:minmax(0, 1fr); } }
+.left { display:flex; flex-direction:column; gap:10px; position:sticky; top:12px; min-width:0; }
 @media (max-width: 860px) { .left { position:static; } }
 textarea { width:100%; min-height:300px; resize:vertical; font-family:var(--f-mono); font-size:13.5px; line-height:1.45; padding:12px; border:1.5px solid var(--line); background:var(--surface); color:var(--fg); }
 textarea:focus { outline:none; border-color:var(--accent); }
@@ -67,30 +77,66 @@ details pre { padding:8px 12px 12px; }
 #log .k.enrich { color:var(--accent); } #log .k.conflict { color:var(--warn); } #log .k.duplicate { color:var(--muted); }
 #board { display:flex; flex-direction:column; gap:14px; }
 code { font-family:var(--f-mono); font-size:.9em; }
+.hint { margin:0; }
+.actions .btn { min-height:38px; }
+
+/* phones: one column, big tap targets, 16px inputs so iOS doesn't zoom */
+@media (max-width: 700px) {
+  body { padding:calc(12px + env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px)) calc(40px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px)); font-size:16px; }
+  header { margin-bottom:12px; }
+  h1 { font-size:20px; }
+  .when { width:100%; }
+  .when .fx { font-size:14px; }
+  .fx input, .fx select { font-size:16px; max-width:100%; }
+  main { gap:14px; }
+  .left { gap:8px; }
+  textarea { min-height:132px; font-size:16px; padding:10px; }
+  .actions { display:grid; grid-template-columns:1fr 2fr 1fr; gap:8px; }
+  .actions .btn { min-height:46px; font-size:15px; }
+  .samples { flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; margin:0 calc(-1 * max(14px, env(safe-area-inset-left, 0px))); padding-left:max(14px, env(safe-area-inset-left, 0px)); padding-right:14px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  .samples::-webkit-scrollbar { display:none; }
+  .samples button { flex:none; min-height:38px; font-size:14px; padding:6px 12px; }
+  .card .g { font-size:18px; }
+  .grid { grid-template-columns:88px minmax(0, 1fr); font-size:15px; }
+  .grid > div { padding:8px 10px; }
+  .grid .big { font-size:18px; }
+  details summary { padding:10px 12px; font-size:14px; }
+  #log div { font-size:15px; padding:9px 10px; }
+  #log .btn { min-height:38px; padding:6px 12px; font-size:14px; }
+  .filedhead .btn { min-height:36px; }
+}
 </style>
 </head>
 <body>
 <header>
-  <h1>parser demo</h1>
-  <div class="fx"><i>fx</i>=PARSE(paste,
-    <label>now <input id="now" type="datetime-local" step="60"></label>,
-    <label>tz <select id="tz"><option>Asia/Kolkata</option><option>Asia/Singapore</option><option>Europe/London</option><option>America/New_York</option><option>America/Los_Angeles</option></select></label>)
-    <button class="btn" id="nowbtn" type="button">now</button>
-  </div>
+  <div class="titles"><h1>boredroom <span>· parser demo</span></h1>
+    <p class="muted">paste a game result from the group chat. nothing is saved; it's an early demo.</p></div>
+  <details class="when" id="when">
+    <summary><i>fx</i> <span id="whensum">now · Asia/Kolkata</span></summary>
+    <div class="fx">=PARSE(paste,
+      <label>now <input id="now" type="datetime-local" step="60"></label>,
+      <label>tz <select id="tz"><option>Asia/Kolkata</option><option>Asia/Singapore</option><option>Europe/London</option><option>America/New_York</option><option>America/Los_Angeles</option></select></label>)
+      <button class="btn" id="nowbtn" type="button">now</button>
+    </div>
+  </details>
 </header>
 <main>
   <section class="left">
     <span class="label">paste one or more results</span>
-    <textarea id="paste" spellcheck="false" placeholder="paste a share text here — it parses as you type"></textarea>
-    <div class="actions"><button class="btn primary" id="file" type="button">file it</button>
-      <span class="muted" id="filehint">files what you pasted as you. paste the same puzzle again to see it merge.</span></div>
+    <textarea id="paste" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="paste a share text here; it reads it as you type"></textarea>
+    <div class="actions">
+      <button class="btn" id="pastebtn" type="button">paste</button>
+      <button class="btn primary" id="file" type="button">file it</button>
+      <button class="btn" id="wipe" type="button" aria-label="clear the box">clear</button>
+    </div>
+    <p class="muted hint">file it, then paste the same puzzle again to see repeats merge.</p>
     <span class="label">or try a sample</span>
     <div class="samples" id="samples"></div>
   </section>
   <section class="right">
     <span class="label">preview</span>
     <div id="out"><div class="empty">results show up here.</div></div>
-    <div class="filedhead"><span class="label">filed by you</span><button class="btn" id="clear" type="button">clear</button></div>
+    <div class="filedhead"><span class="label">filed by you</span><button class="btn" id="clear" type="button">start over</button></div>
     <div id="log"></div>
     <div id="board"><div class="empty">nothing filed yet.</div></div>
   </section>
@@ -115,9 +161,14 @@ const SAMPLES = {
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
+{ // the merge in two taps: files the plain wiki share, leaves the route one in the box
+  const b = document.createElement("button"); b.type = "button"; b.textContent = "try the merge ▸";
+  b.onclick = () => { pastes.push(SAMPLES["wiki, no route"]); $("#paste").value = SAMPLES["wiki, with route"]; run(); refresh(); grow(); $("#paste").scrollIntoView({ block: "center", behavior: "smooth" }); };
+  $("#samples").append(b);
+}
 for (const [k, v] of Object.entries(SAMPLES)) {
   const b = document.createElement("button"); b.type = "button"; b.textContent = k;
-  b.onclick = () => { $("#paste").value = v; run(); };
+  b.onclick = () => { $("#paste").value = v; run(); grow(); };
   $("#samples").append(b);
 }
 function setNow() {
@@ -127,10 +178,25 @@ function setNow() {
   $("#now").value = `${g("year")}-${g("month")}-${g("day")}T${g("hour").replace("24","00")}:${g("minute")}`;
 }
 setNow();
-{ const h = decodeURIComponent(location.hash.slice(1)); if (SAMPLES[h]) { $("#paste").value = SAMPLES[h]; setTimeout(run); } }
-$("#nowbtn").onclick = () => { setNow(); run(); };
-$("#tz").onchange = () => { setNow(); run(); };
-$("#now").onchange = run;
+const when = $("#when");
+if (matchMedia("(min-width: 701px)").matches) when.open = true;
+function sumWhen() { $("#whensum").textContent = `${$("#now").value.replace("T", " ")} · ${$("#tz").value}`; }
+sumWhen();
+$("#pastebtn").onclick = async () => {
+  try { $("#paste").value = await navigator.clipboard.readText(); run(); grow(); }
+  catch { $("#paste").focus(); }
+};
+$("#wipe").onclick = () => { $("#paste").value = ""; run(); grow(); };
+function grow() { const t = $("#paste"); if (innerWidth > 700) return; t.style.height = "auto"; t.style.height = Math.min(Math.max(t.scrollHeight + 2, 132), innerHeight * 0.5) + "px"; }
+$("#paste").addEventListener("input", grow);
+{ // #<sample name> preloads a sample; #merge runs the merge demo (handy links to share)
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (SAMPLES[h]) { $("#paste").value = SAMPLES[h]; setTimeout(() => { run(); grow(); }); }
+  if (h === "merge") setTimeout(() => { $("#samples button").click(); setTimeout(() => $("#file").click(), 300); });
+}
+$("#nowbtn").onclick = () => { setNow(); sumWhen(); run(); refresh(); };
+$("#tz").onchange = () => { setNow(); sumWhen(); run(); refresh(); };
+$("#now").onchange = () => { sumWhen(); run(); refresh(); };
 
 let timer;
 $("#paste").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(run, 200); });
@@ -199,7 +265,8 @@ $("#file").onclick = () => {
   if (!text) return;
   pastes.push(text);
   $("#paste").value = "";
-  run(); refresh();
+  run(); grow();
+  refresh().then(() => { if (innerWidth <= 700) $(".filedhead").scrollIntoView({ behavior: "smooth" }); });
 };
 $("#clear").onclick = () => { pastes = []; answers = {}; refresh(); };
 async function answer(i, a) { answers[i] = a; refresh(); }
