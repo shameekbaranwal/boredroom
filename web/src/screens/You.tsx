@@ -31,7 +31,10 @@ export default function You({ slug }: { slug: string }) {
 
   const lib = new Map(b.library.map(g => [g.game, g]))
   const all = Object.values(games).sort((x, y) => x.name.localeCompare(y.name))
-  const shown = all.filter(g => lib.has(g.id) || (q && g.name.includes(q.toLowerCase())))
+  const onBoard = all.filter(g => lib.has(g.id))
+  // the rest of the catalogue sits below the search box, so typing never moves the box
+  const term = q.trim().toLowerCase()
+  const more = all.filter(g => !lib.has(g.id) && (!term || g.name.includes(term) || g.id.includes(term)))
   const mine = new Set(b.you.agenda)
   const toggle = async (g: string) => {
     try { setB(await api.agenda(slug, g, !mine.has(g))) } catch (e) { toast((e as Error).message) }
@@ -67,21 +70,31 @@ export default function You({ slug }: { slug: string }) {
         </div>
 
         <div className="sec">your games · {mine.size} of {b.library.length} in {b.name}</div>
-        {shown.map(g => {
-          const lg = lib.get(g.id)
+        {onBoard.map(g => {
+          const lg = lib.get(g.id)!
           return (
             <div key={g.id} className="it" style={{ cursor: 'default' }}>
               <Tile game={g.id} name={g.name} />
               <span className="nm" style={{ flex: 1 }}>{g.name}</span>
-              <span className="sub">{lg ? `${lg.players} play${g.ranked ? '' : ' · for fun'}` : 'new to the board'}</span>
+              <span className="sub">{lg.players} play{g.ranked ? '' : ' · for fun'}</span>
               <button className={`add${mine.has(g.id) ? ' on' : ''}`} onClick={() => toggle(g.id)}>{mine.has(g.id) ? '✓ mine' : 'add'}</button>
             </div>
           )
         })}
+        {onBoard.length === 0 && <div className="sub wrap">no games on {b.name} yet. pick some below; adding one puts it on the board for everyone.</div>}
         <div className="field">
           <label htmlFor="q">add a game to the board</label>
           <input id="q" className="input" placeholder="search the games boredroom reads" value={q} onChange={e => setQ(e.target.value)} />
         </div>
+        {more.map(g => (
+          <div key={g.id} className="it" style={{ cursor: 'default' }}>
+            <Tile game={g.id} name={g.name} />
+            <span className="nm" style={{ flex: 1 }}>{g.name}</span>
+            <span className="sub">new to the board</span>
+            <button className="add" onClick={() => toggle(g.id)}>add</button>
+          </div>
+        ))}
+        {term && more.length === 0 && <div className="sub wrap">no game called "{term}" yet. paste one of its results on the agenda and the clerk will ask for it.</div>}
 
         <div className="sec">invite</div>
         <div className="row-a">
