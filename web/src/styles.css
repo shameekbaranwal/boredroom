@@ -319,3 +319,18 @@ a { color: var(--accent); }
 .desk-cta { gap: 10px; padding: 14px; }
 .desk-cta > b { font-size: 18px; }
 .invite-words { font: 700 18px var(--f-num); letter-spacing: .01em; }
+.pb-h { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .04em; }
+.card.quiet { background: transparent; border-style: dashed; }
+.desk-cta .either { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: start; }
+.desk-cta .either section { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.desk-cta .either h3 { margin: 0; font-size: 15px; }
+.desk-cta .either .btn { align-self: flex-start; }
+.desk-cta .or { align-self: stretch; display: flex; flex-direction: column; align-items: center; color: var(--muted); font: 700 12px var(--f-num); }
+.desk-cta .or::before, .desk-cta .or::after { content: ""; flex: 1; width: 1px; background: var(--note-b); }
+.desk-cta .or span { margin: 6px 0; padding: 3px 9px; border: 1px solid var(--note-b); border-radius: 999px; font-size: 13px; color: var(--ink); }
+@media (max-width: 640px) {
+  .desk-cta .either { grid-template-columns: 1fr; }
+  .desk-cta .or { flex-direction: row; }
+  .desk-cta .or::before, .desk-cta .or::after { width: auto; height: 1px; }
+  .desk-cta .or span { margin: 0 10px; }
+}

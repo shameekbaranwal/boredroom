@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { api, type MyResult } from '../api'
+import { api, type Board, type MyResult } from '../api'
 import { headline } from '../format'
 import { go } from '../router'
 import { Fx, Header, Nav, Tile, useApp } from '../ui'
 import { Pasteboard } from './Agenda'
 
 /** Typing an invite's words (or pasting its link) to open it. */
-export function JoinByCode({ autoFocus = false }: { autoFocus?: boolean }) {
+export function JoinByCode({ autoFocus = false, label = 'have an invite? type its three words' }: { autoFocus?: boolean; label?: string }) {
   const [code, setCode] = useState('')
   const el = useRef<HTMLInputElement>(null)
   useEffect(() => { if (autoFocus) el.current?.focus() }, [autoFocus])
@@ -15,7 +15,7 @@ export function JoinByCode({ autoFocus = false }: { autoFocus?: boolean }) {
   const open = () => { if (typed) go(`/join/${encodeURIComponent(typed)}`) }
   return (
     <div className="field">
-      <label htmlFor="code">have an invite? type its three words</label>
+      <label htmlFor="code">{label}</label>
       <div className="guest">
         <input id="code" ref={el} className="input" placeholder="smug walrus adjourns" value={code}
           onChange={e => setCode(e.target.value)} onKeyDown={e => e.key === 'Enter' && open()}
@@ -29,8 +29,16 @@ export function JoinByCode({ autoFocus = false }: { autoFocus?: boolean }) {
 /** Home when you're not on a board: you can still file results (they count once you join
  *  a board that plays the game), and the way onto a board is right at the top. */
 export default function Desk({ shared }: { shared?: string }) {
-  const { me, games } = useApp()
+  const { me, games, toast } = useApp()
   const [mine, setMine] = useState<MyResult[] | null>(null)
+  const [boards, setBoards] = useState<Board[]>([])
+  useEffect(() => { Promise.all(me.boards.map(b => api.board(b.slug))).then(setBoards).catch(() => {}) }, [me.boards])
+  // a result opens that day's minutes on the first board that plays the game
+  const open = (r: MyResult) => {
+    const b = boards.find(x => x.library.some(g => g.game === r.game))
+    if (b) go(`/b/${b.slug}/m/${r.game}${r.day ? `/${r.day}` : ''}`)
+    else toast(me.boards.length ? `none of your boards plays ${r.name} yet` : `join a board to see how others did on ${r.name}`)
+  }
   const load = useCallback(() => { api.results().then(setMine).catch(() => setMine([])) }, [])
   useEffect(load, [load])
   const filed = (mine ?? []).filter(r => !r.withdrawn)
@@ -43,9 +51,18 @@ export default function Desk({ shared }: { shared?: string }) {
         {me.boards.length === 0 && (
           <div className="card desk-cta">
             <b>you're not on a board yet.</b>
-            <small>join your friends' board with its invite, or start one and send yours.</small>
-            <JoinByCode autoFocus={location.hash === '#join'} />
-            <div className="row-a"><button className="btn ghost" onClick={() => go('/new')}>start a board</button></div>
+            <div className="either">
+              <section>
+                <h3>join your friends' board</h3>
+                <JoinByCode autoFocus={location.hash === '#join'} label="type the three words from their invite" />
+              </section>
+              <div className="or" aria-hidden="true"><span>or</span></div>
+              <section>
+                <h3>start your own</h3>
+                <small>name it, then send your friends its three words.</small>
+                <button className="btn ghost" onClick={() => go('/new')}>start a board →</button>
+              </section>
+            </div>
           </div>
         )}
         {me.boards.length > 0 && <JoinByCode autoFocus={location.hash === '#join'} />}
@@ -53,7 +70,7 @@ export default function Desk({ shared }: { shared?: string }) {
         <div className="sec">your results · {filed.length}</div>
         {mine && filed.length === 0 && <div className="sub wrap">nothing filed yet. paste a result above: it's kept, and counts on any board you join that plays it.</div>}
         {filed.slice(0, 30).map(r => (
-          <div key={r.id} className="it" style={{ cursor: 'default' }}>
+          <div key={r.id} className="it" role="button" tabIndex={0} onClick={() => open(r)} onKeyDown={e => e.key === 'Enter' && open(r)}>
             <Tile game={r.game} name={r.name} />
             <div className="g">
               <div className="nm">{r.name} <span className="muted" style={{ fontWeight: 400, fontSize: 13 }}>{r.puzzle}</span></div>

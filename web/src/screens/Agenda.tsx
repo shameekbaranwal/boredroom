@@ -99,61 +99,99 @@ function OpenRow({ i, slug, now }: { i: Item; slug: string; now: number }) {
   )
 }
 
-/** The pasteboard: paste a share text, it's filed everywhere, the cards say what happened. */
+/** The pasteboard: paste a share text, see what the clerk read, then save it or dismiss it.
+ *  Saving files it everywhere; the cards then say what happened. */
 export function Pasteboard({ board, shared, onFiled }: { board?: Board; shared?: string; onFiled: () => void }) {
   const { games, refreshMe } = useApp()
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
+  const [draft, setDraft] = useState<{ text: string; source: 'paste' | 'share'; read: Filing } | null>(null)
   const [out, setOut] = useState<Filing | null>(null)
   const [err, setErr] = useState('')
   const [answered, setAnswered] = useState<Record<number, string>>({})
   const ta = useRef<HTMLTextAreaElement>(null)
   const sharedDone = useRef(false)
 
-  const file = useCallback(async (t: string, source: 'paste' | 'share' = 'paste') => {
+  const read = useCallback(async (t: string, source: 'paste' | 'share' = 'paste') => {
     if (!t.trim()) return
-    setBusy(true); setErr(''); setAnswered({})
+    setBusy(true); setErr(''); setOut(null); setAnswered({})
+    try { setDraft({ text: t, source, read: await api.preview(t) }); setText('') }
+    catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
+  }, [])
+
+  const save = async () => {
+    if (!draft) return
+    setBusy(true); setErr('')
     try {
-      const f = await api.paste(t, source)
-      setOut(f); setText('')
+      const f = await api.paste(draft.text, draft.source)
+      setOut(f); setDraft(null)
       // a new game joins your agenda on this board, as "+ add a game" does
       const add = board ? f.events.filter(e => e.kind !== 'not_out_yet' && !board.you.agenda.includes(e.game)).map(e => e.game) : []
       for (const g of new Set(add)) await api.agenda(board!.slug, g, true).catch(() => {})
       if (add.length) refreshMe()
       onFiled()
     } catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
-  }, [board, onFiled, refreshMe])
+  }
 
   useEffect(() => {
-    if (shared && !sharedDone.current) { sharedDone.current = true; file(shared, 'share'); history.replaceState(null, '', board ? `/b/${board.slug}` : '/desk') }
-  }, [shared, file, board])
+    if (shared && !sharedDone.current) { sharedDone.current = true; read(shared, 'share'); history.replaceState(null, '', board ? `/b/${board.slug}` : '/desk') }
+  }, [shared, read, board])
 
   const name = (g: string) => games[g]?.name ?? g
   const replace = async (rid: number, paste: number) => {
     try { await api.replace(rid, paste); setAnswered(a => ({ ...a, [rid]: 'replaced. stamped "amended".' })); onFiled() }
     catch (e) { setErr((e as Error).message) }
   }
+  const minutes = (g: string) => board && <button className="lnk" style={{ fontSize: 12, alignSelf: 'flex-start' }} onClick={() => go(`/b/${board.slug}/m/${g}`)}>see how {board.name} did →</button>
+  const worth = draft && (draft.read.unknown.length > 0 || draft.read.events.some(e => e.kind === 'filed' || e.kind === 'merged' || e.kind === 'conflict'))
 
   return (
     <div className="pbw">
-      <label className="pb">
-        <Clip />
-        <textarea ref={ta} rows={text.includes('\n') ? Math.min(8, text.split('\n').length) : 1} placeholder="paste a result" aria-label="paste a result"
-          spellCheck={false} value={text} disabled={busy} className="keep"
-          onChange={e => setText(e.target.value)}
-          onPaste={e => { const t = e.clipboardData.getData('text'); if (t.trim()) { e.preventDefault(); file(t) } }} />
-      </label>
-      {text.trim() && <div className="pb-a"><button className="btn" onClick={() => file(text)} disabled={busy}>file</button><button className="lnk" onClick={() => setText('')}>clear</button></div>}
-      {!text && navigator.clipboard?.readText && !out && (
-        <div className="pb-a"><button className="lnk" onClick={async () => { try { file(await navigator.clipboard.readText()) } catch { ta.current?.focus() } }}>paste from clipboard</button></div>
-      )}
+      {!draft && <>
+        <label className="pb">
+          <Clip />
+          <textarea ref={ta} rows={text.includes('\n') ? Math.min(8, text.split('\n').length) : 1} placeholder="paste a result" aria-label="paste a result"
+            spellCheck={false} value={text} disabled={busy} className="keep"
+            onChange={e => setText(e.target.value)}
+            onPaste={e => { const t = e.clipboardData.getData('text'); if (t.trim()) { e.preventDefault(); read(t) } }} />
+        </label>
+        {text.trim() && <div className="pb-a"><button className="btn" onClick={() => read(text)} disabled={busy}>read it</button><button className="lnk" onClick={() => setText('')}>clear</button></div>}
+        {!text && navigator.clipboard?.readText && !out && (
+          <div className="pb-a"><button className="lnk" onClick={async () => { try { read(await navigator.clipboard.readText()) } catch { ta.current?.focus() } }}>paste from clipboard</button></div>
+        )}
+      </>}
       {err && <div className="err">{err}</div>}
+
+      {draft && (
+        <div className="cards">
+          <div className="pb-h">the clerk read</div>
+          {draft.read.events.map((e, k) => (
+            <div className={`card${e.kind === 'filed' || e.kind === 'merged' ? '' : ' quiet'}`} key={k}>
+              {e.kind === 'filed' && <><b>{name(e.game)} {e.puzzle}{e.metrics && Object.keys(e.metrics).length ? ` · ${headline(games[e.game], e.metrics, e.outcome ?? undefined)}` : e.outcome === 'failed' ? ' · failed' : ''}</b>
+                <small>{e.late ? 'late · ' : ''}{e.confidence !== 'exact' ? `read as ${e.confidence} · ` : ''}new</small></>}
+              {e.kind === 'merged' && <><b>more detail for {name(e.game)} {e.puzzle}</b><small>adds the {e.added.join(', ')}. the score stays.</small></>}
+              {e.kind === 'duplicate' && <><b>{name(e.game)} {e.puzzle} is already in the minutes</b><small>nothing new here.</small></>}
+              {e.kind === 'not_out_yet' && <><b>{name(e.game)} {e.puzzle} isn't out yet</b><small>file it once it's the current puzzle.</small></>}
+              {e.kind === 'conflict' && <><b>{name(e.game)} {e.puzzle} is already filed, with a different result</b><small>save, and you'll pick which one to keep.</small></>}
+            </div>
+          ))}
+          {draft.read.unknown.map((u, k) => (
+            <div className="card quiet" key={`u${k}`}><b>we can't read {u.name} yet</b><small>{u.score ? `${u.score} · ` : ''}saving asks the clerk for a parser.</small></div>
+          ))}
+          {!draft.read.events.length && !draft.read.unknown.length && <div className="card quiet"><b>nothing readable in that</b><small>{draft.read.note || 'paste the share text the game gives you.'}</small></div>}
+          <div className="row-a">
+            {worth && <button className="btn" onClick={save} disabled={busy}>save to the minutes</button>}
+            <button className={worth ? 'lnk' : 'btn ghost'} onClick={() => setDraft(null)} disabled={busy}>{worth ? 'dismiss' : 'ok'}</button>
+          </div>
+        </div>
+      )}
+
       {out && (
         <div className="cards" style={{ marginTop: 8 }}>
           {out.events.map((e, k) => (
             <div className="card" key={k}>
-              {e.kind === 'filed' && <><b>filed {name(e.game)} {e.puzzle}</b><small>{e.late ? 'filed late · ' : ''}{e.confidence !== 'exact' ? `read as ${e.confidence} · ` : ''}{board ? `counts on every board with ${name(e.game)} on your agenda` : 'kept for you. it counts once you join a board that plays it.'}</small></>}
-              {e.kind === 'merged' && <><b>added the {e.added.join(', ')} to {name(e.game)} {e.puzzle}</b><small>same puzzle, more detail. nothing else changed.</small></>}
+              {e.kind === 'filed' && <><b>filed {name(e.game)} {e.puzzle}</b><small>{e.late ? 'filed late · ' : ''}{board ? `counts on every board with ${name(e.game)} on your agenda` : 'kept for you. it counts once you join a board that plays it.'}</small>{minutes(e.game)}</>}
+              {e.kind === 'merged' && <><b>added the {e.added.join(', ')} to {name(e.game)} {e.puzzle}</b><small>same puzzle, more detail. nothing else changed.</small>{minutes(e.game)}</>}
               {e.kind === 'duplicate' && <><b>{name(e.game)} {e.puzzle} is already in the minutes</b><small>nothing new in that paste.</small></>}
               {e.kind === 'not_out_yet' && <><b>{name(e.game)} {e.puzzle} isn't out yet</b><small>file it once it's the current puzzle.</small></>}
               {e.kind === 'conflict' && e.result_id != null && (answered[e.result_id]
@@ -169,8 +207,7 @@ export function Pasteboard({ board, shared, onFiled }: { board?: Board; shared?:
               <small>{u.score ? `${u.score} · ` : ''}the clerk has asked for a parser. it'll count once there is one.</small>
             </div>
           ))}
-          {!out.events.length && !out.unknown.length && <div className="card"><b>nothing readable in that</b><small>{out.note || 'paste the share text the game gives you.'}</small></div>}
-          <div className="row-a"><button className="lnk" onClick={() => setOut(null)}>dismiss</button></div>
+          <div className="row-a"><button className="lnk" onClick={() => setOut(null)}>done</button></div>
         </div>
       )}
     </div>

@@ -36,6 +36,7 @@ export type Invite = { code: string; name: string; slug: string; chair: string |
 export type Event = {
   kind: 'filed' | 'merged' | 'duplicate' | 'conflict' | 'not_out_yet'
   game: string; puzzle: string; result_id: number | null; added: string[]; confidence: string; late: boolean
+  outcome?: string | null; metrics?: Record<string, number>  // previews only
 }
 export type MyResult = {
   id: number; game: string; name: string; puzzle: string; day: string | null
@@ -90,6 +91,7 @@ export const api = {
   minutes: (slug: string, game: string, day?: string) =>
     call<Minutes>('GET', `/boards/${slug}/minutes/${game}${day ? `?day=${day}` : ''}`),
   paste: (text: string, source: 'paste' | 'share' = 'paste') => call<Filing>('POST', '/pastes', { text, source }),
+  preview: (text: string) => call<Filing>('POST', '/pastes/preview', { text }),
   replace: (id: number, paste_id: number) => call<unknown>('POST', `/results/${id}/replace`, { paste_id }),
   results: () => call<MyResult[]>('GET', '/results'),
   withdraw: (id: number) => call<unknown>('DELETE', `/results/${id}`),

@@ -256,6 +256,28 @@ def paste():
     return jsonify(f.to_dict()), 201
 
 
+@api.post("/pastes/preview")
+@auth_required
+def paste_preview():
+    """What filing this paste would do, without keeping any of it: the app shows it
+    and files only when the person says save."""
+    text = body().get("text")
+    if not isinstance(text, str) or not text.strip():
+        fail(400, "paste something first")
+    sp = g.db.begin_nested()
+    f = filing.file_paste(g.db, g.person, text)
+    out = f.to_dict()
+    for ev in out["events"]:
+        row = ev["result_id"] and g.db.get(Result, ev["result_id"])
+        ev["outcome"], ev["metrics"] = (row.outcome, dict(row.metrics)) if row and ev["kind"] != "conflict" else (None, {})
+        if ev["kind"] != "conflict":
+            ev["result_id"] = None  # those rows aren't kept
+    out["paste_id"] = None
+    sp.rollback()
+    g.db.rollback()
+    return jsonify(out)
+
+
 @api.get("/results")
 @auth_required
 def my_results():

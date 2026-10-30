@@ -101,3 +101,15 @@ def test_you_cant_touch_someone_elses_result(seat):
     assert b.delete(f"/results/{rid}").status_code == 404
     pid = b.post("/pastes", {"text": WIKI}).json["paste_id"]
     assert a.post(f"/results/{rid}/replace", {"paste_id": pid}).status_code == 404
+
+
+def test_a_preview_shows_what_filing_would_do_and_keeps_nothing(db, seat):
+    a = seat("ivan")
+    pre = a.post("/pastes/preview", {"text": WIKI}).json
+    ev = pre["events"][0]
+    assert (ev["kind"], ev["result_id"], ev["metrics"]) == ("filed", None, {"steps": 5, "time": 129})
+    assert pre["paste_id"] is None
+    assert db.query(Result).count() == 0 and a.get("/results").json == []
+    assert a.post("/pastes", {"text": WIKI}).status_code == 201
+    assert a.post("/pastes/preview", {"text": WIKI}).json["events"][0]["kind"] == "duplicate"
+    assert db.query(Result).count() == 1
