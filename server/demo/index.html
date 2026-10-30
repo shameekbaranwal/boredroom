@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boredroom Parser Demo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Spreadsheet direction: paste box on the left, parsed sheet on the right; stacks on phones. */
+:root { --bg:#ffffff; --surface:#f3f4f2; --fg:#1d1f1e; --muted:#626866; --line:#dcdfdc; --accent:#217346; --accent-soft:rgba(33,115,70,.1); --hl:#fff3b0; --warn:#b54708; --bad:#b42318;
+  --f-ui:"Libre Franklin","Helvetica Neue",Arial,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0b0f19; --surface:#141a29; --fg:#e6e9f2; --muted:#8f98ad; --line:#232b3f; --accent:#5ee6a8; --accent-soft:rgba(94,230,168,.12); --hl:#3a2f12; --warn:#f5a524; --bad:#f97066; color-scheme:dark; } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font-family:var(--f-ui); font-size:15px; line-height:1.5; padding:20px max(16px, 3vw) 60px; }
+header { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 18px; margin-bottom:14px; }
+h1 { margin:0; font-size:22px; font-weight:900; letter-spacing:-.01em; }
+.fx { font-family:var(--f-mono); font-size:12.5px; color:var(--muted); border:1px solid var(--line); padding:4px 9px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.fx i { color:var(--accent); font-style:normal; font-weight:600; }
+.fx input, .fx select { font:inherit; color:var(--fg); background:var(--bg); border:1px solid var(--line); padding:2px 5px; }
+main { display:grid; grid-template-columns:minmax(0, 5fr) minmax(0, 7fr); gap:18px; align-items:start; }
+@media (max-width: 860px) { main { grid-template-columns:1fr; } }
+.left { display:flex; flex-direction:column; gap:10px; position:sticky; top:12px; }
+@media (max-width: 860px) { .left { position:static; } }
+textarea { width:100%; min-height:300px; resize:vertical; font-family:var(--f-mono); font-size:13.5px; line-height:1.45; padding:12px; border:1.5px solid var(--line); background:var(--surface); color:var(--fg); }
+textarea:focus { outline:none; border-color:var(--accent); }
+.samples { display:flex; flex-wrap:wrap; gap:6px; }
+.samples button, .btn { font:inherit; font-size:12.5px; font-weight:600; padding:4px 10px; border:1px solid var(--line); background:var(--bg); color:var(--fg); cursor:pointer; }
+.samples button:hover, .btn:hover { border-color:var(--accent); color:var(--accent); }
+.label { font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+#out { display:flex; flex-direction:column; gap:14px; min-width:0; }
+.card { border:1px solid var(--line); min-width:0; }
+.card > .top { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:9px 12px; background:var(--surface); border-bottom:1px solid var(--line); }
+.card .g { font-weight:900; font-size:17px; }
+.pk { font-family:var(--f-mono); font-size:13px; color:var(--muted); }
+.pill { font-size:11.5px; font-weight:700; padding:1px 8px; border:1px solid var(--line); white-space:nowrap; }
+.pill.current { border-color:var(--accent); color:var(--accent); }
+.pill.late { border-color:var(--warn); color:var(--warn); }
+.pill.ahead, .pill.failed, .pill.partial { border-color:var(--bad); color:var(--bad); }
+.pill.inferred { border-style:dashed; color:var(--warn); border-color:var(--warn); }
+.pill.hl { background:var(--hl); border-color:transparent; }
+.grid { display:grid; grid-template-columns:minmax(90px, max-content) minmax(0, 1fr); font-size:14px; }
+.grid > div { padding:6px 12px; border-bottom:1px solid var(--line); min-width:0; overflow-wrap:anywhere; }
+.grid > div:nth-child(odd) { color:var(--muted); font-family:var(--f-mono); font-size:12.5px; background:color-mix(in srgb, var(--surface) 50%, transparent); }
+.grid .big { font-weight:800; font-size:16px; font-variant-numeric:tabular-nums; }
+.vis { font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin-left:6px; color:var(--muted); }
+.spoiler { background:var(--fg); color:transparent; cursor:pointer; border-radius:2px; user-select:none; }
+.spoiler.shown { background:none; color:inherit; }
+.warn { color:var(--warn); font-size:13.5px; }
+pre { margin:0; font-family:var(--f-mono); font-size:12px; white-space:pre-wrap; overflow-wrap:anywhere; }
+details { border-top:1px solid var(--line); }
+details summary { cursor:pointer; padding:6px 12px; font-size:12.5px; color:var(--muted); font-weight:600; }
+details pre { padding:8px 12px 12px; }
+.empty { color:var(--muted); border:1px dashed var(--line); padding:18px; }
+.unk .top { background:var(--hl); }
+code { font-family:var(--f-mono); font-size:.9em; }
+</style>
+</head>
+<body>
+<header>
+  <h1>parser demo</h1>
+  <div class="fx"><i>fx</i>=PARSE(paste,
+    <label>now <input id="now" type="datetime-local" step="60"></label>,
+    <label>tz <select id="tz"><option>Asia/Kolkata</option><option>Asia/Singapore</option><option>Europe/London</option><option>America/New_York</option><option>America/Los_Angeles</option></select></label>)
+    <button class="btn" id="nowbtn" type="button">now</button>
+  </div>
+</header>
+<main>
+  <section class="left">
+    <span class="label">paste one or more results</span>
+    <textarea id="paste" spellcheck="false" placeholder="paste a share text here — it parses as you type"></textarea>
+    <span class="label">or try a sample</span>
+    <div class="samples" id="samples"></div>
+  </section>
+  <section id="out"><div class="empty">results show up here.</div></section>
+</main>
+<script>
+const SAMPLES = {
+  "maptap": "www.maptap.gg October 30\n100🎯 94🏅 87🎓 94🏆 95🏅\nFinal score: 935\n\npro tip: look for an island",
+  "krillion + krill": "Krillion #107 🦐\n310\n\n🐟🐟🐟🐟🦑🌟🐟\n\ngot a krillion in a sea of mid",
+  "connections fail": "Connections\nPuzzle #1237\n🟨🟩🟨🟨\n🟨🟩🟨🟨\n🟨🟨🟨🟩\n🟨🟨🟨🟨\n🟦🟦🟩🟦",
+  "wiki (wrapped)": "[Daily WIKI SPOILER]\n\n\n​​​Byzantine Empire ➡️ Lightning ⏰ 01:09 🦶4 (Byzantine Empire ➡️ Metalwork ➡️ Copper ➡️ Lightning rod ➡️ Lightning) 🔗 https://www.thewikigamedaily.com",
+  "minute cryptic": "Minute Cryptic - 30 October, 2026\n\"Odds of guys accepting defeat in a photo finish?\" (6)\n⚪️🟣🟣🟣🟣🟣🟣🟣🟣\n🏆 1 hints – 1 under the community par (38,650 solvers so far). Time: 1m 7s.\nhttps://www.minutecryptic.com/?utm_source=share",
+  "headerless anno": "97🎯  94🎯  26🤔  0💀  12💀\n229/500\n\nhttps://anno-game.netlify.app",
+  "three at once": "Strands #971\n“Well, this is awkward”\n💡🔵💡🔵\n🟡🔵\n\n📍 PlayPinDrop Day #241\n🟢 🟢 🎯 🎯 🎯\n976 / 1000\nNew personal best!\nhttps://playpindrop.app?r=wt0emiho\n\nDaily Red #19: Red won\n🟥⬛🟥🟥🟥🟥  5/6 KO'd · 21 turns\ndaily-red.com",
+  "late fermi": "Fermi · No. 94\n01  1.20×\n02  20.6×\n03  51.0×\n─────────\n10.8× score · top 90%\n<https://fermi.gg/s/daily>",
+  "unknown game": "Perceptle2 #12 — 7/10\n🟩🟩🟥🟩🟩\nhttps://perceptle2.example",
+  "broken krillion": "Krillion #107 🦐\n\n🐟🐟🐟🐟🦑🌟🐟",
+  "just chat": "connections today has a jojo ref",
+};
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+for (const [k, v] of Object.entries(SAMPLES)) {
+  const b = document.createElement("button"); b.type = "button"; b.textContent = k;
+  b.onclick = () => { $("#paste").value = v; run(); };
+  $("#samples").append(b);
+}
+function setNow() {
+  const tz = $("#tz").value;
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", hour12:false }).formatToParts(new Date());
+  const g = t => parts.find(p => p.type === t).value;
+  $("#now").value = `${g("year")}-${g("month")}-${g("day")}T${g("hour").replace("24","00")}:${g("minute")}`;
+}
+setNow();
+{ const h = decodeURIComponent(location.hash.slice(1)); if (SAMPLES[h]) { $("#paste").value = SAMPLES[h]; setTimeout(run); } }
+$("#nowbtn").onclick = () => { setNow(); run(); };
+$("#tz").onchange = () => { setNow(); run(); };
+$("#now").onchange = run;
+
+let timer;
+$("#paste").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(run, 200); });
+
+function fmtMetric(name, v, unit) {
+  if (unit === "s") { const m = Math.floor(v / 60), s = v % 60; return m ? `${m}m ${String(s).padStart(2, "0")}s` : `${s}s`; }
+  if (unit === "m") return v >= 1000 ? `${(v / 1000).toLocaleString()} km` : `${v} m`;
+  if (unit === "×") return `${v}×`;
+  return v.toLocaleString();
+}
+function fmtValue(v) {
+  if (Array.isArray(v)) return v.map(x => esc(x)).join(Array.isArray(v) && typeof v[0] === "string" && v[0].length > 3 && /\p{Emoji}/u.test(v[0]) ? "<br>" : " · ");
+  if (v && typeof v === "object") return Object.entries(v).map(([k, x]) => `${esc(k)} ${esc(x)}`).join(" · ");
+  return esc(v);
+}
+
+async function run() {
+  const text = $("#paste").value;
+  if (!text.trim()) { $("#out").innerHTML = '<div class="empty">results show up here.</div>'; return; }
+  const res = await fetch("/api/parse", { method:"POST", headers:{ "content-type":"application/json" },
+    body: JSON.stringify({ text, tz: $("#tz").value, now: $("#now").value }) });
+  const d = await res.json();
+  const cards = [];
+  for (const r of d.results) {
+    const pills = [
+      `<span class="pill ${r.status}">${r.status === "current" ? "today's" : r.status === "late" ? "filed late" : r.status === "ahead" ? "not out yet" : "puzzle date set by board"}</span>`,
+      r.outcome !== "solved" ? `<span class="pill ${r.outcome}">${r.outcome}</span>` : "",
+      r.confidence !== "exact" ? `<span class="pill ${r.confidence}">${r.confidence}</span>` : "",
+      ...r.highlights.map(h => `<span class="pill hl">${esc(h)}</span>`),
+    ].join("");
+    const rows = [];
+    for (const [k, v] of Object.entries(r.metrics)) rows.push(`<div>${esc(k)}</div><div class="big">${esc(fmtMetric(k, v, r.units[k]))}</div>`);
+    for (const f of r.fields) {
+      const val = fmtValue(f.value);
+      const shown = f.visibility === "spoiler" ? `<span class="spoiler" title="tap to reveal" onclick="this.classList.toggle('shown')">${val}</span>` : val;
+      rows.push(`<div>${esc(f.name)}</div><div>${shown}<span class="vis">${f.visibility}</span></div>`);
+    }
+    for (const [k, v] of Object.entries(r.extras)) rows.push(`<div>${esc(k)}</div><div>${fmtValue(v)}<span class="vis">extra</span></div>`);
+    if (r.comment) rows.push(`<div>comment</div><div><em>${esc(r.comment).replace(/\n/g, "<br>")}</em></div>`);
+    if (r.warnings.length) rows.push(`<div>notes</div><div class="warn">${r.warnings.map(esc).join("<br>")}</div>`);
+    cards.push(`<article class="card">
+      <div class="top"><span class="g">${esc(r.name)}</span><span class="pk">${typeof r.puzzle === "number" ? "#" + r.puzzle : esc(r.puzzle ?? "")}</span>${pills}</div>
+      <div class="grid">${rows.join("")}</div>
+      <details><summary>send to soup (what gets forwarded)</summary><pre>${esc(r.forward)}</pre></details>
+      <details><summary>json</summary><pre>${esc(JSON.stringify(r, null, 2))}</pre></details>
+    </article>`);
+  }
+  for (const u of d.unknown) {
+    cards.push(`<article class="card unk">
+      <div class="top"><span class="g">new game?</span><span class="pill">pre-filled form</span></div>
+      <div class="grid"><div>name</div><div>${esc(u.name ?? "—")}</div><div>link</div><div>${esc(u.link ?? "—")}</div>
+      <div>puzzle</div><div>${esc(u.puzzle ?? "—")}</div><div>score</div><div>${esc(u.score ?? "—")} <span class="vis">suggested</span></div></div>
+      <details><summary>json</summary><pre>${esc(JSON.stringify(u, null, 2))}</pre></details></article>`);
+  }
+  if (d.ignored.length) cards.push(`<div class="empty">ignored on purpose: ${d.ignored.map(esc).join(", ")}</div>`);
+  if (!cards.length) cards.push(`<div class="empty">not a result — reads as chat.</div>`);
+  $("#out").innerHTML = cards.join("");
+}
+</script>
+</body>
+</html>

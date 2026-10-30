@@ -7,7 +7,28 @@ Boredroom, and your rooms keep the streaks, rankings and bragging rights.
 
 ## Status
 
-Pre-build. We're locking UX and requirements before any architecture or code.
+UX is locked (v8). The parser is built: 26 games, tested against the soup export.
+
+## Layout
+
+```
+server/          Flask backend (a uv project)
+  boredroom/     the package; parser/ turns pasted share texts into results
+  tests/         server tests, including a regression run over the chat export
+  scripts/       dev scripts (corpus.py: measure the parser against an export)
+  demo/          paste-box playground for the parser
+web/             the PWA frontend (not started); its tests live inside it
+tests/           end-to-end tests across server and web (none yet)
+docs/            decisions, specs, UX
+research/        private source material (gitignored)
+```
+
+```
+cd server
+uv run pytest                          # tests
+uv run python scripts/corpus.py        # parser report over ../research/soup_export.txt
+uv run python demo/app.py              # demo at http://127.0.0.1:5077
+```
 
 - [`docs/ux/boredroom-ux.html`](docs/ux/boredroom-ux.html) — design philosophy, UX
   requirements, core flows and screen mockups (also published as an artifact)

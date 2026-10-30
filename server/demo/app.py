@@ -1,0 +1,67 @@
+"""Paste-box demo for the parser.
+
+    cd server && uv run python demo/app.py [--host 0.0.0.0] [--port 5077]
+"""
+from __future__ import annotations
+
+import argparse
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+from flask import Flask, jsonify, request, send_file
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from boredroom.parser import REGISTRY, forward_text, parse  # noqa: E402
+from boredroom.parser import games  # noqa: E402,F401
+
+app = Flask(__name__)
+HERE = Path(__file__).resolve().parent
+
+
+@app.get("/")
+def index():
+    return send_file(HERE / "index.html")
+
+
+@app.get("/api/games")
+def list_games():
+    now = datetime.now(timezone.utc)
+    tz = request.args.get("tz", "Asia/Kolkata")
+    out = []
+    for g in REGISTRY.values():
+        if g.ignore:
+            continue
+        cur = g.current(now, tz)
+        out.append({
+            "id": g.id, "name": g.name, "key": g.key, "ranked": g.ranked(),
+            "current": cur.isoformat() if hasattr(cur, "isoformat") else cur,
+            "reset": f"{g.reset.at:%H:%M} {g.reset.tz or 'local'}",
+            "ranker": [{"metric": m, "better": g.metric_def(m).better} for m in g.ranker],
+        })
+    return jsonify(sorted(out, key=lambda x: x["name"]))
+
+
+@app.post("/api/parse")
+def api_parse():
+    body = request.get_json(force=True)
+    tz = body.get("tz") or "Asia/Kolkata"
+    now = datetime.fromisoformat(body["now"]) if body.get("now") else datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        from zoneinfo import ZoneInfo
+        now = now.replace(tzinfo=ZoneInfo(tz))
+    parsed = parse(body.get("text", ""), now=now, tz=tz)
+    out = parsed.to_dict()
+    for d, r in zip(out["results"], parsed.results):
+        d["name"] = REGISTRY[r.game].name
+        d["forward"] = forward_text(r).replace("​" * 4000, "[4000 invisible characters]")
+        d["units"] = {m.name: m.unit for m in REGISTRY[r.game].metrics if m.unit}
+    return jsonify(out)
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--host", default="127.0.0.1")
+    ap.add_argument("--port", type=int, default=5077)
+    a = ap.parse_args()
+    app.run(host=a.host, port=a.port, debug=False)
