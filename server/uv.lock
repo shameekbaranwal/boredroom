@@ -41,6 +41,7 @@ dependencies = [
     { name = "psycopg", extra = ["binary"] },
     { name = "requests" },
     { name = "sqlalchemy" },
+    { name = "tzdata" },
 ]
 
 [package.dev-dependencies]
@@ -57,6 +58,7 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
     { name = "requests", specifier = ">=2.34.2" },
     { name = "sqlalchemy", specifier = ">=2.0" },
+    { name = "tzdata", specifier = ">=2026.6" },
 ]
 
 [package.metadata.requires-dev]

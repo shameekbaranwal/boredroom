@@ -29,6 +29,20 @@ def issue_token(s: Session, person: Person, device: str | None = None) -> str:
     return token
 
 
+# browsers still report some old zone names; store the current one
+TZ_ALIASES = {"Asia/Calcutta": "Asia/Kolkata", "Asia/Saigon": "Asia/Ho_Chi_Minh", "Asia/Katmandu": "Asia/Kathmandu",
+              "Asia/Rangoon": "Asia/Yangon", "Europe/Kiev": "Europe/Kyiv", "America/Buenos_Aires": "America/Argentina/Buenos_Aires",
+              "US/Eastern": "America/New_York", "US/Central": "America/Chicago", "US/Mountain": "America/Denver",
+              "US/Pacific": "America/Los_Angeles"}
+
+
+def browser_tz(tz: str | None, default: str) -> str:
+    """The timezone a browser sent, tidied: aliases become current names, and anything
+    unknown becomes the default. Signing in never fails over a timezone; it's editable."""
+    tz = TZ_ALIASES.get(tz or "", tz or "")
+    return tz if tz and valid_tz(tz) else default
+
+
 def valid_tz(tz: str) -> bool:
     try:
         ZoneInfo(tz)
@@ -45,8 +59,6 @@ def create_guest(s: Session, username: str | None, tz: str, device: str | None =
         fail(400, "usernames are 2–30 characters: letters, digits, . _ -")
     if s.scalar(select(Person.id).where(Person.username == username)):
         fail(409, "that username is taken")
-    if not valid_tz(tz):
-        fail(400, f"unknown timezone {tz}")
     person = Person(username=username, kind="guest", tz=tz)
     s.add(person)
     s.flush()
@@ -123,8 +135,6 @@ def sign_in_google(s: Session, who: GoogleId, tz: str, seat: Person | None,
         if seat is not None and seat.kind == "guest":
             person = seat
         else:
-            if not valid_tz(tz):
-                fail(400, f"unknown timezone {tz}")
             person = Person(username=username_for(s, who.email), tz=tz)
             s.add(person)
             created = True

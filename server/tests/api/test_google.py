@@ -76,3 +76,11 @@ def test_sign_out_revokes_the_token(seat):
     a = seat("ivan")
     assert a.post("/auth/signout").json == {"signed_out": True}
     assert a.get("/me").status_code == 401
+
+
+def test_old_timezone_names_and_junk_never_block_sign_in(app, client):
+    google(app, IVAN)
+    me = sign_in(client, "good:0", tz="Asia/Calcutta").json["me"]
+    assert me["tz"] == "Asia/Kolkata"
+    r = client.post("/api/v1/guests", json={"username": "drifter", "tz": "Mars/Olympus"})
+    assert r.status_code == 201 and r.json["me"]["tz"] == "Asia/Kolkata"

@@ -22,9 +22,24 @@ function apply(p: Pref) {
   window.dispatchEvent(new Event('boredroom:theme'))
 }
 
-export function setPref(p: Pref) {
+type VT = { ready: Promise<void> }
+type DocVT = Document & { startViewTransition?: (cb: () => void) => VT }
+
+/** Saves and applies the preference. Given where the tap was, the new theme spreads out
+ *  from there in a circle (view transitions); otherwise, or with reduced motion, it just switches. */
+export function setPref(p: Pref, from?: { x: number; y: number }) {
   try { if (p === 'system') localStorage.removeItem(KEY); else localStorage.setItem(KEY, p) } catch { /* private mode */ }
-  apply(p)
+  const doc = document as DocVT
+  const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (!doc.startViewTransition || calm) { apply(p); return }
+  const x = from?.x ?? innerWidth / 2, y = from?.y ?? 0
+  const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))
+  doc.startViewTransition(() => apply(p)).ready.then(() => {
+    document.documentElement.animate(
+      { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] },
+      { duration: 520, easing: 'cubic-bezier(.4,0,.2,1)', pseudoElement: '::view-transition-new(root)' },
+    )
+  }).catch(() => {})
 }
 
 /** [the preference, what's showing]; re-renders on change and when the device flips. */

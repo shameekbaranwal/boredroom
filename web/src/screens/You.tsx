@@ -18,8 +18,14 @@ export default function You({ slug }: { slug: string }) {
   useEffect(() => { api.board(slug).then(x => { setB(x); setNick(x.you.nickname) }).catch(e => setErr(e.message)) }, [slug])
   useEffect(() => { if (location.hash === '#seats') document.getElementById('seats')?.scrollIntoView() }, [b])
 
-  const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone
-  const zones = useMemo(() => (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.('timeZone') ?? [], [])
+  const deviceTz = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const browserTz = OLD_ZONES[deviceTz] ?? deviceTz
+  // chrome lists some zones by their old names (asia/calcutta); show the current ones
+  const zones = useMemo(() => {
+    const all = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.('timeZone') ?? []
+    const fixed = all.map(z => OLD_ZONES[z] ?? z)
+    return fixed.includes(me.tz) ? fixed : [me.tz, ...fixed]
+  }, [me.tz])
   if (err) return <div className="app"><Header title="you.xlsx" /><div className="center err">{err}</div></div>
   if (!b) return <div className="app"><Header title="you.xlsx" meta={me.username} /><Loading what="your seat" /></div>
 
@@ -140,3 +146,5 @@ function confirmClaim(nickname: string): boolean {
   // a real dialog would be nicer; this keeps it to one tap plus a check
   return window.confirm(`claim ${nickname}'s seat? their history becomes yours.`)
 }
+
+const OLD_ZONES: Record<string, string> = { 'Asia/Calcutta': 'Asia/Kolkata', 'Asia/Saigon': 'Asia/Ho_Chi_Minh', 'Asia/Katmandu': 'Asia/Kathmandu', 'Asia/Rangoon': 'Asia/Yangon', 'Europe/Kiev': 'Europe/Kyiv' }

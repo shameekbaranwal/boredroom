@@ -43,7 +43,7 @@ def me_json(p: Person) -> dict[str, Any]:
 @api.post("/guests")
 def new_guest():
     b = body()
-    tz = b.get("tz") or current_app.config["BOREDROOM"].default_tz
+    tz = auth.browser_tz(b.get("tz"), current_app.config["BOREDROOM"].default_tz)
     person, token = create_guest(g.db, b.get("username"), tz, request.headers.get("User-Agent", "")[:200])
     g.db.commit()
     return jsonify({"token": token, "me": me_json(person)}), 201
@@ -69,7 +69,7 @@ def google_sign_in():
     verify = current_app.config.get("GOOGLE_VERIFY", auth.verify_google)  # swapped in tests
     who = verify(credential, client_id)
     row = auth.token_row(g.db, auth.bearer())
-    tz = b.get("tz") or current_app.config["BOREDROOM"].default_tz
+    tz = auth.browser_tz(b.get("tz"), current_app.config["BOREDROOM"].default_tz)
     person, token, created = auth.sign_in_google(
         g.db, who, tz, row.person if row else None, request.headers.get("User-Agent", "")[:200])
     g.db.commit()
@@ -95,9 +95,10 @@ def me():
 def update_me():
     b = body()
     if "tz" in b:
-        if not valid_tz(b["tz"]):
+        tz = auth.TZ_ALIASES.get(b["tz"], b["tz"])
+        if not valid_tz(tz):
             fail(400, f"unknown timezone {b['tz']}")
-        g.person.tz = b["tz"]
+        g.person.tz = tz
     if "username" in b:
         name = str(b["username"]).strip().lower()
         if not USERNAME.match(name):

@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import type { Game, Me } from './api'
 import { hue } from './format'
 import { go } from './router'
-import { TableMark, ThemeToggle } from './brand'
+import { TableMark, ThemeToggle, Wordmark } from './brand'
 
 export type Ctx = {
   me: Me
@@ -43,7 +43,7 @@ export function Nav({ slug, on, temp }: { slug: string; on: 'agenda' | 'review' 
     <nav className="nav">
       <div className="nav-brand wide-only">
         <TableMark size={30} tile />
-        <span>boredroom</span>
+        <Wordmark size={22} />
       </div>
       <button className={on === 'agenda' && !temp ? 'on' : ''} onClick={() => go(`/b/${slug}`)}>agenda</button>
       <button disabled title="coming in the next milestone">review</button>

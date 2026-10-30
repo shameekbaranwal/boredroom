@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { api, setToken, type Invite } from '../api'
-import { TableMark, ThemeToggle, Wordmark } from '../brand'
+import { ThemeToggle, Wordmark } from '../brand'
 import { useTheme } from '../theme'
 
 declare global {
@@ -55,11 +55,17 @@ export function GoogleButton({ onToken, onError }: { onToken: (t: string) => voi
         client_id: clientId,
         callback: r => api.google(r.credential).then(x => cb.current.onToken(x.token)).catch(e => cb.current.onError(e.message)),
       })
-      el.current.innerHTML = ''
-      window.google.accounts.id.renderButton(el.current, {
+      // draw the new button in a fresh layer on top, and drop the old one once google's
+      // frame has loaded; clearing first made the button collapse and jump
+      const host = el.current
+      const layer = document.createElement('div')
+      layer.className = 'glayer'
+      host.appendChild(layer)
+      window.google.accounts.id.renderButton(layer, {
         theme: shown === 'dark' ? 'filled_black' : 'outline', size: 'large', shape: 'pill',
         text: 'continue_with', logo_alignment: 'center', width: Math.max(200, Math.min(400, width)),
       })
+      setTimeout(() => { if (live) for (const old of [...host.children]) if (old !== layer) old.remove() }, 700)
     }).catch(e => live && cb.current.onError(e.message))
     return () => { live = false }
   }, [clientId, shown, width])
@@ -96,7 +102,7 @@ export default function SignIn({ invite, onSignedIn }: { invite?: Invite | null;
           ? <><h1>{invite.chair ?? 'someone'} saved you a seat on {invite.name}.</h1>
               <p>{invite.members} members{invite.library.length ? `, playing ${invite.library.slice(0, 3).join(', ')}${invite.library.length > 3 ? ` and ${invite.library.length - 3} more` : ''}` : ''}. sign in to take your seat.</p></>
           : <><h1>there's an empty chair at your friends' table.</h1>
-              <p>paste your daily puzzles like you always do. boredroom keeps the minutes, the rivalries and the streaks.</p></>}
+              <p>paste your daily puzzles like you always do. boredroom keeps the minutes, the scores, and the receipts.</p></>}
         <div className="acts">
           <GoogleButton onToken={done} onError={setErr} />
           {!guestOpen
@@ -124,8 +130,7 @@ export function Room({ top, big, bottom }: { top: string; big: string; bottom: s
   return (
     <section className="room" aria-label="the boardroom">
       <div className="room-top">
-        <TableMark size={30} mono />
-        <Wordmark cell={24} onDark />
+        <Wordmark onRoom />
         <ThemeToggle />
       </div>
       <div className="table-wrap" aria-hidden="true">
