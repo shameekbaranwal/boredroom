@@ -9,7 +9,7 @@ from typing import Any
 from flask import Blueprint, current_app, g, jsonify, request
 from sqlalchemy import select
 
-from . import boards, filing
+from . import boards, claims, filing
 from . import auth
 from .auth import auth_required, create_guest, valid_tz, USERNAME
 from .errors import fail
@@ -154,6 +154,17 @@ def board_me(slug):
     m.nickname = nick
     g.db.commit()
     return jsonify(boards.board_json(g.db, b, m))
+
+
+@api.post("/boards/<slug>/claim")
+@auth_required
+def claim_seat(slug):
+    """{username}: "that's me". Takes over an imported placeholder's history on this board."""
+    board, _ = boards.get_board(g.db, slug, g.person)
+    moved = claims.claim(g.db, board, g.person, str(body().get("username", "")))
+    g.db.commit()
+    _, m = boards.get_board(g.db, slug, g.person)
+    return jsonify({"moved": moved, "board": boards.board_json(g.db, board, m)})
 
 
 @api.put("/boards/<slug>/library/<game>")

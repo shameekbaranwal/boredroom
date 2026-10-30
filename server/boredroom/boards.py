@@ -103,7 +103,8 @@ def board_json(s: Session, board: Board, m: Membership) -> dict[str, Any]:
     out = {
         "slug": board.slug, "name": board.name, "settings": board.settings,
         "you": {"nickname": m.nickname, "role": m.role, "agenda": sorted(agendas.get(m.person_id, []))},
-        "members": [{"nickname": x.nickname, "role": x.role, "kind": x.person.kind,
+        "members": [{"nickname": x.nickname, "username": x.person.username, "role": x.role,
+                     "kind": x.person.kind,
                      "games": len(agendas.get(x.person_id, []))}
                     for x in sorted(members, key=lambda x: x.nickname)],
         "library": [{"game": bg.game_id, "name": REGISTRY[bg.game_id].name, "rules": bg.rules,
