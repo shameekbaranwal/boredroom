@@ -189,3 +189,13 @@ See docs/UX-NOTES.md for the functional requirements that came with this.
 - Pasting a puzzle you've already filed merges when it's the same play with more detail
   (the Wiki route posted after the plain share). Duplicates are ignored, and a
   different result asks to replace. See docs/PARSER.md part 1.
+
+## 2026-10-30 — Server stack (see docs/SERVER.md part 6)
+
+- Flask + Postgres with SQLAlchemy 2 and Alembic. JSON API under `/api/v1`.
+- Web app: React + Vite + TypeScript, chosen over Svelte so a React Native app later
+  can share the API client, types and data hooks.
+- Sign-in: Google, verifying ID tokens on the server, so hosting stays open
+  (self-hosted now; Firebase or AWS possible). Guest tokens until the OAuth client
+  exists.
+- Soup's history is seeded by hand from the export, under placeholder members.

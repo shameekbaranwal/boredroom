@@ -3,7 +3,7 @@ from datetime import date, datetime, timezone
 from boredroom.parser import REGISTRY, forward_text, rank
 from boredroom.parser.text import duration, emoji_cells, nearest_year, normalise, number
 
-from .conftest import one
+from ..conftest import one
 
 KRILL = "Krillion #107 🦐\n{score}\n\n🐟🐟🏮🦑🐟🦑🫧"
 

@@ -1,6 +1,6 @@
 from boredroom.parser import merge
 
-from .conftest import one
+from ..conftest import one
 
 PLAIN = "Seawater ➡️ Babe Ruth ⏰ 02:09 🦶5 🔗 https://www.thewikigamedaily.com"
 ROUTE = ("Seawater ➡️ Babe Ruth ⏰ 02:10 🦶5 (Seawater ➡️ ASTM International ➡️ "

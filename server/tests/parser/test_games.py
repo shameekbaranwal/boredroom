@@ -1,7 +1,7 @@
 """One case per share-text shape. Each case: (paste, expected subset of the result)."""
 import pytest
 
-from .conftest import one
+from ..conftest import one
 
 CASES = {
     "maptap": [(

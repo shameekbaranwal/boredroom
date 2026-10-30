@@ -1,11 +1,10 @@
-# Server spec (draft 1, 2026-10-30)
+# Server spec (draft 2, 2026-10-30)
 
 The parser turns pastes into results. The server keeps them: who filed what, on which
 boards it counts, and what each member is allowed to see. This spec covers the data
 model, the API, and how "today", visibility and daily wins are computed.
 
-Part 6 lists the open choices, numbered so they can be answered by number. Each one says
-what I'd pick.
+Part 6 records the choices made on draft 1.
 
 ## 1. Milestones
 
@@ -98,58 +97,22 @@ JSON under `/api/v1`. The client sends a bearer token (one per seat).
 | PATCH | `/boards/{slug}/rules/{game}` | chair: per-game rules |
 | GET | `/boards/{slug}/export/whatsapp?scope=` | the WhatsApp text for a result, minutes or the review |
 
-## 6. Open choices
+## 6. Choices (answered 2026-10-30)
 
-1. **Database access.**
-   - (a) **SQLAlchemy 2 ORM with Alembic migrations.**
-   - (b) SQLAlchemy Core: tables and queries, no ORM objects.
-   - (c) Raw SQL with psycopg.
-
-   I'd pick (a). It's the standard Flask pairing, migrations come with it, and
-   the queries here are simple.
-
-2. **Signing in.** Guests are real server accounts with no email (decided 2026-10-27).
-   The question is how an account signs in:
-   - (a) **Sign in with Google.** No passwords, and everyone in soup has an Android
-     phone.
-   - (b) A magic link by email. Needs an email sender.
-   - (c) Passkeys. The nicest long term, but the most work and the least familiar.
-   - (d) Username and password.
-
-   I'd pick (a), with guests able to claim their seats into an account later. Google
-   OAuth needs a Google Cloud OAuth client for `boredroom.shmk.dev`, and you'd have to
-   create that.
-
-3. **Web app stack.**
-   - (a) **A JSON API plus a small SPA:** Svelte with Vite, built into static files
-     Flask serves. Good for a PWA (offline cache, share target), the formula-bar and
-     drill-in-tab interactions, and a native Android app could use the same API later.
-   - (b) Server-rendered Jinja plus htmx. One codebase and fast to build, but awkward
-     for offline and the richer interactions.
-   - (c) React with Vite. Same shape as (a), heavier.
-
-   I'd pick (a).
-
-4. **Where results show up.** "Results belong to people" means filing krillion shows
-   on every board where krillion is on your agenda. Should a member be able to keep a
-   result off one board? I'd say no for v1: your agenda already decides it.
-
-5. **Metrics as JSON or columns.** I'd keep them as jsonb, the parser's shape as is,
-   since games differ. Ranking and averages run in Python over a board's results,
-   which is small.
-
-6. **Seeding soup from the export.** The import files every result under a placeholder
-   member per sender ("ivan", "+65 …"). When a friend joins soup, they claim
-   theirs ("which of these is you?") and the history moves to their account. I'd
-   do it that way, so soup starts with 20 days of records and tenure. The import
-   stays an internal tool (decided).
-
-7. **Tests.** Against a real Postgres (a throwaway container per test run), or SQLite?
-   I'd use Postgres. jsonb and array columns behave differently in SQLite, and a
-   container is cheap here.
-
-8. **Timezone per person.** Taken from the browser on first use and editable in "you".
-   Local-midnight games use it. I'd store it on the person, not per seat.
+1. **SQLAlchemy 2 ORM with Alembic migrations.**
+2. **Google sign-in,** set up later: you create the OAuth client. Until then, guests
+   get a token from `POST /api/v1/guests`. Sign-in is one module that verifies a Google
+   ID token, so it works the same self-hosted, on Firebase Auth, or on AWS. Hosting
+   stays on the homeserver for now.
+3. **A JSON API plus React (Vite, TypeScript),** served by Flask as static files. React
+   Native later reuses the API client, types and data hooks (a shared package), though
+   not the screens.
+4. **No per-board hiding.** Your agenda decides where a result counts.
+5. **Metrics as jsonb,** the parser's shape.
+6. **Soup's history** is imported by me as a manual step, under one placeholder member
+   per sender that friends claim when they join.
+7. **Tests run against real Postgres** in a throwaway container.
+8. **Timezone lives on the person,** from the browser and editable.
 
 ## 7. Testing
 

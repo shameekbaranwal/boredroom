@@ -216,6 +216,17 @@ class Game:
         return bool(cls.ranker)
 
     @classmethod
+    def puzzle_day(cls, puzzle: int | date | str | None) -> date | None:
+        """The day a puzzle belongs to. None for page-pair keys (the wiki game),
+        whose day is set by the first filing (see the server)."""
+        if isinstance(puzzle, date):
+            return puzzle
+        if cls.key == "number" and cls.anchor and isinstance(puzzle, int):
+            n, d = cls.anchor
+            return d + timedelta(days=puzzle - n)
+        return None
+
+    @classmethod
     def current(cls, now: datetime, member_tz: str) -> int | date | None:
         day = cls.reset.game_day(now, member_tz)
         if cls.key == "date":
