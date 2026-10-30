@@ -82,5 +82,5 @@ def test_invite_preview_needs_no_sign_in(client, seat):
     code = a.post("/boards", {"name": "soup"}).json["invite_code"]
     a.put("/boards/soup/agenda/wiki")
     assert client.get(f"/api/v1/invites/{code}").json == {
-        "name": "soup", "slug": "soup", "chair": "ivan", "members": 1, "library": ["wiki game"]}
+        "code": code, "name": "soup", "slug": "soup", "chair": "ivan", "members": 1, "library": ["wiki game"]}
     assert client.get("/api/v1/invites/nope").status_code == 404

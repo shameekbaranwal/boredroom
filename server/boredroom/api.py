@@ -10,7 +10,7 @@ from typing import Any
 from flask import Blueprint, current_app, g, jsonify, request
 from sqlalchemy import select
 
-from . import boards, claims, filing, reads
+from . import boards, claims, filing, invites, reads
 from . import auth
 from .auth import auth_required, create_guest, valid_tz, USERNAME
 from .errors import fail
@@ -136,12 +136,11 @@ def new_board():
 @api.get("/invites/<code>")
 def invite(code):
     """What an invitation shows before you join. No sign-in needed: the code is the key."""
-    board = g.db.scalar(select(Board).where(Board.invite_code == code))
-    if board is None:
-        fail(404, "that invite link doesn't work")
+    inv = invites.lookup(g.db, code)
+    board = inv.board
     live = [m for m in board.memberships if m.left_at is None]
     chair = next((m.nickname for m in live if m.role == "chair"), None)
-    return jsonify({"name": board.name, "slug": board.slug, "chair": chair, "members": len(live),
+    return jsonify({"code": inv.code, "name": board.name, "slug": board.slug, "chair": chair, "members": len(live),
                     "library": [REGISTRY[bg.game_id].name for bg in sorted(board.library, key=lambda b: b.game_id)]})
 
 

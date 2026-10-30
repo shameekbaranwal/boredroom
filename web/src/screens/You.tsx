@@ -1,31 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
-import { api, setToken, type Board } from '../api'
+import { useEffect, useState } from 'react'
+import { api, type Board } from '../api'
 import { query, usePath } from '../router'
 import { Fx, Header, Loading, Nav, Tile, sendOn, useApp } from '../ui'
-import { GoogleButton } from './SignIn'
-import { setPref, useTheme, type Pref } from '../theme'
+import { Personal } from './Personal'
 
 export default function You({ slug }: { slug: string }) {
-  const { me, games, refreshMe, toast, signOut } = useApp()
-  const [theme] = useTheme()
+  const { me, games, refreshMe, toast } = useApp()
   const path = usePath()
   const welcome = query(path).get('welcome')
   const [b, setB] = useState<Board | null>(null)
   const [nick, setNick] = useState('')
-  const [tz, setTz] = useState(me.tz)
   const [q, setQ] = useState('')
   const [err, setErr] = useState('')
   useEffect(() => { api.board(slug).then(x => { setB(x); setNick(x.you.nickname) }).catch(e => setErr(e.message)) }, [slug])
   useEffect(() => { if (location.hash === '#seats') document.getElementById('seats')?.scrollIntoView() }, [b])
 
-  const deviceTz = Intl.DateTimeFormat().resolvedOptions().timeZone
-  const browserTz = OLD_ZONES[deviceTz] ?? deviceTz
-  // chrome lists some zones by their old names (asia/calcutta); show the current ones
-  const zones = useMemo(() => {
-    const all = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.('timeZone') ?? []
-    const fixed = all.map(z => OLD_ZONES[z] ?? z)
-    return fixed.includes(me.tz) ? fixed : [me.tz, ...fixed]
-  }, [me.tz])
   if (err) return <div className="app"><Header title="you.xlsx" /><div className="center err">{err}</div></div>
   if (!b) return <div className="app"><Header title="you.xlsx" meta={me.username} /><Loading what="your seat" /></div>
 
@@ -43,10 +32,6 @@ export default function You({ slug }: { slug: string }) {
     if (nick.trim() && nick !== b.you.nickname) {
       try { setB(await api.nickname(slug, nick.trim())); refreshMe(); toast('noted in the minutes') } catch (e) { toast((e as Error).message) }
     }
-  }
-  const saveTz = async (v: string) => {
-    setTz(v)
-    try { await api.updateMe({ tz: v }); refreshMe(); toast(`timezone set to ${v}`) } catch (e) { toast((e as Error).message) }
   }
   const placeholders = b.members.filter(m => m.kind === 'placeholder')
   const claim = async (username: string, nickname: string) => {
@@ -98,8 +83,11 @@ export default function You({ slug }: { slug: string }) {
 
         <div className="sec">invite</div>
         <div className="row-a">
-          <span className="sub keep" style={{ flex: 1 }}>{invite}</span>
-          <button className="btn" onClick={() => sendOn(`join ${b.name} on boredroom: ${invite}`, toast)}>send invite</button>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <b className="invite-words">{b.invite_code.replace(/-/g, ' ')}</b>
+            <span className="sub keep" style={{ display: 'block' }}>{invite}</span>
+          </span>
+          <button className="btn" onClick={() => sendOn(`join ${b.name} on boredroom: ${invite} (or type "${b.invite_code.replace(/-/g, ' ')}" in the app)`, toast)}>send invite</button>
         </div>
 
         {placeholders.length > 0 && <>
@@ -121,34 +109,7 @@ export default function You({ slug }: { slug: string }) {
           </div>
         ))}
 
-        <div className="sec">you</div>
-        <div className="field">
-          <label htmlFor="tz">timezone {tz !== browserTz && <span className="muted">(this device says {browserTz})</span>}</label>
-          {zones.length
-            ? <select id="tz" className="input" value={tz} onChange={e => saveTz(e.target.value)}>{zones.map(z => <option key={z} value={z}>{z}</option>)}</select>
-            : <input id="tz" className="input" value={tz} onChange={e => setTz(e.target.value)} onBlur={() => saveTz(tz)} />}
-        </div>
-        <div className="field">
-          <label>appearance</label>
-          <div className="seg" role="radiogroup" aria-label="appearance">
-            {(['system', 'light', 'dark'] as Pref[]).map(p => (
-              <button key={p} role="radio" aria-checked={theme === p} className={theme === p ? 'on' : ''} onClick={() => setPref(p)}>
-                {p === 'system' ? 'like this device' : p}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="mrow">
-          <span>{me.kind === 'account' ? <>signed in{me.email && <span className="muted keep"> · {me.email}</span>}</> : 'guest seat on this device'}</span>
-          <span className={`chip${me.kind === 'guest' ? ' seat' : ''}`}>{me.kind === 'account' ? 'signed in' : 'guest seat'}</span>
-        </div>
-        {me.kind === 'guest' && (
-          <div className="field">
-            <label>keep this seat: sign in with google</label>
-            <GoogleButton onToken={t => { setToken(t); refreshMe(); toast('signed in. your guest seat is now your account.') }} onError={m => toast(m)} />
-          </div>
-        )}
-        <div><button className="lnk" onClick={signOut}>sign out</button></div>
+        <Personal />
       </div>
       <Nav slug={slug} on="you" />
     </div>
@@ -160,4 +121,3 @@ function confirmClaim(nickname: string): boolean {
   return window.confirm(`claim ${nickname}'s seat? their history becomes yours.`)
 }
 
-const OLD_ZONES: Record<string, string> = { 'Asia/Calcutta': 'Asia/Kolkata', 'Asia/Saigon': 'Asia/Ho_Chi_Minh', 'Asia/Katmandu': 'Asia/Kathmandu', 'Asia/Rangoon': 'Asia/Yangon', 'Europe/Kiev': 'Europe/Kyiv' }

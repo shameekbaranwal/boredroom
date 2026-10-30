@@ -1,5 +1,6 @@
 import { go } from '../router'
 import { Overlay, useApp } from '../ui'
+import { JoinByCode } from './Desk'
 
 export default function Boards({ current, onClose }: { current: string; onClose: () => void }) {
   const { me } = useApp()
@@ -11,7 +12,7 @@ export default function Boards({ current, onClose }: { current: string; onClose:
         </button>
       ))}
       <button className="bopt" onClick={() => { onClose(); go('/new') }}><b style={{ color: 'var(--accent)' }}>+ start a board</b></button>
-      <div className="ph-h" style={{ borderBottom: 0, fontWeight: 400 }}>to join one, open its invite link.</div>
+      <div style={{ padding: '10px 14px 14px' }}><JoinByCode /></div>
     </Overlay>
   )
 }

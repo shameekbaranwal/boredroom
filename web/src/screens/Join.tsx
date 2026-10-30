@@ -3,6 +3,7 @@ import { api, type Invite } from '../api'
 import { go } from '../router'
 import { useApp } from '../ui'
 import { Room } from './SignIn'
+import { JoinByCode } from './Desk'
 
 export default function Join({ code }: { code: string }) {
   const { me, refreshMe } = useApp()
@@ -17,7 +18,8 @@ export default function Join({ code }: { code: string }) {
     <div className="signin">
       <Room top="the agenda" big={inv?.name ?? '…'} bottom={inv ? `${inv.members} members` : 'checking the invite'} />
       <section className="pitch">
-        {err && <><h1>that invite doesn't work.</h1><p>{err}. ask for a fresh link.</p></>}
+        {err && <><h1>that invite doesn't work.</h1><p>{err}. check the words, or ask for a fresh invite.</p>
+          <div className="acts"><JoinByCode /><button className="alt" onClick={() => go('/')}>not now →</button></div></>}
         {inv && <>
           <h1>{inv.chair ?? 'someone'} saved you a seat on {inv.name}.</h1>
           <p>{inv.members} members{inv.library.length ? `, playing ${inv.library.slice(0, 4).join(', ')}${inv.library.length > 4 ? ` and ${inv.library.length - 4} more` : ''}` : ''}.</p>
@@ -25,6 +27,7 @@ export default function Join({ code }: { code: string }) {
             {already
               ? <button className="btn wide" onClick={() => go(`/b/${inv.slug}`)}>you're on it · open {inv.name}</button>
               : <button className="btn wide" onClick={join}>join as {me.username}</button>}
+            <button className="alt" onClick={() => go('/')}>not now →</button>
           </div>
         </>}
       </section>

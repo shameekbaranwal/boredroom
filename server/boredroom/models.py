@@ -59,13 +59,28 @@ class Board(Base):
     name: Mapped[str] = mapped_column(String(60))
     slug: Mapped[str] = mapped_column(String(60), unique=True)
     chair_id: Mapped[int] = mapped_column(ForeignKey("person.id"))
-    invite_code: Mapped[str] = mapped_column(String(32), unique=True)
     # late_filing (bool), join ("link" | "approval")
     settings: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     memberships: Mapped[list["Membership"]] = relationship(back_populates="board")
     library: Mapped[list["BoardGame"]] = relationship(back_populates="board", cascade="all, delete-orphan")
+
+
+class Invite(Base):
+    """A way onto a board: three words (see invites.py). Boards can have several."""
+    __tablename__ = "invite"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(80), unique=True)
+    board_id: Mapped[int] = mapped_column(ForeignKey("board.id", ondelete="CASCADE"), index=True)
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("person.id", ondelete="SET NULL"))
+    legacy: Mapped[bool] = mapped_column(Boolean, default=False)  # an old random code, kept working
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    board: Mapped[Board] = relationship()
 
 
 class Membership(Base):

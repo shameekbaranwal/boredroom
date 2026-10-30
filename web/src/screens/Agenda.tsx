@@ -100,7 +100,7 @@ function OpenRow({ i, slug, now }: { i: Item; slug: string; now: number }) {
 }
 
 /** The pasteboard: paste a share text, it's filed everywhere, the cards say what happened. */
-function Pasteboard({ board, shared, onFiled }: { board: Board; shared?: string; onFiled: () => void }) {
+export function Pasteboard({ board, shared, onFiled }: { board?: Board; shared?: string; onFiled: () => void }) {
   const { games, refreshMe } = useApp()
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -117,16 +117,16 @@ function Pasteboard({ board, shared, onFiled }: { board: Board; shared?: string;
       const f = await api.paste(t, source)
       setOut(f); setText('')
       // a new game joins your agenda on this board, as "+ add a game" does
-      const add = f.events.filter(e => e.kind !== 'not_out_yet' && !board.you.agenda.includes(e.game)).map(e => e.game)
-      for (const g of new Set(add)) await api.agenda(board.slug, g, true).catch(() => {})
+      const add = board ? f.events.filter(e => e.kind !== 'not_out_yet' && !board.you.agenda.includes(e.game)).map(e => e.game) : []
+      for (const g of new Set(add)) await api.agenda(board!.slug, g, true).catch(() => {})
       if (add.length) refreshMe()
       onFiled()
     } catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
   }, [board, onFiled, refreshMe])
 
   useEffect(() => {
-    if (shared && !sharedDone.current) { sharedDone.current = true; file(shared, 'share'); history.replaceState(null, '', `/b/${board.slug}`) }
-  }, [shared, file, board.slug])
+    if (shared && !sharedDone.current) { sharedDone.current = true; file(shared, 'share'); history.replaceState(null, '', board ? `/b/${board.slug}` : '/desk') }
+  }, [shared, file, board])
 
   const name = (g: string) => games[g]?.name ?? g
   const replace = async (rid: number, paste: number) => {
@@ -152,7 +152,7 @@ function Pasteboard({ board, shared, onFiled }: { board: Board; shared?: string;
         <div className="cards" style={{ marginTop: 8 }}>
           {out.events.map((e, k) => (
             <div className="card" key={k}>
-              {e.kind === 'filed' && <><b>filed {name(e.game)} {e.puzzle}</b><small>{e.late ? 'filed late · ' : ''}{e.confidence !== 'exact' ? `read as ${e.confidence} · ` : ''}counts on every board with {name(e.game)} on your agenda</small></>}
+              {e.kind === 'filed' && <><b>filed {name(e.game)} {e.puzzle}</b><small>{e.late ? 'filed late · ' : ''}{e.confidence !== 'exact' ? `read as ${e.confidence} · ` : ''}{board ? `counts on every board with ${name(e.game)} on your agenda` : 'kept for you. it counts once you join a board that plays it.'}</small></>}
               {e.kind === 'merged' && <><b>added the {e.added.join(', ')} to {name(e.game)} {e.puzzle}</b><small>same puzzle, more detail. nothing else changed.</small></>}
               {e.kind === 'duplicate' && <><b>{name(e.game)} {e.puzzle} is already in the minutes</b><small>nothing new in that paste.</small></>}
               {e.kind === 'not_out_yet' && <><b>{name(e.game)} {e.puzzle} isn't out yet</b><small>file it once it's the current puzzle.</small></>}

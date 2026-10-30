@@ -32,10 +32,14 @@ export type Board = {
   members: Member[]
   library: { game: string; name: string; rules: Record<string, unknown>; players: number }[]
 }
-export type Invite = { name: string; slug: string; chair: string | null; members: number; library: string[] }
+export type Invite = { code: string; name: string; slug: string; chair: string | null; members: number; library: string[] }
 export type Event = {
   kind: 'filed' | 'merged' | 'duplicate' | 'conflict' | 'not_out_yet'
   game: string; puzzle: string; result_id: number | null; added: string[]; confidence: string; late: boolean
+}
+export type MyResult = {
+  id: number; game: string; name: string; puzzle: string; day: string | null
+  outcome: 'solved' | 'failed' | 'played'; metrics: Record<string, number>; late: boolean; withdrawn: boolean; filed_at: string
 }
 export type Unknown = { name: string; link: string | null; score: string | null; raw: string }
 export type Filing = { paste_id: number; events: Event[]; unknown: Unknown[]; note: string }
@@ -87,5 +91,6 @@ export const api = {
     call<Minutes>('GET', `/boards/${slug}/minutes/${game}${day ? `?day=${day}` : ''}`),
   paste: (text: string, source: 'paste' | 'share' = 'paste') => call<Filing>('POST', '/pastes', { text, source }),
   replace: (id: number, paste_id: number) => call<unknown>('POST', `/results/${id}/replace`, { paste_id }),
+  results: () => call<MyResult[]>('GET', '/results'),
   withdraw: (id: number) => call<unknown>('DELETE', `/results/${id}`),
 }

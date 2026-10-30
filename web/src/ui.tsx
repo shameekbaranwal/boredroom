@@ -37,7 +37,7 @@ export function Fx({ fn, args }: { fn: string; args: [string, string][] }) {
   )
 }
 
-export function Nav({ slug, on, temp }: { slug: string; on: 'agenda' | 'review' | 'you' | null; temp?: string }) {
+export function Nav({ slug, on, temp }: { slug?: string; on: 'agenda' | 'review' | 'you' | null; temp?: string }) {
   const { me } = useApp()
   return (
     <nav className="nav">
@@ -45,9 +45,9 @@ export function Nav({ slug, on, temp }: { slug: string; on: 'agenda' | 'review' 
         <TableMark size={30} tile />
         <Wordmark size={22} />
       </div>
-      <button className={on === 'agenda' && !temp ? 'on' : ''} onClick={() => go(`/b/${slug}`)}>agenda</button>
+      <button className={on === 'agenda' && !temp ? 'on' : ''} onClick={() => go(slug ? `/b/${slug}` : '/desk')}>agenda</button>
       <button disabled title="coming in the next milestone">review</button>
-      <button className={on === 'you' && !temp ? 'on' : ''} onClick={() => go(`/b/${slug}/you`)}>you</button>
+      <button className={on === 'you' && !temp ? 'on' : ''} onClick={() => go(slug ? `/b/${slug}/you` : '/me')}>you</button>
       {temp && <span className="on tmp">{temp}</span>}
       <div className="nav-boards wide-only">
         <span className="nav-sec">your boards</span>
@@ -55,6 +55,7 @@ export function Nav({ slug, on, temp }: { slug: string; on: 'agenda' | 'review' 
           <button key={b.slug} className={b.slug === slug ? 'cur' : ''} onClick={() => go(`/b/${b.slug}`)}>{b.name}<small>{b.nickname}</small></button>
         ))}
         <button className="nav-new" onClick={() => go('/new')}>+ start a board</button>
+        <button className="nav-new" onClick={() => go('/desk#join')}>+ join with an invite</button>
       </div>
       <div className="nav-foot wide-only"><ThemeToggle /><span>{me.username}</span></div>
     </nav>

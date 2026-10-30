@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 
+from boredroom import invites
 from boredroom.models import Board, Person, Result
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
@@ -37,7 +38,7 @@ def test_import_then_claim(tmp_path, db, seat):
     assert board.chair_id == placeholder_id  # first sender holds the chair
 
     a = seat("mallory.k")
-    a.post("/boards/join", {"code": board.invite_code})
+    a.post("/boards/join", {"code": invites.current(db, board).code})
     seen = a.get("/boards/soup").json["members"]
     assert {m["username"]: m["kind"] for m in seen}["mallory"] == "placeholder"
     r = a.post("/boards/soup/claim", {"username": "mallory"})
@@ -58,7 +59,7 @@ def test_a_reimport_files_new_messages_to_whoever_claimed_the_seat(tmp_path, db,
     import_chat.run(db, export, "soup", {}, "Asia/Kolkata")
     db.commit()
     a = seat("mallory.k")
-    a.post("/boards/join", {"code": db.query(Board).one().invite_code})
+    a.post("/boards/join", {"code": invites.current(db, db.query(Board).one()).code})
     a.post("/boards/soup/claim", {"username": "mallory"})
     # the chat goes on; mallory posts again, then it's exported and imported again
     export.write_text(CHAT + "31/10/26, 09:40 - Mallory: Krillion #108 🦐\n410\n\n🐟🦑🫧\n", encoding="utf-8")

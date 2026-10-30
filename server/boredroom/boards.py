@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import re
-import secrets
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from . import invites
 from .errors import fail
 from .models import Agenda, Board, BoardGame, Membership, Person
 from .parser import REGISTRY
@@ -26,11 +26,12 @@ def create_board(s: Session, chair: Person, name: str) -> Board:
     n = 2
     while s.scalar(select(Board.id).where(Board.slug == slug)):
         slug, n = f"{base}-{n}", n + 1
-    board = Board(name=name, slug=slug, chair_id=chair.id, invite_code=secrets.token_urlsafe(9),
+    board = Board(name=name, slug=slug, chair_id=chair.id,
                   settings={"late_filing": True, "join": "link"})
     s.add(board)
     s.flush()
     s.add(Membership(board_id=board.id, person_id=chair.id, nickname=chair.username, role="chair"))
+    invites.create(s, board, chair)
     return board
 
 
@@ -44,9 +45,7 @@ def get_board(s: Session, slug: str, person: Person) -> tuple[Board, Membership]
 
 
 def join(s: Session, person: Person, code: str) -> Board:
-    board = s.scalar(select(Board).where(Board.invite_code == code))
-    if not board:
-        fail(404, "that invite link doesn't work")
+    board = invites.lookup(s, code).board
     m = s.get(Membership, (board.id, person.id))
     if m is None:
         s.add(Membership(board_id=board.id, person_id=person.id, nickname=person.username))
@@ -111,5 +110,5 @@ def board_json(s: Session, board: Board, m: Membership) -> dict[str, Any]:
                      "players": sum(bg.game_id in g for g in agendas.values())}
                     for bg in sorted(board.library, key=lambda b: b.game_id)],
     }
-    out["invite_code"] = board.invite_code  # joining by link is open to any member's invite
+    out["invite_code"] = invites.current(s, board).code  # any member can hand it out
     return out
