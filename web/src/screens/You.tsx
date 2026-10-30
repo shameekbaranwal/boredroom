@@ -3,9 +3,11 @@ import { api, setToken, type Board } from '../api'
 import { query, usePath } from '../router'
 import { Fx, Header, Loading, Nav, Tile, sendOn, useApp } from '../ui'
 import { GoogleButton } from './SignIn'
+import { setPref, useTheme, type Pref } from '../theme'
 
 export default function You({ slug }: { slug: string }) {
   const { me, games, refreshMe, toast, signOut } = useApp()
+  const [theme] = useTheme()
   const path = usePath()
   const welcome = query(path).get('welcome')
   const [b, setB] = useState<Board | null>(null)
@@ -106,6 +108,16 @@ export default function You({ slug }: { slug: string }) {
           {zones.length
             ? <select id="tz" className="input" value={tz} onChange={e => saveTz(e.target.value)}>{zones.map(z => <option key={z} value={z}>{z}</option>)}</select>
             : <input id="tz" className="input" value={tz} onChange={e => setTz(e.target.value)} onBlur={() => saveTz(tz)} />}
+        </div>
+        <div className="field">
+          <label>appearance</label>
+          <div className="seg" role="radiogroup" aria-label="appearance">
+            {(['system', 'light', 'dark'] as Pref[]).map(p => (
+              <button key={p} role="radio" aria-checked={theme === p} className={theme === p ? 'on' : ''} onClick={() => setPref(p)}>
+                {p === 'system' ? 'like this device' : p}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="mrow">
           <span>{me.kind === 'account' ? <>signed in{me.email && <span className="muted keep"> · {me.email}</span>}</> : 'guest seat on this device'}</span>

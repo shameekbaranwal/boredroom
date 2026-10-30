@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import type { Game, Me } from './api'
 import { hue } from './format'
 import { go } from './router'
+import { TableMark, ThemeToggle } from './brand'
 
 export type Ctx = {
   me: Me
@@ -37,12 +38,25 @@ export function Fx({ fn, args }: { fn: string; args: [string, string][] }) {
 }
 
 export function Nav({ slug, on, temp }: { slug: string; on: 'agenda' | 'review' | 'you' | null; temp?: string }) {
+  const { me } = useApp()
   return (
     <nav className="nav">
+      <div className="nav-brand wide-only">
+        <TableMark size={30} tile />
+        <span>boredroom</span>
+      </div>
       <button className={on === 'agenda' && !temp ? 'on' : ''} onClick={() => go(`/b/${slug}`)}>agenda</button>
       <button disabled title="coming in the next milestone">review</button>
       <button className={on === 'you' && !temp ? 'on' : ''} onClick={() => go(`/b/${slug}/you`)}>you</button>
-      {temp && <span className="on tmp" style={{ padding: '12px 14px' }}>{temp}</span>}
+      {temp && <span className="on tmp">{temp}</span>}
+      <div className="nav-boards wide-only">
+        <span className="nav-sec">your boards</span>
+        {me.boards.map(b => (
+          <button key={b.slug} className={b.slug === slug ? 'cur' : ''} onClick={() => go(`/b/${b.slug}`)}>{b.name}<small>{b.nickname}</small></button>
+        ))}
+        <button className="nav-new" onClick={() => go('/new')}>+ start a board</button>
+      </div>
+      <div className="nav-foot wide-only"><ThemeToggle /><span>{me.username}</span></div>
     </nav>
   )
 }

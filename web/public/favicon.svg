@@ -1,1 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#217346"/><path d="M6 10h20M6 16h20M6 22h20M12 6v20" stroke="#fff" stroke-opacity=".35" stroke-width="1.5"/><text x="19" y="22" font-family="Arial, sans-serif" font-weight="900" font-size="14" fill="#fff" text-anchor="middle">b</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#217346"/><g transform="translate(0.0 0.0) scale(1.0)">
+<rect x="15" y="21" width="34" height="22" rx="11" fill="#ffffff"/>
+<rect x="20" y="9" width="8" height="8" rx="1.5" fill="#7fb294"/>
+<rect x="36" y="9" width="8" height="8" rx="1.5" fill="#7fb294"/>
+<rect x="20" y="47" width="8" height="8" rx="1.5" fill="#7fb294"/>
+<rect x="36" y="47" width="8" height="8" rx="1.5" fill="#7fb294"/>
+<rect x="4" y="28" width="8" height="8" rx="1.5" fill="#7fb294"/>
+<rect x="52" y="27" width="10" height="10" rx="1.5" fill="#ffd84d"/>
+</g></svg>
