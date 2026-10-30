@@ -325,6 +325,54 @@ button.sub:hover { color: var(--ink); }
 .toast button + button { margin-left: 10px; }
 .bar .clockv { font-family: var(--f-mono); font-size: 13px; font-weight: 600; }
 
+.pk { color: var(--muted); font-weight: 400; font-family: var(--fn); font-size: 10px; }
+.it2, .it1 { display: flex; align-items: center; gap: 8px; min-width: 0; cursor: pointer; }
+.it2 .g { flex: 1; min-width: 0; }
+.it1 .nm { flex: 1; min-width: 0; font-weight: 700; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.it1.just { animation: glow 1.2s ease-out; }
+.it2:hover, .it1[data-go]:hover, .it1[data-rule]:hover, .mm:hover, .gr:hover, .wr[data-vs]:hover, .mh:hover { background: var(--surface); }
+.cmt::after, .mm::after { content: ""; position: absolute; top: 0; right: 0; border-left: 6px solid transparent; border-top: 6px solid var(--sx-note-b); }
+.plc { font-family: var(--fn); font-size: 10px; color: var(--muted); white-space: nowrap; }
+.plc.top { color: var(--ok-ink); font-weight: 700; }
+.plc.op { color: var(--sx-todo-ink); font-weight: 700; }
+.st1 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 11.5px; }
+.st1 span { color: var(--muted); font-family: var(--fn); font-size: 10px; white-space: nowrap; }
+.mh { display: flex; justify-content: space-between; gap: 8px; font-size: 10.5px; font-weight: 700; cursor: pointer; background: var(--sx-seg); color: var(--accent); }
+.mm { display: grid; grid-template-columns: 12px 18px minmax(0,1fr) auto; gap: 6px; align-items: center; cursor: pointer; }
+.gl { font-size: 11px; text-align: center; line-height: 1; }
+.k-record { color: var(--g3); } .k-highlight { color: var(--accent); } .k-standing { color: var(--g2); } .k-rivalry { color: var(--g4); } .k-tenure { color: var(--muted); } .k-you { color: var(--accent); }
+.mt { font-size: 11px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mn { font-family: var(--fn); font-size: 11px; white-space: nowrap; padding-right: 4px; }
+.sec2 { font-size: 9.5px; font-weight: 700; color: var(--muted); letter-spacing: .04em; background: var(--sx-gut); display: flex; gap: 4px; align-items: center; }
+.wr { display: grid; grid-template-columns: 22px 18px minmax(0,1fr) auto 58px; gap: 6px; align-items: center; font-variant-numeric: tabular-nums; }
+.wr .n { font-weight: 800; color: var(--muted); font-family: var(--fn); font-size: 10.5px; }
+.wr .who { font-weight: 700; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wr.me .who { color: var(--accent); } .wr.cmp { background: var(--surface); } .wr[data-vs] { cursor: pointer; }
+.wr .v { font-family: var(--fn); font-size: 11.5px; }
+.wr .t2 { font-size: 9px; color: var(--muted); font-family: var(--fn); text-align: right; white-space: nowrap; }
+.gap { color: var(--muted); font-size: 10px; text-align: center; }
+.gr { display: grid; grid-template-columns: 20px minmax(0,1fr) auto 36px 38px; gap: 6px; align-items: center; cursor: pointer; }
+.gr .gn { font-weight: 700; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gr .ld { font-size: 10px; color: var(--muted); white-space: nowrap; display: flex; align-items: center; gap: 4px; overflow: hidden; }
+.gr .ld b { color: var(--ink); font-family: var(--fn); }
+.gr .ld .av { width: 14px; height: 14px; font-size: 7.5px; }
+.gr .ps { font-size: 9.5px; color: var(--muted); font-family: var(--fn); text-align: right; white-space: nowrap; }
+.gr .plc, .gr .rv { text-align: right; }
+.gr .rv { font-family: var(--fn); font-size: 11px; }
+.strip { display: flex; gap: 1px; }
+.strip i { flex: 1; height: 12px; background: var(--surface); }
+.strip i.on, .key i.kon { background: var(--accent); }
+.strip i.ls, .key i.kls { background: var(--g4); opacity: .55; }
+.strip i.lv { background: var(--miss); }
+.h2h { display: flex; align-items: baseline; gap: 8px; }
+.h2h b { font-family: var(--fn); font-size: 20px; }
+.h2h span { color: var(--muted); font-size: 10.5px; }
+.shr { background: none; border: 1px solid var(--sx-hd-m); color: var(--sx-hd-ink); font-size: 10px; line-height: 1; padding: 1px 4px; margin-left: 6px; cursor: pointer; border-radius: 2px; }
+.nav .tmp { margin-left: auto; border-left: 1px solid var(--sx-rule); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 112px; }
+.acc { display: flex; flex-direction: column; gap: 6px; background: var(--surface); }
+.it1 .car { color: var(--muted); font-size: 10px; }
+.mm:focus-visible, .it2:focus-visible, .it1:focus-visible, .gr:focus-visible, .mh:focus-visible, .wr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
 /* share sheet + lock screen (outside the app, so no sheet chrome) */
 .game { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 30px 14px; background: var(--surface); }
 .game .gt { font-family: Georgia, serif; font-weight: 700; font-size: 18px; }
@@ -390,11 +438,11 @@ button.sub:hover { color: var(--ink); }
     <div class="col"><div class="eyebrow">Feedback this round</div><h2>Six things the screens below have to solve</h2>
       <p class="muted">From the notes in <span class="mono">docs/UX-NOTES.md</span>. Each mockup says which of these it covers.</p></div>
     <div class="notes6">
-      <div><b>Review scales to 10+ members</b><span>Grouped bars break past four people. The chart now shows one bar per day for the whole board with you marked inside it, plus a member × day grid that reads at 15 rows. Pick up to three people to compare.</span><em>screens 4, 5</em></div>
-      <div><b>The formula bar is real</b><span>Every screen's query sits in the formula bar as editable parts. Tap one to change it, type to filter. Tapping tabs or the chart rewrites the bar; editing the bar changes the screen.</span><em>screens 1, 4–9, 11</em></div>
-      <div><b>Boards, guests and sync</b><span>The header title switches boards. Signed in, one filing reaches every board with that game. A guest seat on the same phone gets it too, because the phone keeps every seat's login. Signing in merges guest seats.</span><em>screens 1, 2, 3, 11, 12</em></div>
-      <div><b>One review dashboard</b><span>Period (today, week, month, all time) × game (all, or one) × stat. Defaults: today · all games · daily wins. The same screen answers "who's best at maptap this month".</span><em>screens 4, 5</em></div>
-      <div><b>Memos are the heart of it</b><span>Generated notes turn numbers into board gossip: photo finishes, PIPs, broken tenure, "file 2 more to take #1". Each one opens the query behind it.</span><em>screens 4, 5, 7, 14</em></div>
+      <div><b>Review scales to 10+ members</b><span>Standings instead of charts: the top five with you pinned, "all 13" to expand. Per game, a ranking by average and your last 30 days as one strip. Tap a name for a head-to-head.</span><em>screens 4, 5, 6</em></div>
+      <div><b>The formula bar is real</b><span>Every screen's query sits in the formula bar as editable parts. Tap one to change it, type to filter. Tapping tabs or the chart rewrites the bar; editing the bar changes the screen.</span><em>screens 1, 4–8, 10</em></div>
+      <div><b>Boards, guests and sync</b><span>The header title switches boards. Signed in, one filing reaches every board with that game. A guest seat on the same phone gets it too, because the phone keeps every seat's login. Signing in merges guest seats.</span><em>screens 1, 2, 3, 10, 12</em></div>
+      <div><b>One review, two views</b><span>Today and all time, nothing else up front. Week and month are values of the period token in the formula bar. A game opens as its own temporary tab.</span><em>screens 4, 5, 6</em></div>
+      <div><b>Memos are the heart of it</b><span>Each memo is one sheet row: a glyph for its kind, who, one line, and the number that matters, with a comment corner. Three sit on the agenda; the full meeting is one tap away. Tapping one opens what it's about.</span><em>screens 1, 8, 13</em></div>
       <div><b>Richer agenda presence</b><span>Under each item: who has filed, "4/9 present" counting only people who play that game, and who leads so far. Unplayed items say "no one yet · be first". Still one line.</span><em>screen 1</em></div>
     </div>
   </section>
@@ -403,14 +451,14 @@ button.sub:hover { color: var(--ink); }
     <div class="col"><div class="eyebrow">From the soup chat</div><h2>What 20 days of the real group changed</h2>
       <p class="muted">Decided on 30 Oct (docs/DECISIONS.md), from about 760 results in the soup export.</p></div>
     <div class="notes6">
-      <div><b>Each game keeps its own day</b><span>Krillion resets at 9:30, anno at 10:30, daily orbs at 2:30 pm, most others at midnight. "Today" is the current puzzle per game; the agenda sorts by time left and the clock is live.</span><em>screens 1, 8, 14</em></div>
-      <div><b>Your agenda, the board's library</b><span>Nobody plays everything. The board has a library; you pick your games. Presence counts only people who play a game, so "3/3" isn't shamed as "3/12".</span><em>screens 1, 9, 11</em></div>
-      <div><b>Scores public, details after</b><span>Standings and scores are visible before you play: that's the pull. Routes, grids and clues unlock once you file. Spoilers are decided per game by the parser.</span><em>screens 1, 8</em></div>
-      <div><b>Share once, forward to whatsapp</b><span>After filing, "send to soup" forwards the original text with your place. Minutes and reviews export as a tidy whatsapp post, replacing the hand-typed nightly leaderboard.</span><em>screens 1, 2, 6, 8</em></div>
-      <div><b>Rankers per game, ties shared</b><span>One number can't rank everything: wiki game is steps then time, strands is hints then spangram. Ties share a place (=2). Games without a score count as played.</span><em>screens 4, 8, 13</em></div>
-      <div><b>Daily wins, today first</b><span>The review opens on today. Across games the stat is daily wins (games you placed #1 in, with company). No per-game weights. Built modular so this can change.</span><em>screens 4, 6</em></div>
-      <div><b>Edit, late, amended</b><span>Re-filing a puzzle replaces it and stamps "amended". The previous puzzle can be filed late with a stamp. Old re-shares are refused.</span><em>screens 1, 8</em></div>
-      <div><b>New games by pasting</b><span>A result from an unknown game offers "add perceptle and file". It counts as played until it gets a parser.</span><em>screens 1, 9, 10</em></div>
+      <div><b>Each game keeps its own day</b><span>Krillion resets at 9:30, anno at 10:30, daily orbs at 2:30 pm, most others at midnight. "Today" is the current puzzle per game; the agenda sorts by time left and the clock is live.</span><em>screens 1, 7, 13</em></div>
+      <div><b>Your agenda, the board's library</b><span>Nobody plays everything. The board has a library; you pick your games. Presence counts only people who play a game, so "3/3" isn't shamed as "3/12".</span><em>screens 1, 10</em></div>
+      <div><b>Scores public, details after</b><span>Standings and scores are visible before you play: that's the pull. Routes, grids and clues unlock once you file. Spoilers are decided per game by the parser.</span><em>screens 1, 7</em></div>
+      <div><b>Share once, forward to whatsapp</b><span>After filing, "send to soup" forwards the original text with your place. Minutes and reviews export as a tidy whatsapp post, replacing the hand-typed nightly leaderboard.</span><em>screens 1, 2, 7, 9</em></div>
+      <div><b>Rankers per game, ties shared</b><span>One number can't rank everything: wiki game is steps then time, strands is hints then spangram. Ties share a place (=2). Games without a score count as played.</span><em>screens 4, 6, 7, 11</em></div>
+      <div><b>Daily wins, today first</b><span>The review opens on today. Across games the stat is daily wins (games you placed #1 in, with company). No per-game weights. Built modular so this can change.</span><em>screens 4, 5, 9</em></div>
+      <div><b>Edit, late, amended</b><span>Re-filing a puzzle replaces it and stamps "amended". The previous puzzle can be filed late with a stamp. Old re-shares are refused.</span><em>screens 1, 7</em></div>
+      <div><b>New games by pasting</b><span>A result from an unknown game offers "add perceptle and file". It counts as played until it gets a parser.</span><em>screens 1, 10</em></div>
     </div>
   </section>
 
@@ -516,16 +564,17 @@ button.sub:hover { color: var(--ink); }
         <tr><td></td><td>Each game's "today" is its current puzzle (per-game reset time and timezone); everything groups by puzzle, never by calendar date</td><td><span class="pri m">MUST</span></td></tr>
         <tr><td></td><td>Board switcher in the title; previous-puzzles view for filing late</td><td><span class="pri m">MUST</span></td></tr>
         <tr><td class="k">Formula bar</td><td>Every screen shows its query as editable parts, kept in sync with the controls; queries are shareable links</td><td><span class="pri m">MUST</span></td></tr>
-        <tr><td class="k">Review</td><td>One dashboard: period × game × stat, defaulting to today · all games · daily wins; board chart, member grid, standings with shared places, compare up to 3</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td class="k">Navigation</td><td>Three tabs (agenda · review · you). Minutes, a game, and the daily bored meeting open as one temporary tab from whatever you tapped</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td class="k">Review</td><td>Today and all time up front (daily wins top five with you pinned; per-game leaders, or board records); week and month via the formula bar; per-game drill-in with averages, head-to-head and a 30-day strip</td><td><span class="pri m">MUST</span></td></tr>
         <tr><td></td><td>Rankers per game (metrics in order, direction); review views are queries; both swappable without touching screens</td><td><span class="pri m">MUST</span></td></tr>
         <tr><td></td><td>Send any review or minutes to WhatsApp as formatted text with a link back</td><td><span class="pri m">MUST</span></td></tr>
         <tr><td></td><td>Works at 15+ members with partial attendance</td><td><span class="pri m">MUST</span></td></tr>
-        <tr><td class="k">Memos</td><td>Simple, independent rules: standings, highlights, records, rivalries, broken tenure; top one or two per view; each opens its query</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td class="k">Memos</td><td>Simple, independent rules: standings, highlights, records, rivalries, broken tenure. One row each (glyph, who, line, number); top three on the agenda; each opens what it's about</td><td><span class="pri m">MUST</span></td></tr>
         <tr><td></td><td>The daily bored meeting: recap screen and notification</td><td><span class="pri s">SHOULD</span></td></tr>
         <tr><td class="k">Minutes</td><td>Per game and puzzle; scores public, details (grids, routes, clues) hidden until you file; board record; stamps; not-in-yet collapsed</td><td><span class="pri m">MUST</span></td></tr>
         <tr><td class="k">Boards</td><td>Create, invite by link, several boards; chair and member roles; join approval optional</td><td><span class="pri m">MUST</span></td></tr>
-        <tr><td class="k">Library</td><td>The board's library and your agenda (pick your games); catalogue search to add a game to the board; any other business form (board-private)</td><td><span class="pri m">MUST</span></td></tr>
-        <tr><td class="k">Chair</td><td>Per-game rules with parser defaults: ranked or for fun, rank order, hidden fields, late filing; strike a result</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td class="k">Library</td><td>Under "you": the board's games with yours ticked; "+ add a game"; pasting an unknown game adds it</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td class="k">Chair</td><td>Under "you" for chairs: late filing, per-game rules with parser defaults (ranked or for fun, rank order, hidden fields), pending seat claims. Needs another pass</td><td><span class="pri m">MUST</span></td></tr>
         <tr><td class="k">Identity</td><td>Guest seats (server accounts, no email); Google sign-in that merges a phone's guest seats</td><td><span class="pri m">MUST</span></td></tr>
         <tr><td></td><td>A name per board, defaulting to your username</td><td><span class="pri m">MUST</span></td></tr>
         <tr><td></td><td>Move a seat with a code; chair-approved claims when the phone is lost</td><td><span class="pri s">SHOULD</span></td></tr>
@@ -655,7 +704,8 @@ const P = { you:.93, ivan:.96, judy:.55, priya:.85, kabir:.6, meera:.75, dev:.8,
 const TODAY_ON = { ivan:1, priya:1, dev:1, meera:1, tara:1, kabir:1, ananya:1, neel:1, ma:1, didi:1, neha:1, omar:1 };
 const FRESH = { krillion:.45, anno:.3, orbs:.8 };   // krillion and anno reset this morning, so fewer are in yet
 let DATA = {}, STAMP = {}, HL = {}, WC = {}, RC = {};
-const dirty = () => { WC = {}; RC = {}; };
+let WT = {};
+const dirty = () => { WC = {}; RC = {}; WT = {}; };
 function build(){
   BOARDS = JSON.parse(JSON.stringify(BOARDS0)); AG = agendas();
   Object.keys(GAMES).forEach(k=>{ if (GAMES[k].custom) delete GAMES[k]; });
@@ -669,29 +719,29 @@ function build(){
   const you = DATA.you;
   Object.values(you).forEach(a=>{ a[T] = null; a[T-23] = null; });
   for (let d=T-22; d<T; d++) if (!Object.values(you).some(a=>a[d]!=null)) you.connections[d] = 1;      // tenure: 23 days
-  you.connections[T] = 1; you.pindrop[T] = 812; you.anno[T] = 286;
+  you.connections[T] = 0; you.pindrop[T] = 812; you.anno[T] = 286;
   for (let d=T-10; d<=T-2; d++) DATA.judy.maptap[d] = DATA.judy.maptap[d] ?? 870;               // a 9-day tenure…
   Object.values(DATA.judy).forEach(a=>{ a[T-1] = null; a[T] = null; a[T-11] = null; });            // …that ended yesterday
   SOUP.forEach(m=>{ const a = DATA[m].maptap; if (a){ for (let d=0; d<=T; d++) if (num(a[d]) && a[d]>960) a[d] = 960; } });
-  tuneWeek();
+  tuneToday();
   stampOne('amended', 'wiki', T); stampOne('filed late', 'maptap', T-1); stampOne('filed late', 'anno', T-1);
 }
 function stampOne(s, g, d){ const m = SOUP.find(x=>x!=='you' && x!=='ivan' && plays('soup',x,g) && num(val(x,g,d))); if (m) STAMP[m+'|'+g+'|'+d] = s; }
-/* tune the week so you and ivan share the lead in daily wins: winning maptap today is then a hostile takeover */
-function tuneWeek(){
-  const offs = range(-6,0), wk = m => offs.reduce((n,o)=>n+winsOn(m,'soup',o), 0);
-  const worsen = m => { for (const o of offs) for (const g of SOUP_LIB){ const d = cur(g)+o; if (winners('soup',g,d).includes(m) && !(m==='you' && o===0)){ DATA[m][g][d] = GAMES[g].worst; dirty(); return true; } } return false; };
-  for (let i=0; i<600; i++){
-    dirty(); const y = wk('you'), a = wk('ivan');
-    const hi = SOUP.find(m=>m!=='you' && m!=='ivan' && wk(m) >= Math.min(y,a));
-    if (hi){ if (worsen(hi)) continue; }
-    if (a > y){ if (worsen('ivan')) continue; }
-    if (y > a){ if (worsen('you')) continue; }
+/* tune today so you and ivan share the lead in daily wins: winning maptap is then a hostile takeover */
+function tuneToday(){
+  const w = m => winsOn(m,'soup',0);
+  const worsen = (m, keep) => { for (const g of SOUP_LIB){ const d = cur(g); if (g!==keep && g!=='maptap' && winners('soup',g,d).includes(m)){ DATA[m][g][d] = DATA[m][g][d]===GAMES[g].worst ? null : GAMES[g].worst; dirty(); return true; } } return false; };
+  for (let i=0; i<3000; i++){
+    dirty(); const y = w('you'), a = w('ivan');
+    if (a > y && worsen('ivan')) continue;
+    if (y > a && worsen('you', 'connections')) continue;
+    const hi = SOUP.find(m=>m!=='you' && m!=='ivan' && w(m) >= y);
+    if (hi && worsen(hi)) continue;
     break;
   }
-  dirty();
+  dirty(); TUNE = [w('you'), w('ivan')];
 }
-
+let TUNE;
 /* ---------------- lookups ---------------- */
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const B = id => BOARDS[id];
@@ -744,11 +794,9 @@ function places(list, key){ const out = []; list.forEach((x,i)=>{ const tieUp = 
 
 /* ---------------- state ---------------- */
 let S, Q, view = 'both';
-const REV0 = { ra:{ board:'soup', game:'all', period:'today', stat:'wins', sel:null, cmp:[] }, rb:{ board:'soup', game:'maptap', period:'month', stat:'average', sel:null, cmp:['you','ivan'] } };
-function setQ(pid, q){ Q[pid] = q; if (pid==='ra') Q.wa = q; }
 function reset(){
-  S = { board:'soup', puz:'current', show:'all', text:'', toast:null, ban:null, menu:null, ovl:null, wa:null, back:null, mgame:'maptap', mpuz:'current', libq:'', libv:'board', nudge:false, just:{}, joined:false, mboard:'soup', seatb:'soup', nick:{ soup:'shmk', family:'beta', office:'walter' }, last:{}, amended:{} };
-  Q = JSON.parse(JSON.stringify(REV0)); Q.wa = Q.ra;
+  S = { board:'soup', puz:'current', show:'all', text:'', toast:null, ban:null, menu:null, ovl:null, wa:null, back:null, mgame:'maptap', mpuz:'current', nudge:false, just:{}, joined:false, mday:'today', seatb:'soup', game:{ g:'maptap', period:'all', vs:null }, rule:null, nick:{ soup:'shmk', family:'beta', office:'walter' }, last:{} };
+  Q = { rt:{ board:'soup', period:'today', open:false, open2:false }, ra:{ board:'soup', period:'all', open:false, open2:false } }; Q.wa = Q.rt;
 }
 build(); reset();
 try { const v = localStorage.getItem('br-ux-view'); if (v) view = v; } catch(e) {}
@@ -852,9 +900,9 @@ const CLIP = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-
 const SRCH = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>';
 const TOKS = {};
 function tile(g){ const G = GAMES[g] || { l:'?', gc:7 }; return '<span class="ic" style="--gc:var(--g'+G.gc+')">'+esc(G.l)+'</span>'; }
-function head(pid, title, meta, board){
+function head(pid, title, meta, board, share){
   const t = board ? '<button class="ttl" data-bopen="'+pid+'" aria-label="switch board">'+esc(title)+'<span class="car">▾</span></button>' : esc(title);
-  return '<div class="hd"><span class="t">'+t+'</span><span class="m">'+esc(meta)+'</span></div>';
+  return '<div class="hd"><span class="t">'+t+'</span><span class="m">'+esc(meta)+(share ? '<button class="shr" data-wa="'+share+'" data-pid="'+pid+'" aria-label="send to whatsapp" title="send to whatsapp">⤴</button>' : '')+'</span></div>';
 }
 /* each token: [key, label, display, options [[value,label]] or null (read-only), current value] */
 function fx(pid, fn, toks){
@@ -867,8 +915,8 @@ function fx(pid, fn, toks){
   return h + '</div>';
 }
 function menuOpts(t){ const q = (S.menu && S.menu.q || '').toLowerCase(); const o = t[3].filter(x=>x[1].includes(q)); return o.length ? o.map(x=>'<button data-opt="'+esc(x[0])+'" class="'+(x[0]===t[4]?'on':'')+'">'+esc(x[1])+'</button>').join('') : '<span class="none">no match</span>'; }
-function nav(on){ return '<div class="nav">'+['agenda','review','library','you'].map(k=>'<span class="'+(k===on?'on':'')+'">'+k+'</span>').join('')+'</div>'; }
-function shell(pid, copy, inner, on, over){ return '<div class="ph'+(copy==='d'?' dk':'')+'" data-pid="'+pid+'" data-copy="'+copy+'"><div class="sb"><span data-clock>'+esc(clockLabel())+'</span><span>●●●</span></div>'+inner+(on?nav(on):'')+(over||'')+'</div>'; }
+function nav(on, temp){ return '<div class="nav">'+['agenda','review','you'].map(k=>'<span class="'+(k===on&&!temp?'on':'')+'">'+k+'</span>').join('')+(temp?'<span class="on tmp">'+esc(temp)+' ×</span>':'')+'</div>'; }
+function shell(pid, copy, inner, on, over, temp){ return '<div class="ph'+(copy==='d'?' dk':'')+'" data-pid="'+pid+'" data-copy="'+copy+'"><div class="sb"><span data-clock>'+esc(clockLabel())+'</span><span>●●●</span></div>'+inner+(on?nav(on, temp):'')+(over||'')+'</div>'; }
 const boardOpts = () => Object.entries(BOARDS).map(([k,b])=>[k,b.n]);
 const gameOpts = b => B(b).games.map(g=>[g,GAMES[g].n]);
 const cdSpan = g => { const m = left(g); return '<span class="cd'+(m<60?' urg':'')+'" data-cd="'+g+'">'+esc(fmtLeft(m))+'</span>'; };
@@ -876,11 +924,57 @@ const cdSpan = g => { const m = left(g); return '<span class="cd'+(m<60?' urg':'
 function boardsOverlay(pid, cur0){
   const rows = Object.entries(BOARDS).map(([k,b])=>{
     const ag = mine(k), done = ag.filter(g=>val('you',g,cur(g))!=null).length, pres = b.members.filter(m=>m!=='you' && itemsOn(m,k,0)>0).length;
-    return '<button class="bopt'+(k===cur0?' on':'')+'" data-bpick="'+k+'" data-pid="'+pid+'"><span class="ic" style="--gc:var(--g'+(k==='soup'?1:k==='family'?4:2)+')">'+b.n[0]+'</span><span class="g"><span class="nm" style="display:block">'+esc(b.n)+'</span><span class="sub">your agenda '+done+' of '+ag.length+' · '+pres+'/'+(b.members.length-1)+' present today</span></span>'+(b.seat==='guest'?'<span class="chip seat">guest seat</span>':'<span class="chip">signed in</span>')+'</button>';
+    return '<button class="bopt'+(k===cur0?' on':'')+'" data-bpick="'+k+'" data-pid="'+pid+'"><span class="ic" style="--gc:var(--g'+(k==='soup'?1:k==='family'?4:2)+')">'+b.n[0]+'</span><span class="g"><span class="nm" style="display:block">'+esc(b.n)+'</span><span class="sub">'+done+' of '+ag.length+' filed · '+pres+'/'+(b.members.length-1)+' present today</span></span>'+(b.seat==='guest'?'<span class="chip seat">guest seat</span>':'<span class="chip">signed in</span>')+'</button>';
   }).join('');
   return '<div class="ovl"><div class="panel"><div class="ph-h"><span>your boards</span><span>'+Object.keys(BOARDS).length+'</span></div>'+rows
-    + '<div class="foot"><span>a result goes to every board where that game is on your agenda, including the guest seat on this phone.</span><button class="btn ghost">sign in to merge 1 guest seat</button><button class="lnk" style="align-self:flex-start">create a boredroom</button></div></div><button class="close" data-oclose aria-label="close"></button></div>';
+    + '<div class="foot"><span>a result goes to every board where it\'s one of your games, including the guest seat on this phone.</span><button class="btn ghost">sign in to merge 1 guest seat</button><button class="lnk" style="align-self:flex-start">create a boredroom</button></div></div><button class="close" data-oclose aria-label="close"></button></div>';
 }
+
+/* ---------------- standings ---------------- */
+const ALL = range(-(T-1), 0);
+const PER = { today:'today', week:'this week', month:'this month', all:'all time' };
+const offsFor = p => p==='today' ? [0] : p==='week' ? range(-6,0) : p==='month' ? range(-29,0) : ALL;
+function winsTable(b, offs){
+  const k = b+'|'+offs[0]+'|'+offs.length+'|'+sig(); if (WT[k]) return WT[k];
+  return WT[k] = B(b).members.map(m=>({ m, v:sum(offs.map(o=>winsOn(m,b,o))), days:offs.filter(o=>itemsOn(m,b,o)>0).length }))
+    .filter(r=>r.days>0).sort((x,y)=>y.v-x.v || y.days-x.days);
+}
+const todayLeader = () => { dirty(); const t = winsTable('soup',[0]); return !t.length || !t[0].v ? null : t[1] && t[1].v===t[0].v ? 'tie' : t[0].m; };
+function rivalry(b, g, x, y, offs){ let a = 0, c = 0, lv = 0, G = GAMES[g];
+  (offs||ALL).forEach(o=>{ const p = vo(b,x,g,o), q = vo(b,y,g,o); if (!num(p) || !num(q)) return; if (same(p,q)) lv++; else if (better(G,p,q)) a++; else c++; });
+  return a+c+lv ? { a, c, lv } : null; }
+function averages(b, g, offs, min){
+  const G = GAMES[g];
+  return B(b).members.map(m=>{ const vs = offs.map(o=>vo(b,m,g,o)).filter(num); return { m, n:vs.length, v: vs.length ? sum(vs.map(G.prim))/vs.length : null }; })
+    .filter(r=>r.n>=min).sort((x,y)=>G.lower ? x.v-y.v : y.v-x.v);
+}
+const fmtAvg = (g, v) => GAMES[g].unit==='points' ? String(Math.round(v)) : v.toFixed(GAMES[g].unit==='×'?2:1);
+const placeOf = (b, g, d, m) => { const rows = rankedFor(b,g,d).filter(r=>num(r.v)), pl = places(rows, r=>r.v), i = rows.findIndex(r=>r.m===m); return i<0 ? null : pl[i].s+'/'+rows.length; };
+
+/* ---------------- memos: small independent rules; each is one line, one number and a place to go ---------------- */
+const GLYPH = { you:'▸', standing:'▲', record:'★', highlight:'◆', rivalry:'⚔', tenure:'✕' };
+const KIND = { you:'for you', standing:'standings', record:'records', highlight:'highlights', rivalry:'rivalries', tenure:'tenure' };
+const HLL = { krill:(m)=>nm(m)+' krilled', perfect:(m)=>nm(m)+' went +0, perfect', 'under par':(m)=>nm(m)+' solved it under par', flawless:(m)=>nm(m)+': no hints, spangram first' };
+const hlShort = (m,g,h) => HLL[h] ? HLL[h](m) : nm(m)+' got it '+h;
+function meeting(b, o){
+  const out = [], when = o===0 ? 'today' : 'yesterday', tbl = winsTable(b,[o]);
+  if (tbl.length && tbl[0].v>0){
+    const top = tbl.filter(r=>r.v===tbl[0].v);
+    out.push({ k:'standing', s:5, m:top[0].m, t: top.length===1 ? (top[0].m==='you'?'you lead ':top[0].m+' leads ')+when+'\'s daily wins' : top.slice(0,2).map(r=>nm(r.m)).join(' and ')+(top.length>2?' +'+(top.length-2):'')+' share '+when+'\'s lead', n:plural(tbl[0].v,'win'), go:'review:today' });
+    const me = tbl.find(r=>r.m==='you'), open = o===0 ? openGames(b) : [];
+    if (me && open.length && top.length>1 && top.some(r=>r.m==='you')) out.push({ k:'you', s:8, m:'you', t:'one more win and today is yours · '+GAMES[open[0]].n+' resets in '+fmtLeft(left(open[0])).replace(' left',''), n:'+1', go:'minutes:'+open[0] });
+    else if (me && open.length && tbl[0].v-me.v===1) out.push({ k:'you', s:7, m:'you', t:'one more win ties #1 · '+open.slice(0,2).map(g=>GAMES[g].n).join(', ')+' still open', n:'−1', go:'minutes:'+open[0] });
+  }
+  B(b).games.forEach(g=>{ const r = record(b,g); if (r && r[2]===cur(g)+o) out.push({ k:'record', s:9, m:r[1], t:(r[1]==='you'?'your ':r[1]+'\'s ')+GAMES[g].n+' is the board\'s best ever', n:GAMES[g].short(r[0]), go:'game:'+g }); });
+  B(b).games.forEach(g=>B(b).members.forEach(m=>{ const d = cur(g)+o, v = bval(b,m,g,d), h = hl(m,g,d,v); if (h) out.push({ k:'highlight', s:6, m, t:hlShort(m,g,h)+' · '+GAMES[g].n, n:g==='strands' ? 'no hints' : g==='krillion' ? String(v) : GAMES[g].fmt(v), go:'minutes:'+g }); }));
+  if (B(b).games.includes('maptap') && plays(b,'ivan','maptap')){ const r = rivalry(b,'maptap','you','ivan');
+    if (r) out.push({ k:'rivalry', s:3, m:'ivan', t:(r.a===r.c ? 'you and ivan are level' : r.c>r.a ? 'ivan leads you' : 'you lead ivan')+' on maptap · all time', n:Math.max(r.a,r.c)+'–'+Math.min(r.a,r.c), go:'vs:maptap:ivan' }); }
+  const lost = B(b).members.map(m=>[m,lostTenure(m)]).filter(x=>x[1]>=5).sort((a,c)=>c[1]-a[1])[0];
+  if (lost && o===0) out.push({ k:'tenure', s:4, m:lost[0], t:lost[0]+'\'s tenure ended yesterday', n:lost[1]+'d', go:'review:all' });
+  return out.sort((a,c)=>c.s-a.s);
+}
+const memoRow = x => '<div class="mm" data-go="'+esc(x.go)+'" role="button" tabindex="0"><span class="gl k-'+x.k+'" title="'+esc(KIND[x.k])+'">'+GLYPH[x.k]+'</span>'+av(x.m)+'<span class="mt">'+esc(x.t)+'</span><b class="mn">'+esc(x.n)+'</b></div>';
+const todayHl = (b, g) => { const d = cur(g); for (const m of B(b).members){ const h = hl(m,g,d,bval(b,m,g,d)); if (h) return hlShort(m,g,h); } return null; };
 
 /* ---------------- whatsapp ---------------- */
 function rankedFor(b, g, d){
@@ -902,13 +996,11 @@ function waText(w){
     return '*'+G.n+'* '+pkey(g,d)+' · '+bn+'\n'+rows.map((r,i)=>(pl[i]?pl[i].s+'. ':'· ')+nick(b,r.m)+' '+G.fmt(r.v)+(hl(r.m,g,d,r.v)?' ('+hl(r.m,g,d,r.v)+')':'')).join('\n')
       + (notIn.length ? '\nnot in yet: '+notIn.join(', ') : '') + '\n\n'+url+'/minutes/'+g;
   }
-  const q = w.q, offs = dayCols(q.period).flat(), { ranked } = rank(q, offs), pl = places(ranked, r=>r.v);
-  let t = '*'+bn+'* · performance review · '+PER[q.period]+(q.game!=='all'?' · '+GAMES[q.game].n:'')+'\n'+statLabel(q)+'\n'
-    + ranked.slice(0,6).map((r,i)=>pl[i].s+'. '+nick(b,r.m)+' '+fmtV(q,r.v)).join('\n') + (ranked.length>6 ? '\n… and '+(ranked.length-6)+' more' : '');
-  if (q.game==='all' && q.period==='today'){
-    t += '\n\nitem by item'; B(b).games.filter(g=>GAMES[g].ranked).forEach(g=>{ const ws = winners(b,g,cur(g)); if (ws.length) t += '\n'+GAMES[g].n+' — '+ws.map(m=>nick(b,m)).join(' = ')+' '+GAMES[g].fmt(bval(b,ws[0],g,cur(g))); });
-  }
-  return t + '\n\n'+url+'/review?period='+q.period+(q.game!=='all'?'&game='+q.game:'');
+  const p = w.period, tbl = winsTable(b, offsFor(p)), pl = places(tbl, r=>r.v);
+  let t = '*'+bn+'* · daily wins · '+PER[p]+'\n' + tbl.slice(0,6).map((r,i)=>pl[i].s+'. '+nick(b,r.m)+' '+r.v).join('\n') + (tbl.length>6 ? '\n… and '+(tbl.length-6)+' more' : '');
+  if (p==='today'){ t += '\n\nitem by item'; B(b).games.filter(g=>GAMES[g].ranked).forEach(g=>{ const ws = winners(b,g,cur(g)); if (ws.length) t += '\n'+GAMES[g].n+' — '+ws.map(m=>nick(b,m)).join(' = ')+' '+GAMES[g].fmt(bval(b,ws[0],g,cur(g))); }); }
+  if (p==='all'){ t += '\n\nboard records'; B(b).games.filter(g=>GAMES[g].ranked).slice(0,6).forEach(g=>{ const r = record(b,g); if (r) t += '\n'+GAMES[g].n+' — '+nick(b,r[1])+' '+GAMES[g].fmt(r[0]); }); }
+  return t + '\n\n'+url+'/review?period='+p;
 }
 function waOverlay(pid, w, fixed){
   return '<div class="ovl"><div class="panel"><div class="ph-h"><span>send to whatsapp · '+esc(B(w.b||'soup').n)+'</span><span>preview</span></div>'
@@ -922,25 +1014,29 @@ function presence(b, g, d){
   const ms = B(b).members.filter(m=>m!=='you' && plays(b,m,g)), pres = ms.filter(m=>bval(b,m,g,d)!=null), G = GAMES[g];
   if (!pres.length) return '<span>no one yet · be first</span>';
   let h = '<span class="stack">'+pres.slice(0,3).map(av).join('')+'</span><span>'+pres.length+'/'+ms.length+' present</span>';
+  const note = d===cur(g) && todayHl(b,g);
+  if (note) return h + '<span class="best">· '+esc(note)+'</span>';
   const ws = G.ranked ? winners(b,g,d) : [];
   if (ws.length) h += '<span class="best">· '+(ws.length>1?ws.length+' tied':esc(nm(ws[0])))+' '+esc(G.short(bval(b,ws[0],g,d)))+'</span>';
   else if (!G.ranked) h += '<span>· for fun</span>';
   return h;
 }
-function agItem(b, g, d, live){
-  const G = GAMES[g], v = val('you',g,d), now = d===cur(g);
-  const st = STAMP['you|'+g+'|'+d];
-  const pill = v!=null ? '<span class="pill done">'+esc(num(v)?G.short(v):'played')+'</span>'
-    : now ? (live ? '<button class="pill todo" data-play="'+g+'">play</button>' : '<span class="pill todo">play</span>')
-    : (live ? '<button class="pill todo" data-late="'+g+'">file late</button>' : '<span class="pill todo">file late</span>');
-  const right = v==null && now ? cdSpan(g) : st ? '<span class="cd">'+esc(st)+'</span>' : v!=null && num(v) && winners(b,g,d).includes('you') ? '<span class="cd win">#1 so far</span>' : '';
-  return '<div class="it'+(S.just[g]&&now?' just':'')+'" style="--gc:var(--g'+G.gc+')">'+tile(g)+'<div class="g"><div class="nm">'+esc(G.n)+' <span class="key">'+esc(pkey(g,d))+'</span></div>'
-    + (live ? '<button class="sub" data-mg="'+g+'">'+presence(b,g,d)+'</button>' : '<div class="sub">'+presence(b,g,d)+'</div>')+'</div>'
-    + '<div class="pr">'+pill+right+'</div></div>';
+function openRow(b, g, d, live){
+  const G = GAMES[g], now = d===cur(g);
+  const pill = now ? (live ? '<button class="pill todo" data-play="'+g+'">play</button>' : '<span class="pill todo">play</span>') : (live ? '<button class="pill todo" data-late="'+g+'">file late</button>' : '<span class="pill todo">file late</span>');
+  return '<div class="it2'+(now && todayHl(b,g)?' cmt':'')+'" data-go="minutes:'+g+'" role="button" tabindex="0">'+tile(g)
+    + '<div class="g"><div class="nm">'+esc(G.n)+' <span class="pk">'+esc(pkey(g,d))+'</span></div><div class="sub">'+presence(b,g,d)+'</div></div>'
+    + '<div class="pr">'+pill+(now ? cdSpan(g) : '')+'</div></div>';
+}
+function filedRow(b, g, d){
+  const G = GAMES[g], v = val('you',g,d), st = STAMP['you|'+g+'|'+d], pl = num(v) && G.ranked ? placeOf(b,g,d,'you') : null;
+  return '<div class="it1'+(S.just[g]?' just':'')+'" data-go="minutes:'+g+'" role="button" tabindex="0">'+tile(g)+'<span class="nm">'+esc(G.n)+'</span>'
+    + (st ? '<span class="stamp">'+esc(st)+'</span>' : '') + (pl ? '<span class="plc'+(pl[0]==='1'||pl.startsWith('=1/')?' top':'')+'">'+esc(pl)+'</span>' : '')
+    + '<span class="pill done">'+esc(num(v)?G.short(v):'played')+'</span></div>';
 }
 function card(r){
   if (r.unknown) return '<div class="pc"><div class="pc-h">'+tile('?')+'<div><b>new game: '+esc(r.name)+' '+esc(r.key)+'</b><small>not in '+esc(B(S.board).n)+'\'s library yet</small></div></div>'
-    + '<div class="to">add it to the library and your agenda. it counts as played until it has a parser, then scores fill in.</div><div class="pc-a"><button class="btn" data-adopt="'+esc(r.id)+'" data-name="'+esc(r.name)+'">add '+esc(r.name)+' and file</button></div></div>';
+    + '<div class="to">add it to the library and your games. it counts as played until it has a parser, then scores fill in.</div><div class="pc-a"><button class="btn" data-adopt="'+esc(r.id)+'" data-name="'+esc(r.name)+'">add '+esc(r.name)+' and file</button></div></div>';
   const G = GAMES[r.id], s = slot(r);
   if (!s) return '<div class="dup">'+esc(G.n)+' '+esc(r.key)+' is an old puzzle · only the current one and the one before can be filed</div>';
   const prev = val('you', r.id, s.d), to = boardsWith(r.id);
@@ -949,7 +1045,7 @@ function card(r){
   return '<div class="pc"><div class="pc-h">'+tile(r.id)+'<div><b>'+esc(G.n)+' '+esc(r.key || pkey(r.id, s.d))+'</b><small>'+shown+'</small></div></div><div class="chipr">'+chips+'</div>'
     + (r.grid ? '<div class="gridp">'+esc(r.grid)+'</div>' : '')
     + (prev!=null ? '<div class="to risk">you already filed this one ('+esc(num(prev)?G.fmt(prev):'played')+') · filing again replaces it and marks it amended</div>' : '')
-    + '<div class="to">'+(to.length ? 'files to '+to.map(b=>'<b>'+esc(B(b).n)+'</b>'+(B(b).seat==='guest'?' (guest seat)':'')).join(', ') : 'not on any of your agendas')+(plays(S.board,'you',r.id) ? '' : ' · not on your '+esc(B(S.board).n)+' agenda')+'</div></div>';
+    + '<div class="to">'+(to.length ? 'files to '+to.map(b=>'<b>'+esc(B(b).n)+'</b>'+(B(b).seat==='guest'?' (guest seat)':'')).join(', ') : 'not in any of your games')+(plays(S.board,'you',r.id) ? '' : ' · not one of your '+esc(B(S.board).n)+' games')+'</div></div>';
 }
 function fileable(res){ return res.filter(r=>!r.unknown && slot(r) && boardsWith(r.id).length); }
 function output(text, live){
@@ -966,31 +1062,30 @@ function output(text, live){
 }
 function scrAgenda(pid, copy, live){
   const b = live ? S.board : 'soup', prev = live && S.puz==='previous', show = live ? S.show : 'all';
-  const ag = mine(b), dOf = g => cur(g) - (prev ? 1 : 0);
-  const isDone = g => val('you',g,dOf(g))!=null;
-  let games = ag.slice().sort((x,y)=>(isDone(x)-isDone(y)) || (prev ? 0 : left(x)-left(y)));
-  if (show==='open') games = games.filter(g=>!isDone(g));
-  if (show==='filed') games = games.filter(isDone);
-  const done = ag.filter(isDone).length, k = ag.length;
-  const pres = B(b).members.filter(m=>m!=='you' && itemsOn(m,b,prev?-1:0)>0).length;
-  const extra = B(b).games.filter(g=>!ag.includes(g));
-  const q = fx(pid, 'agenda', [['board','board',B(b).n,live?boardOpts():null,b],['puzzles','puzzles',prev?'previous':'current',live?[['current','current'],['previous','previous (file late)']]:null,prev?'previous':'current'],['show','show',show,live?[['all','all'],['open','open'],['filed','filed']]:null,show],['sort','sort','time left',null,'']]);
+  const ag = mine(b), dOf = g => cur(g) - (prev ? 1 : 0), isDone = g => val('you',g,dOf(g))!=null;
+  const open = ag.filter(g=>!isDone(g)).sort((x,y)=>prev ? 0 : left(x)-left(y)), filed = ag.filter(isDone);
+  const q = fx(pid, 'agenda', [['board','board',B(b).n,live?boardOpts():null,b],['puzzles','puzzles',prev?'previous':'current',live?[['current','current'],['previous','previous (file late)']]:null,prev?'previous':'current'],['show','show',show,live?[['all','all'],['open','open'],['filed','filed']]:null,show]]);
   let back = '';
   if (live && S.back && !S.text && val('you',S.back,cur(S.back))==null){ const g = S.back; back = SAMPLES[g] ? '<div class="sug">back from '+esc(GAMES[g].n)+' · clipboard: <b>'+esc(GAMES[g].n+' '+pkey(g,cur(g)))+'</b><button class="go" data-back>file →</button></div>' : '<div class="sug">back from '+esc(GAMES[g].n)+' · nothing readable copied<button class="go" data-played="'+g+'">file as played →</button></div>'; }
   const pb = live && !prev ? '<div class="pbw"><label class="pb">'+CLIP+'<textarea rows="1" data-in="pbx" placeholder="paste a result" aria-label="paste a result" spellcheck="false">'+esc(S.text)+'</textarea><span class="kbd">⌘v</span></label></div>'+back+'<div class="out" data-region="pbout">'+output(S.text,true)+'</div>'
-    : !prev ? '<div class="pbw"><div class="pb">'+CLIP+'<span style="flex:1">paste a result</span><span class="kbd">⌘v</span></div></div><div class="sug">clipboard · <b>maptap oct 28</b><span class="go">file →</span></div>'
-    : '<div class="sub wrap">previous puzzles · filing late is on (the chair can turn it off). late results get a "filed late" stamp.</div>';
-  const nextG = !prev && openGames(b)[0];
+    : !prev ? '<div class="pbw"><div class="pb">'+CLIP+'<span style="flex:1">paste a result</span><span class="kbd">⌘v</span></div></div>'
+    : '<div class="sub wrap">previous puzzles · late results get a "filed late" stamp.</div>';
+  const nx = !prev && open[0];
+  const status = '<div class="st1"><b>'+filed.length+' of '+ag.length+' filed</b>'+(nx ? '<span>'+esc(GAMES[nx].n)+' resets in '+esc(fmtLeft(left(nx)).replace(' left',''))+'</span>' : !prev ? '<span>all filed · the board thanks you</span>' : '')+'</div>';
+  const memos = !prev ? meeting(b,0) : [];
+  const meet = memos.length ? '<div class="mh" data-go="meeting" role="button" tabindex="0"><span>the daily bored meeting</span><span>'+memos.length+' memos →</span></div>' + '<div class="rows">'+memos.slice(0,3).map(memoRow).join('')+'</div>' : '';
+  const openH = show!=='filed' ? open.map(g=>openRow(b,g,dOf(g),live)).join('') : '';
+  const filedH = show!=='open' && filed.length ? '<div class="sec2">filed</div>'+filed.map(g=>filedRow(b,g,dOf(g))).join('') : '';
+  const extra = B(b).games.filter(g=>!ag.includes(g));
   let over = '';
   if (live && S.ban) over += '<button class="ban" data-ban><small>'+esc(S.ban.k)+'</small><b>'+esc(S.ban.t)+'</b>'+esc(S.ban.s)+'</button>';
-  if (live && S.toast) over += '<div class="toast"><span>'+esc(S.toast.msg)+'</span>'+(S.toast.wa?'<button data-wa="result" data-g="'+S.toast.wa+'">send to soup</button>':'')+(S.toast.snap?'<button data-undo>undo</button>':'')+'</div>';
+  if (live && S.toast) over += '<div class="toast"><span>'+esc(S.toast.msg)+'</span>'+(S.toast.wa?'<button data-go="minutes:'+S.toast.wa+'">minutes</button><button data-wa="result" data-g="'+S.toast.wa+'">send to soup</button>':'')+(S.toast.snap?'<button data-undo>undo</button>':'')+'</div>';
   if (live && S.wa && S.wa.pid===pid) over += waOverlay(pid, S.wa);
   if ((live && S.ovl===pid) || pid==='boards') over += boardsOverlay(pid, b);
-  return shell(pid, copy, head(pid, B(b).n+'.xlsx', prev?'previous puzzles':'your agenda', true) + q + '<div class="bd">'+pb
-    + '<div class="prog"><div class="pn">'+done+' of '+k+' done<span>board: '+pres+'/'+(B(b).members.length-1)+' present today</span></div><div class="prg"><i style="width:'+Math.round(done/Math.max(1,k)*100)+'%"></i></div>'
-    + (nextG ? '<div class="sub">next to reset: <b class="best">'+esc(GAMES[nextG].n)+'</b>&nbsp;in '+esc(fmtLeft(left(nextG)).replace(' left',''))+'</div>' : done===k && !prev ? '<div class="cmd">everything on your agenda is filed · the board thanks you</div>' : '')+'</div>'
-    + games.map(g=>agItem(b,g,dOf(g),live)).join('') + (games.length?'':'<div class="sub">nothing '+esc(show)+' here</div>')
-    + (extra.length ? '<button class="lib-more" data-golib>'+extra.length+' more in '+esc(B(b).n)+'\'s library · '+esc(extra.slice(0,3).map(g=>GAMES[g].n).join(', '))+(extra.length>3?'…':'')+'</button>' : '')
+  return shell(pid, copy, head(pid, B(b).n+'.xlsx', prev?'previous puzzles':'agenda', true) + q + '<div class="bd">'+pb + status
+    + (open.length || prev ? openH + meet : meet + openH) + filedH
+    + (!open.length && !filed.length ? '<div class="sub">nothing here</div>' : '')
+    + (extra.length ? '<button class="lib-more" data-go="you">'+extra.length+' more in '+esc(B(b).n)+'\'s library →</button>' : '')
     + '</div>', 'agenda', over);
 }
 
@@ -999,272 +1094,142 @@ function scrShare(pid, copy){
   return shell(pid, copy, '<div class="game"><span class="gt">connections</span><span class="sub">puzzle #1235 · solved</span><span class="gg">🟨🟨🟨🟨\n🟩🟦🟩🟩\n🟩🟩🟩🟩\n🟦🟦🟦🟦\n🟪🟪🟪🟪</span></div><div class="shade"></div>'
     + '<div class="sheet"><div class="grab"></div><div class="pc-h">'+tile('connections')+'<div><b>filed connections #1235</b><small>boredroom · just now</small></div></div>'
     + '<div class="chipr"><span class="chip">1 mistake</span><span class="chip">4/4 groups</span></div>'
-    + '<div class="to">filed to <b>soup daily</b>, <b>office wordle</b> (guest seat)</div><div class="to">soup daily: 8/10 present · you\'re joint 3rd so far</div>'
-    + '<div class="pc-a"><button class="btn">send to soup</button><button class="btn ghost">done</button><button class="lnk" style="margin-left:auto">undo</button></div>'
-    + '<div class="hint">"send to soup" opens whatsapp with your result and a line saying where you placed.</div></div>', null);
+    + '<div class="to">filed to <b>soup daily</b>, <b>office wordle</b> (guest seat)</div><div class="to">soup daily: joint 3rd of 8 so far</div>'
+    + '<div class="pc-a"><button class="btn">send to soup</button><button class="btn ghost">minutes</button><button class="lnk" style="margin-left:auto">undo</button></div>'
+    + '<div class="hint">"send to soup" opens whatsapp with your result and your place.</div></div>', null);
 }
 
-/* ---------------- 4/5 review ---------------- */
-const PERIODS = [['today','today'],['week','week'],['month','month'],['all','all time']];
-const PER = { today:'today', week:'this week', month:'this month', all:'all time' };
-const statOpts = q => q.game==='all' ? [['wins','daily wins'],['items','items done'],['present','days present']] : [['average','average '+GAMES[q.game].unit],['best','best'],['wins','wins'],['played','played']];
-const statLabel = q => (statOpts(q).find(s=>s[0]===q.stat) || statOpts(q)[0])[1];
-const statWord = (q,v) => ({ wins:plural(v,'win').replace(/^\S+ /,''), items:v===1?'item':'items', present:v===1?'day':'days', played:v===1?'day':'days' })[q.stat] || '';
-const isCount = q => q.game==='all' || q.stat==='played' || q.stat==='wins';
-const lowerBetter = q => !isCount(q) && GAMES[q.game].lower;
-function dayCols(p){
-  if (p==='today') return [[0]];
-  if (p==='week') return range(-6,0).map(o=>[o]);
-  if (p==='month') return range(-29,0).map(o=>[o]);
-  const c = []; for (let e=0; e>-T; e-=7) c.unshift(range(Math.max(-T+1,e-6), e)); return c;
+/* ---------------- 4/5 review: today | all time ---------------- */
+function winsRows(b, offs, q, pid){
+  const tbl = winsTable(b, offs), pl = places(tbl, r=>r.v), all = offs.length>1;
+  let idx = tbl.map((r,i)=>i); if (!q.open){ idx = idx.slice(0,5); const me = tbl.findIndex(r=>r.m==='you'); if (me>=5) idx.push(me); }
+  return idx.map((i,k)=>{ const r = tbl[i]; return (k===5 && !q.open ? '<div class="gap">⋯</div>' : '')+'<div class="wr'+(r.m==='you'?' me':'')+'"><span class="n">'+pl[i].s+'</span>'+av(r.m)+'<span class="who">'+esc(nm(r.m))+'</span><b class="v">'+r.v+'</b><span class="t2">'+(all ? 'of '+r.days+' days' : '')+'</span></div>'; }).join('')
+    + (tbl.length>5 ? '<button class="lib-more" data-open="'+pid+'">'+(q.open ? 'show top 5' : 'all '+tbl.length+' →')+'</button>' : '');
 }
-function cell(m, q, offs){
-  const b = q.board;
-  if (q.game==='all'){ if (q.stat==='present') return offs.filter(o=>itemsOn(m,b,o)>0).length; if (q.stat==='wins') return sum(offs.map(o=>winsOn(m,b,o))); return sum(offs.map(o=>itemsOn(m,b,o))); }
-  const g = q.game, G = GAMES[g], vs = offs.map(o=>vo(b,m,g,o)).filter(v=>v!=null);
-  if (q.stat==='played') return vs.length;
-  if (q.stat==='wins') return offs.filter(o=>winners(b,g,cur(g)+o).includes(m)).length;
-  const ns = vs.filter(num); if (!ns.length) return null;
-  if (q.stat==='best') return ns.reduce((x,y)=>better(G,y,x)?y:x);
-  return sum(ns.map(G.prim))/ns.length;
-}
-function fmtV(q, v){
-  if (v==null) return '—'; if (isCount(q)) return String(v);
-  const G = GAMES[q.game];
-  if (q.stat==='average') return G.unit==='points' ? String(Math.round(v)) : v.toFixed(G.unit==='×'?2:1);
-  return G.short(v);
-}
-function rank(q, offs){
-  const rows = B(q.board).members.map(m=>({ m, v:cell(m,q,offs) }));
-  const inPeriod = m => q.game==='all' ? offs.some(o=>itemsOn(m,q.board,o)>0) : offs.some(o=>vo(q.board,m,q.game,o)!=null);
-  const has = r => r.v!=null && inPeriod(r.m);
-  const lb = lowerBetter(q);
-  return { ranked: rows.filter(has).sort((x,y)=>lb ? x.v-y.v : y.v-x.v), absent: rows.filter(r=>!has(r)).map(r=>r.m) };
-}
-function heatCols(q){
-  if (q.period==='today' && q.game==='all') return B(q.board).games.map(g=>({ label:GAMES[g].l, title:GAMES[g].n+' '+pkey(g,cur(g)), game:g, offs:[0], get:m=>{ const v = vo(q.board,m,g,0); return v==null ? null : num(v) ? v : 0; }, lower:GAMES[g].lower }));
-  return dayCols(q.period).map((offs,i)=>({ label: q.period==='all' ? (i%4===0 ? dlabel(offs[0]).split(' ')[0] : '') : q.period==='month' ? (i%7===0 ? String(odate(offs[0]).getDate()) : '') : dow(offs[0])[0], title: q.period==='all' ? 'week of '+dlabel(offs[0]) : dow(offs[0])+' '+dlabel(offs[0]), offs, get:m=>cell(m,q,offs), lower:lowerBetter(q) }));
-}
-const HLT = { krill:(m,g,d)=>nm(m)+' krilled · krillion '+pkey(g,d), perfect:(m,g,d)=>nm(m)+' went +0 perfect on travle '+pkey(g,d), 'under par':(m,g,d)=>nm(m)+' solved minute cryptic under par', flawless:(m,g,d)=>nm(m)+': flawless strands, spangram first' };
-const hlText = (m,g,d,h) => (HLT[h] ? HLT[h](m,g,d) : nm(m)+' got '+GAMES[g].n+' '+h) + (d===cur(g) ? ' today' : ' on '+dow(d-cur(g)));
-function memosFor(q){
-  const out = [], offs = dayCols(q.period).flat(), { ranked } = rank(q, offs), per = PER[q.period], G = q.game==='all' ? null : GAMES[q.game], gn = G ? G.n+' ' : '', b = q.board;
-  const qs = x => Object.assign({}, q, { sel:null, cmp:[] }, x);
-  if (ranked.length && (G ? G.ranked : true)){
-    const a = ranked[0], tied = ranked.filter(r=>same(r.v,a.v)), u = isCount(q) ? ' '+statWord(q,a.v) : '';
-    out.push({ k:'standing', s:tied.length>1?6:3, t: tied.length>1 && tied.length<=3 ? tied.map(r=>nm(r.m)).join(' and ')+' share the lead '+gn+per+' · '+fmtV(q,a.v)+u : tied.length>3 ? tied.length+' members share the lead '+gn+per : (a.m==='you'?'you lead ':a.m+' leads ')+gn+per+' with '+fmtV(q,a.v)+u, q:qs({ cmp:tied.slice(0,3).map(r=>r.m) }) });
-    if (!G && q.stat==='wins' && q.period==='week'){ const me = ranked.find(r=>r.m==='you'), open = openGames(b);
-      if (me && !same(me.v,a.v)) out.push({ k:'memo to you', s:7, t:'you trail '+a.m+' by '+plural(a.v-me.v,'win')+' this week'+(open.length?' · '+open.slice(0,2).map(g=>GAMES[g].n).join(', ')+' still open':''), q:qs({ cmp:['you',a.m] }) });
-      else if (me && tied.length>1 && tied.some(r=>r.m==='you')) out.push({ k:'memo to you', s:8, t:'win one more item today and the week is yours'+(open.length?' · '+open.slice(0,2).map(g=>GAMES[g].n).join(', ')+' still open':''), q:qs({ cmp:tied.slice(0,3).map(r=>r.m) }) }); }
-    if (ranked.length>=4 && q.period!=='today' && q.stat!=='present'){ const z = ranked[ranked.length-1]; if (!same(z.v, ranked[ranked.length-2].v)) out.push({ k:'on a pip', s:4, t:nm(z.m)+(z.m==='you'?' are':' is')+' on a pip '+gn+per, q:qs({ cmp:[z.m] }) }); }
-  }
-  const gs = G ? [q.game] : B(b).games.filter(g=>GAMES[g].ranked);
-  outer: for (const o of offs.slice().reverse()) for (const g of gs) for (const m of B(b).members){ const d = cur(g)+o, v = bval(b,m,g,d), h = hl(m,g,d,v); if (h){ out.push({ k:'highlight', s:o===0?8:5, t:hlText(m,g,d,h), q:qs({ game:g, period:o===0?'today':q.period, stat:'best', cmp:[m] }) }); break outer; } }
-  for (const g of gs){ const r = record(b,g); if (r && r[2]-cur(g) >= offs[0]){ out.push({ k:'record', s:r[2]===cur(g)?9:6, t:(r[1]==='you'?'your ':r[1]+'\'s ')+GAMES[g].fmt(r[0])+' is '+B(b).n+'\'s best '+GAMES[g].n+' ever', q:qs({ game:g, period:'all', stat:'best', cmp:[r[1]] }) }); break; } }
-  if (G && G.ranked && q.cmp.length===2){ const [x,y] = q.cmp; let wx = 0, wy = 0, lv = 0;
-    offs.forEach(o=>{ const a = vo(b,x,q.game,o), c = vo(b,y,q.game,o); if (!num(a) || !num(c)) return; if (same(a,c)) lv++; else if (better(G,a,c)) wx++; else wy++; });
-    if (wx+wy+lv) out.push({ k:'rivalry', s:7, t:gn+per+': '+(wx===wy ? nm(x)+' and '+nm(y)+' are level '+wx+'–'+wy : (wx>wy ? nm(x)+(x==='you'?' lead ':' leads ')+nm(y)+' '+wx+'–'+wy : nm(y)+(y==='you'?' lead ':' leads ')+nm(x)+' '+wy+'–'+wx))+(lv?' ('+lv+' level)':''), q:qs({ cmp:[x,y] }) }); }
-  const lost = B(b).members.map(m=>[m,lostTenure(m)]).filter(x=>x[1]>=5).sort((a,c)=>c[1]-a[1])[0];
-  if (lost && q.period!=='all') out.push({ k:'broken tenure', s:5, t:lost[0]+'\'s '+lost[1]+'-day tenure ended yesterday', q:qs({ game:'all', stat:'present', period:'month', cmp:[lost[0]] }) });
-  return out.sort((a,c)=>c.s-a.s);
-}
-function qText(q){ return '=review(board:"'+B(q.board).n+'", game:"'+(q.game==='all'?'all':GAMES[q.game].n)+'", period:"'+PER[q.period]+'", stat:"'+statLabel(q)+'")'; }
 function scrReview(pid, copy){
-  const q = Q[pid];
-  if (!statOpts(q).some(s=>s[0]===q.stat)) q.stat = statOpts(q)[0][0];
-  const cols = heatCols(q), G = q.game==='all' ? null : GAMES[q.game], ms = B(q.board).members;
-  const toks = [['board','board',B(q.board).n,boardOpts(),q.board],['game','game',G?G.n:'all',[['all','all']].concat(gameOpts(q.board)),q.game],['period','period',PER[q.period],PERIODS,q.period],['stat','stat',statLabel(q),statOpts(q),q.stat]];
-  const sel = q.sel!=null && cols[q.sel] ? cols[q.sel] : null;
-  const offs = sel ? sel.offs : dayCols(q.period).flat();
-  const rq = sel && sel.game ? Object.assign({}, q, { game:sel.game, stat:'best', period:'today' }) : q;
-  const { ranked, absent } = rank(rq, offs);
-  /* chart */
-  let chart = '';
-  if (!(q.period==='today' && q.game!=='all')){
-    const cmp = q.cmp.filter(m=>ms.includes(m));
-    const colsV = cols.map(c=>{ const vs = ms.map(m=>c.get(m)); return { c, vs, tot: sum(vs.map(v=>v==null?0:c.game?1:v)), you: c.get('you') }; });
-    const btn = (i, x, inner) => '<button class="'+(q.sel===i?'sel':'')+'" data-col="'+i+'" data-pid="'+pid+'" title="'+esc(x.c.title)+'">'+inner+'</button>';
-    let bars;
-    if (cmp.length){
-      const mx = Math.max(1, ...colsV.flatMap(x=>cmp.map(m=>x.c.get(m)||0)));
-      bars = colsV.map((x,i)=>btn(i, x, '<span class="grp">'+cmp.map(m=>{ const v = x.c.get(m); return v==null||(isCount(q)&&v===0&&!x.c.game) ? '<i class="none" style="--h:'+hue(m)+';height:8%"></i>' : '<i style="--h:'+hue(m)+';height:'+Math.max(4,(lowerBetter(q)?(mx*1.15-v)/(mx*1.15):v/mx)*100)+'%"></i>'; }).join('')+'</span>')).join('');
-    } else if (isCount(q)){
-      const mx = Math.max(1, ...colsV.map(x=>x.tot));
-      bars = colsV.map((x,i)=>{ const yv = x.you==null ? 0 : x.c.game ? 1 : x.you; return btn(i, x, '<span class="o" style="height:'+((x.tot-yv)/mx*100)+'%"></span><span class="y" style="height:'+(yv/mx*100)+'%"></span>'); }).join('');
-    } else {
-      const avgs = colsV.map(x=>{ const ns = x.vs.filter(v=>v!=null); return ns.length ? sum(ns)/ns.length : null; });
-      const mx = Math.max(1, ...avgs.filter(v=>v!=null), ...colsV.map(x=>x.you||0));
-      bars = colsV.map((x,i)=>btn(i, x, '<span class="o" style="height:'+((avgs[i]||0)/mx*100)+'%"></span>'+(x.you!=null?'<span class="mk" style="bottom:'+(x.you/mx*100)+'%"></span>':''))).join('');
-    }
-    const key = cmp.length ? cmp.map(m=>'<span><i style="background:hsl('+hue(m)+' var(--av-s) var(--av-l))"></i>'+nm(m)+'</span>').join('')+'<button class="lnk" data-cmpclear="'+pid+'">clear</button>'
-      : isCount(q) ? '<span><i style="background:var(--bar-o)"></i>board</span><span><i style="background:var(--accent)"></i>you</span><span style="margin-left:auto">'+(q.period==='today'?'present, per item':(q.stat==='wins'?'wins':'total')+' per '+(q.period==='all'?'week':'day'))+'</span>'
-      : '<span><i style="background:var(--bar-o)"></i>board avg</span><span><i style="background:var(--accent);height:2px"></i>you</span><span style="margin-left:auto">'+(lowerBetter(q)?'lower is better':'higher is better')+'</span>';
-    chart = '<div class="chart"><div class="key">'+key+'</div><div class="cols">'+bars+'</div><div class="lbls">'+cols.map((c,i)=>'<span class="'+(q.sel===i?'on':'')+'">'+esc(c.label)+'</span>').join('')+'</div></div>';
+  const q = Q[pid], b = q.board, offs = offsFor(q.period), today = q.period==='today';
+  const toks = [['board','board',B(b).n,boardOpts(),b],['period','period',PER[q.period],[['today','today'],['all','all time'],['week','this week'],['month','this month']],q.period]];
+  let body = '<div class="seg two"><button class="'+(today?'on':'')+'" data-period="today" data-pid="'+pid+'">today</button><button class="'+(q.period==='all'?'on':'')+'" data-period="all" data-pid="'+pid+'">all time</button></div>'
+    + (!today && q.period!=='all' ? '<div class="sub">'+esc(PER[q.period])+' · from the formula bar</div>' : '')
+    + '<div class="sec2">daily wins · '+esc(PER[q.period])+'</div>' + winsRows(b, offs, q, pid);
+  if (today){
+    body += '<div class="sec2">item by item</div>' + B(b).games.map(g=>{ const G = GAMES[g], d = cur(g), ws = G.ranked ? winners(b,g,d) : [], n = B(b).members.filter(m=>plays(b,m,g)).length, p = B(b).members.filter(m=>plays(b,m,g) && bval(b,m,g,d)!=null).length;
+      const mine0 = val('you',g,d), pl = plays(b,'you',g) ? (mine0==null ? 'open' : num(mine0) && G.ranked ? placeOf(b,g,d,'you') : '✓') : '';
+      return '<div class="gr" data-go="minutes:'+g+'" role="button" tabindex="0">'+tile(g)+'<span class="gn">'+esc(G.n)+'</span><span class="ld">'+(ws.length ? esc(ws.length>1 ? ws.length+' tied' : nm(ws[0]))+' <b>'+esc(G.short(bval(b,ws[0],g,d)))+'</b>' : p ? (G.ranked?'—':'for fun') : 'no one yet')+'</span><span class="ps">'+p+'/'+n+'</span><span class="plc'+(pl==='open'?' op':'')+'">'+esc(pl)+'</span></div>'; }).join('');
+  } else {
+    const label = q.period==='all' ? 'board records' : 'best '+PER[q.period];
+    const recs = B(b).games.filter(g=>GAMES[g].ranked).map(g=>{ const G = GAMES[g]; let r = null;
+      if (q.period==='all') r = record(b,g); else offs.forEach(o=>B(b).members.forEach(m=>{ const v = vo(b,m,g,o); if (num(v) && (!r || better(G,v,r[0]))) r = [v,m,cur(g)+o]; }));
+      return r ? { g, r } : null; }).filter(Boolean);
+    const shown = q.open2 ? recs : recs.slice(0,5);
+    body += '<div class="sec2">'+label+'</div>' + shown.map(({g,r})=>'<div class="gr" data-go="game:'+g+'" role="button" tabindex="0">'+tile(g)+'<span class="gn">'+esc(GAMES[g].n)+'</span><span class="ld">'+av(r[1])+esc(nm(r[1]))+'</span><b class="rv">'+esc(GAMES[g].short(r[0]))+'</b><span class="ps">'+esc(dlabel(r[2]-T))+'</span></div>').join('')
+      + (recs.length>5 ? '<button class="lib-more" data-open2="'+pid+'">'+(q.open2 ? 'show 5' : 'all '+recs.length+' →')+'</button>' : '');
   }
-  /* detail line */
-  let det;
-  if (sel){ const pr = ms.filter(m=>{ const v = sel.get(m); return v!=null && !(isCount(q)&&v===0&&!sel.game); }).length;
-    det = '<div class="det"><b>'+esc(sel.title)+'</b> · '+pr+'/'+ms.length+' present'+(ranked[0]?' · top <b>'+esc(nm(ranked[0].m))+'</b> '+fmtV(rq,ranked[0].v):'')+'<button class="lnk" data-col="'+q.sel+'" data-pid="'+pid+'">back to '+esc(PER[q.period])+'</button></div>'; }
-  else det = '<div class="det">'+ms.length+' members · '+ranked.length+' ranked '+PER[q.period]+' · tap '+(q.period==='today'&&q.game==='all'?'an item':q.period==='all'?'a week':'a day')+', or names to compare</div>';
-  /* member × column grid */
-  let hm = '';
-  if (cols.length>1){
-    const allv = cols.flatMap(c=>ms.map(m=>c.get(m))).filter(v=>v!=null);
-    const order = ranked.map(r=>r.m).concat(absent);
-    const normv = (c, v) => {
-      if (v==null || (isCount(q) && v===0 && !c.game)) return null;
-      const pool = c.game ? ms.map(m=>c.get(m)).filter(x=>x!=null) : allv; const mn = Math.min(...pool), mx = Math.max(...pool);
-      const f = mx===mn ? 1 : (v-mn)/(mx-mn); return .25 + .75 * (c.lower ? 1-f : f);
-    };
-    hm = '<div class="hm"><span class="sec">member</span><div class="cl hdr">'+cols.map((c,i)=>'<i class="'+(q.sel===i?'sel':'')+'">'+esc(c.label)+'</i>').join('')+'</div>'
-      + order.map(m=>{ const dim = q.cmp.length && !q.cmp.includes(m) ? ' dim' : '';
-        return '<button class="n'+(m==='you'?' me':'')+dim+(q.cmp.includes(m)?' on-c':'')+'" style="--h:'+hue(m)+'" data-cmp="'+m+'" data-pid="'+pid+'">'+esc(nm(m))+'</button><div class="cl'+dim+'">'+cols.map((c,i)=>{ const f = normv(c, c.get(m)); return '<i class="'+(q.sel===i?'sel':'')+'">'+(f==null?'':'<b style="opacity:'+f.toFixed(2)+'"></b>')+'</i>'; }).join('')+'</div>'; }).join('')
-      + '</div>';
-  }
-  /* standings, ties share a place */
-  const pl = places(ranked, r=>r.v);
-  const isPip = q.period!=='today' && !sel && ranked.length>=4 && q.stat!=='present' && !same(ranked[ranked.length-1].v, ranked[Math.max(0,ranked.length-2)].v);
-  const st = ranked.map((r,i)=>'<div class="rk'+(r.m==='you'?' me':'')+(q.cmp.includes(r.m)?' cmp':'')+'"><span class="n">'+pl[i].s+'</span>'+av(r.m)+'<button class="who" data-cmp="'+r.m+'" data-pid="'+pid+'">'+esc(nm(r.m))+'</button><span class="v">'+fmtV(rq,r.v)+'</span><span class="t2'+(isPip&&i===ranked.length-1?' pip':'')+'">'+(isPip&&i===ranked.length-1?'on a pip':'tenure '+tenure(r.m)+'d')+'</span></div>').join('');
-  const memos = memosFor(q).slice(0,2);
   let over = '';
-  if (pid==='wa') over = waOverlay(pid, { kind:'review', q, b:q.board }, true);
+  if (pid==='wa') over = waOverlay(pid, { kind:'review', period:q.period, b }, true);
   else if (S.wa && S.wa.pid===pid) over = waOverlay(pid, S.wa);
-  else if (S.ovl===pid) over = boardsOverlay(pid, q.board);
-  return shell(pid, copy, head(pid, B(q.board).n+'.xlsx', 'performance review', true) + fx(pid, 'review', toks) + '<div class="bd">'
-    + '<div class="seg">'+PERIODS.map(p=>'<button class="'+(p[0]===q.period?'on':'')+'" data-period="'+p[0]+'" data-pid="'+pid+'">'+p[1]+'</button>').join('')+'</div>'
-    + '<div class="gch"><button class="'+(q.game==='all'?'on':'')+'" data-game="all" data-pid="'+pid+'">all games</button>'+B(q.board).games.map(g=>'<button class="'+(q.game===g?'on':'')+'" data-game="'+g+'" data-pid="'+pid+'">'+esc(GAMES[g].n)+'</button>').join('')+'</div>'
-    + '<div class="seg">'+statOpts(q).map(s=>'<button class="'+(s[0]===q.stat?'on':'')+'" data-stat="'+s[0]+'" data-pid="'+pid+'">'+esc(s[1].replace('average ','avg '))+'</button>').join('')+'</div>'
-    + (memos.length?'<div class="memos">'+memos.map((m,i)=>'<button class="memo" data-memo="'+i+'" data-pid="'+pid+'"><small><span>memo · '+esc(m.k)+'</span><span>open →</span></small>'+esc(m.t)+'</button>').join('')+'</div>':'')
-    + chart + det + hm
-    + '<div class="sec">standings · '+esc(sel?sel.title:PER[q.period])+(rq!==q?' · '+esc(GAMES[rq.game].unit):'')+'</div>' + (st || '<div class="absent">no one has filed yet</div>')
-    + (absent.length?'<div class="absent">absent ('+absent.length+'): '+absent.map(nm).join(', ')+'</div>':'')
-    + '<div class="plain"><button class="lnk" data-wa="review" data-pid="'+pid+'">send this review to whatsapp</button></div>'
-    + '</div>', 'review', over);
+  else if (S.ovl===pid) over = boardsOverlay(pid, b);
+  return shell(pid, copy, head(pid, B(b).n+'.xlsx', 'review', true, 'review') + fx(pid, 'review', toks) + '<div class="bd">' + body + '</div>', 'review', over);
 }
 
-/* ---------------- 6 the daily bored meeting (memo feed) ---------------- */
-function feed(b){
-  const base = { board:b, sel:null, cmp:[] };
-  const qs = [{ game:'all', period:'today', stat:'wins' }, { game:'all', period:'week', stat:'wins' }]
-    .concat(B(b).games.filter(g=>GAMES[g].ranked).map(g=>({ game:g, period:'today', stat:'best' })))
-    .concat(B(b).games.includes('maptap') ? [{ game:'maptap', period:'month', stat:'average', cmp:['you','ivan'] }] : []);
-  const seen = new Set(), out = [];
-  qs.forEach(x=>memosFor(Object.assign({}, base, x)).forEach(m=>{ if (seen.has(m.t) || (m.k==='standing' && x.game!=='all')) return; seen.add(m.t); out.push(m); }));
-  return out.sort((a,c)=>c.s-a.s).slice(0,8);
-}
-function scrMemos(pid, copy){
-  const b = S.mboard, list = feed(b);
-  return shell(pid, copy, head(pid, B(b).n+'.xlsx', 'the daily bored meeting', false) + fx(pid, 'memos', [['board','board',B(b).n,boardOpts(),b],['day','day','today',null,'today']]) + '<div class="bd">'
-    + '<div class="sub wrap">the daily bored meeting is in · '+list.length+' memos: standings, highlights, records, rivalries. tap one to open its review (screen 4).</div>'
-    + list.map((m,i)=>'<button class="memo" data-feed="'+i+'"><small><span>memo · '+esc(m.k)+'</span><span>open →</span></small>'+esc(m.t)+'<span class="q">'+esc(qText(m.q))+'</span></button>').join('')
-    + '</div>', 'review');
+/* ---------------- 6 one game (drill-in) ---------------- */
+function scrGame(pid, copy){
+  const b = 'soup', s = S.game, g = s.g, G = GAMES[g], offs = offsFor(s.period), min = s.period==='all' ? 10 : 3;
+  const avs = averages(b, g, offs, min), pl = places(avs, r=>r.v), rec = record(b,g);
+  const myVs = offs.map(o=>vo(b,'you',g,o)).filter(num), myBest = myVs.length ? myVs.reduce((x,y)=>better(G,y,x)?y:x) : null;
+  const me = avs.find(r=>r.m==='you');
+  const toks = [['game','game',G.n,B(b).games.filter(x=>GAMES[x].ranked).map(x=>[x,GAMES[x].n]),g],['period','period',PER[s.period],[['all','all time'],['month','this month'],['week','this week']],s.period],['vs','vs',s.vs||'no one',[['','no one']].concat(B(b).members.filter(m=>m!=='you' && plays(b,m,g)).map(m=>[m,m])),s.vs||'']];
+  let h = '<div class="stat"><div><b>'+(me?fmtAvg(g,me.v):'—')+'</b><small>your average</small></div><div><b>'+(myBest!=null?esc(G.short(myBest)):'—')+'</b><small>your best</small></div><div><b>'+(rec?esc(G.short(rec[0])):'—')+'</b><small>record · '+(rec?esc(nm(rec[1])):'')+'</small></div></div>';
+  if (s.vs){
+    const r = rivalry(b,g,'you',s.vs,offs);
+    const strip = range(-29,0).map(o=>{ const a = vo(b,'you',g,o), c = vo(b,s.vs,g,o); const k = !num(a)||!num(c) ? '' : same(a,c) ? 'lv' : better(G,a,c) ? 'on' : 'ls'; return '<i class="'+k+'"></i>'; }).join('');
+    h += '<div class="sec2">you vs '+esc(s.vs)+' · '+esc(PER[s.period])+'</div><div class="h2h"><b>'+(r?r.a:0)+'–'+(r?r.c:0)+'</b><span>'+(r ? (r.a===r.c?'level':r.a>r.c?'you lead':s.vs+' leads')+(r.lv?' · '+r.lv+' level':'') : 'never met')+'</span></div><div class="strip">'+strip+'</div><div class="key"><span><i class="kon"></i>you won</span><span><i class="kls"></i>'+esc(s.vs)+' won</span><span>last 30</span><button class="lnk" data-vs="">clear</button></div>';
+  }
+  h += '<div class="sec2">ranking by average · '+esc(PER[s.period])+' · '+min+'+ plays</div>'
+    + avs.map((r,i)=>'<div class="wr'+(r.m==='you'?' me':'')+(s.vs===r.m?' cmp':'')+'" data-vs="'+r.m+'" role="button" tabindex="0"><span class="n">'+pl[i].s+'</span>'+av(r.m)+'<span class="who">'+esc(nm(r.m))+'</span><b class="v">'+fmtAvg(g,r.v)+'</b><span class="t2">'+r.n+' played</span></div>').join('')
+    + (avs.length ? '' : '<div class="sub">no one has '+min+' plays yet</div>');
+  if (!s.vs){
+    const strip = range(-29,0).map(o=>{ const a = vo(b,'you',g,o); if (!num(a)) return '<i></i>'; const vs = B(b).members.map(m=>vo(b,m,g,o)).filter(num), avg = sum(vs)/vs.length; return '<i class="'+(better(G,a,avg)||same(a,avg)?'on':'ls')+'"></i>'; }).join('');
+    h += '<div class="sec2">your last 30 days</div><div class="strip">'+strip+'</div><div class="key"><span><i class="kon"></i>beat the board average</span><span><i class="kls"></i>below</span></div>';
+  }
+  return shell(pid, copy, head(pid, 'soup daily.xlsx', G.n, false) + fx(pid, 'game', toks) + '<div class="bd">' + h + '</div>', 'review', '', G.n);
 }
 
-/* ---------------- 7 minutes ---------------- */
+/* ---------------- 7 minutes (drill-in) ---------------- */
 function scrMinutes(pid, copy){
   const b = S.board, g = B(b).games.includes(S.mgame) ? S.mgame : B(b).games[0], G = GAMES[g], d = cur(g) - (S.mpuz==='previous' ? 1 : 0);
   const open = val('you',g,d)!=null;
   const rows = rankedFor(b,g,d), scored = rows.filter(r=>num(r.v)), pl = places(scored, r=>r.v);
-  const notIn = B(b).members.filter(m=>plays(b,m,g) && bval(b,m,g,d)==null), skip = B(b).members.filter(m=>!plays(b,m,g)).length;
+  const notIn = B(b).members.filter(m=>plays(b,m,g) && bval(b,m,g,d)==null);
   const rec = record(b,g);
-  const lock = open ? 'you filed · details are open' + (STAMP['you|'+g+'|'+d] ? ' · yours: '+STAMP['you|'+g+'|'+d] : '') : S.nudge ? 'file '+G.n+' first. no peeking.' : 'scores are public · '+esc(G.hide)+' unlock when you file';
+  const lock = open ? 'you filed · details are open' : S.nudge ? 'file '+G.n+' first. no peeking.' : 'scores are public · '+esc(G.hide)+' unlock when you file';
   const row = (r,i) => { const det = detailFor(r.m,g,d,r.v), h = hl(r.m,g,d,r.v), st = STAMP[r.m+'|'+g+'|'+d];
     return '<div class="mr"><div class="mrow"><span class="who2"><span class="rn">'+(pl[i]?pl[i].s:'·')+'</span>'+av(r.m)+esc(nick(b,r.m))+(h?'<span class="chip badge">'+esc(h)+'</span>':'')+(st?'<span class="stamp">'+esc(st)+'</span>':'')+'</span><span class="mv">'+esc(num(r.v)?G.fmt(r.v):'played')+'</span></div>'
       + (det ? '<span class="'+(det.includes('\n')?'gridp mini':'mdet')+(open||r.m==='you'?'':' blur')+'"'+(open?'':' data-nudge')+'>'+esc(det)+'</span>' : '') + '</div>'; };
   const sub = (G.theme ? '“'+G.theme+'” · ' : '') + (G.clue ? (open ? G.clue : 'clue hidden until you file') + ' · ' : '');
   let over = '';
-  if (S.wa && S.wa.pid===pid) over = waOverlay(pid, S.wa); else if (S.ovl===pid) over = boardsOverlay(pid, b);
-  const h = shell(pid, copy, head(pid, B(b).n+'.xlsx', 'minutes', true) + fx(pid, 'minutes', [['game','game',G.n,gameOpts(b),g],['puzzle','puzzle',pkey(g,d),[['current',pkey(g,cur(g))+' · current'],['previous',pkey(g,cur(g)-1)+' · previous']],S.mpuz]]) + '<div class="bd">'
-    + '<div class="sub wrap">'+esc(sub)+rows.length+' of '+(rows.length+notIn.length)+' present'+(rec?' · board record '+esc(G.short(rec[0]))+' ('+esc(nm(rec[1]))+', '+esc(dlabel(rec[2]-T))+')':'')+(d===cur(g)?' · resets in '+esc(fmtLeft(left(g)).replace(' left','')):'')+'</div>'
+  if (S.wa && S.wa.pid===pid) over = waOverlay(pid, S.wa);
+  const h = shell(pid, copy, head(pid, B(b).n+'.xlsx', 'minutes', false, 'minutes') + fx(pid, 'minutes', [['game','game',G.n,B(b).games.map(x=>[x,GAMES[x].n]),g],['puzzle','puzzle',pkey(g,d),[['current',pkey(g,cur(g))+' · current'],['previous',pkey(g,cur(g)-1)+' · previous']],S.mpuz]]) + '<div class="bd">'
+    + '<div class="sub wrap">'+esc(sub)+rows.length+' of '+(rows.length+notIn.length)+' present'+(rec?' · record '+esc(G.short(rec[0]))+' ('+esc(nm(rec[1]))+')':'')+(d===cur(g)?' · resets in '+esc(fmtLeft(left(g)).replace(' left','')):'')+'</div>'
     + '<div class="lock'+(S.nudge?' nudge':'')+'">'+lock+'</div>'
     + rows.map(row).join('')
-    + (notIn.length ? '<div class="absent">not in yet ('+notIn.length+'): '+notIn.map(nm).join(', ')+(skip?' · '+skip+' don\'t play '+esc(G.n):'')+'</div>' : '')
-    + '<div class="plain mrow"><button class="lnk" data-wa="minutes" data-pid="'+pid+'">send to soup</button>'+(open?'<button class="lnk" data-amend="'+g+'">amend yours</button>':'')+'</div>'
-    + '</div>', 'review', over);
+    + (notIn.length ? '<div class="absent">not in yet: '+notIn.map(nm).join(', ')+'</div>' : '')
+    + (open ? '<div class="plain"><button class="lnk" data-amend="'+g+'">amend yours</button></div>' : '')
+    + '</div>', 'review', over, G.n+' '+pkey(g,d));
   S.nudge = false; return h;
 }
 
-/* ---------------- 8 library ---------------- */
-const LIB = [['wordle','words','local midnight'],['perceptle','perception',''],['noillirk','trivia',''],['layers','words',''],['pyragrams','words',''],['historydle','trivia',''],['petguessr','trivia',''],['daily red','puzzles',''],['system design daily','trivia',''],['geoguessr daily','geography','needs an account']];
-function libRows(){
-  const q = S.libq.toLowerCase(), b = S.board, ms = B(b).members;
-  if (S.libv==='board'){
-    const rows = B(b).games.filter(g=>!q || GAMES[g].n.includes(q));
-    return rows.map(g=>{ const G = GAMES[g], n = ms.filter(m=>plays(b,m,g)).length, on = plays(b,'you',g);
-      return '<div class="it" style="--gc:var(--g'+G.gc+')">'+tile(g)+'<div class="g"><div class="nm">'+esc(G.n)+'</div><div class="sub">'+n+'/'+ms.length+' play · resets '+esc(hhmm(G.rs))+(G.ranked?'':' · for fun')+'</div></div>'+(on?'<button class="add on" data-unmine="'+g+'">on your agenda ✓</button>':'<button class="add" data-mine="'+g+'">add to mine</button>')+'</div>'; }).join('')
-      + (rows.length ? '' : '<div class="sub">nothing called "'+esc(S.libq)+'" on this board · try the catalogue</div>');
-  }
-  const rows = LIB.filter(r=>!B(b).games.includes(r[0].replace(/\s+/g,'')) && (!q || r[0].includes(q) || r[1].includes(q)));
-  return rows.slice(0,8).map((r,i)=>'<div class="it" style="--gc:var(--g'+(i%7+1)+')"><span class="ic">'+esc(r[0][0])+'</span><div class="g"><div class="nm">'+esc(r[0])+'</div><div class="sub">'+esc(r[1])+(r[2]?' · '+esc(r[2]):'')+'</div></div><button class="add" data-add="'+esc(r[0])+'">add to board</button></div>').join('')
-    + (rows.length ? '' : '<div class="sub">no game called "'+esc(S.libq)+'" yet · try any other business</div>');
-}
-function scrLibrary(pid, copy){
-  const b = S.board;
-  return shell(pid, copy, head(pid, 'library.xlsx', S.libv==='board' ? B(b).games.length+' on this board' : '140 games', false) + fx(pid, 'library', [['board','board',B(b).n,boardOpts(),b],['view','view',S.libv==='board'?'board library':'catalogue',[['board','board library'],['catalogue','catalogue']],S.libv]]) + '<div class="bd">'
-    + '<div class="pbw"><label class="srch">'+SRCH+'<input data-in="libq" placeholder="search games" aria-label="search games" value="'+esc(S.libq)+'"></label></div>'
-    + '<div class="sub wrap">'+(S.libv==='board' ? 'everything '+esc(B(b).n)+' plays. pick yours; presence only counts people who play a game.' : 'add a game to '+esc(B(b).n)+'\'s library. pasting a result from an unknown game does this too.')+'</div>'
-    + '<div class="rows" data-region="lib">'+libRows()+'</div>'
-    + '<div class="memo" style="cursor:default"><small><span>any other business?</span></small>add any daily game with a link and its reset time</div></div>', 'library');
+/* ---------------- 8 the daily bored meeting (drill-in) ---------------- */
+function scrMeeting(pid, copy){
+  const b = 'soup', o = S.mday==='yesterday' ? -1 : 0, list = meeting(b, o);
+  const kinds = Object.keys(GLYPH).filter(k=>list.some(x=>x.k===k));
+  return shell(pid, copy, head(pid, 'soup daily.xlsx', 'the daily bored meeting', false) + fx(pid, 'meeting', [['day','day',S.mday,[['today','today'],['yesterday','yesterday']],S.mday]]) + '<div class="bd">'
+    + '<div class="sub">'+kinds.map(k=>'<span class="gl k-'+k+'">'+GLYPH[k]+'</span> '+esc(KIND[k])).join(' · ')+'</div>'
+    + '<div class="rows">'+kinds.map(k=>list.filter(x=>x.k===k).map(memoRow).join('')).join('')+'</div>'
+    + (list.length ? '' : '<div class="sub">a quiet meeting</div>')
+    + '</div>', 'agenda', '', 'meeting');
 }
 
-/* ---------------- 9 any other business ---------------- */
-function scrAob(pid, copy){
-  return shell(pid, copy, head(pid, 'any other business', 'soup daily', false) + fx(pid, 'add_game', [['board','board','soup daily',null,''],['from','from','pasted result',null,'']]) + '<div class="bd">'
-    + '<div class="sub wrap">filled in from the result you pasted. check the reset time and you\'re done.</div>'
-    + '<div class="field"><label>name</label><div class="input">perceptle</div></div>'
-    + '<div class="field"><label>link</label><div class="input">perceptle.com</div></div>'
-    + '<div class="field"><label>new puzzle every day at</label><div class="opt"><span class="on">00:00 my time</span><span>00:00 utc</span><span>custom</span></div></div>'
-    + '<div class="field"><label>ranked?</label><div class="opt"><span>ranked</span><span class="on">for fun until it has a parser</span></div></div>'
-    + '<div class="field"><label>the result</label><div class="input gridp keep" style="font-size:9.5px">Perceptle #103 - S (97)\n🔢 98  🎯 99  📐 94  🥁 95  ✂️ 97</div></div>'
-    + '<div class="pc-a"><button class="btn">add and file</button><span class="hint" style="margin-left:auto">goes on your agenda too</span></div></div>', 'library');
-}
-
-/* ---------------- 10 your seat ---------------- */
+/* ---------------- 10 you (your games, name, seats) ---------------- */
 function scrYou(pid, copy){
-  const b = S.seatb;
-  const wk = range(-13,0).map(o=>anyOn('you',o));
+  const b = S.seatb, ms = B(b).members;
   return shell(pid, copy, head(pid, 'you.xlsx', 'walter', false) + fx(pid, 'seat', [['board','board',B(b).n,boardOpts(),b]]) + '<div class="bd">'
     + '<div class="field"><label>your name on '+esc(B(b).n)+'</label><input class="input" data-in="nick" value="'+esc(S.nick[b]||'')+'" aria-label="nickname" spellcheck="false"></div>'
-    + '<div class="stat"><div><b>'+tenure('you')+'d</b><small>tenure · anything, every day</small></div><div><b>'+mine(b).filter(g=>val('you',g,cur(g))!=null).length+'/'+mine(b).length+'</b><small>your agenda today</small></div><div><b>'+Math.max(0,...mine(b).map(g=>itemTenure('you',g)))+'d</b><small>longest item tenure</small></div></div>'
-    + '<div><div class="sec">last 14 days</div><div class="wk">'+wk.map(x=>'<i class="'+(x?'on':'')+'"></i>').join('')+'</div></div>'
-    + '<div class="sec">your agenda · '+esc(B(b).n)+' · '+mine(b).length+' of '+B(b).games.length+' games</div>'
-    + mine(b).map(g=>{ const n = itemTenure('you',g), filed = val('you',g,cur(g))!=null; return '<div class="mrow"><span>'+esc(GAMES[g].n)+'</span><span class="mv">'+n+'d'+(!filed && n ? ' · <span class="risk">ends in '+esc(fmtLeft(left(g)).replace(' left',''))+'</span>' : '')+'</span></div>'; }).join('')
-    + '<div class="sec">seats on this phone</div>'
+    + '<div class="stat"><div><b>'+tenure('you')+'d</b><small>tenure</small></div><div><b>'+sum(ALL.map(o=>winsOn('you',b,o)))+'</b><small>daily wins, all time</small></div><div><b>'+Math.max(0,...mine(b).map(g=>itemTenure('you',g)))+'d</b><small>longest item tenure</small></div></div>'
+    + '<div class="sec2">your games · '+mine(b).length+' of '+B(b).games.length+' in '+esc(B(b).n)+'</div>'
+    + '<div class="rows">'+B(b).games.map(g=>{ const G = GAMES[g], on = plays(b,'you',g), n = ms.filter(m=>plays(b,m,g)).length;
+        return '<div class="it1">'+tile(g)+'<span class="nm">'+esc(G.n)+'</span><span class="plc">'+n+' play'+(G.ranked?'':' · for fun')+'</span>'+(on?'<button class="add on" data-unmine="'+g+'">✓ mine</button>':'<button class="add" data-mine="'+g+'">add</button>')+'</div>'; }).join('')+'</div>'
+    + '<div><button class="lnk">+ add a game to the board</button></div>'
+    + '<div class="tg"><span><span class="nm" style="display:block">reset reminders</span><span class="sub">1h before one of your games resets, if you haven\'t filed</span></span><span class="sw on"></span></div>'
+    + '<div class="sec2">seats on this phone</div>'
     + Object.entries(BOARDS).map(([k,x])=>'<div class="mrow"><span>'+esc(x.n)+' <span class="muted">as '+esc(S.nick[k]||'walter')+'</span></span><span class="chip'+(x.seat==='guest'?' seat':'')+'">'+(x.seat==='guest'?'guest seat':'signed in')+'</span></div>').join('')
-    + '<div class="sub wrap">the guest seat on office wordle still gets everything you file. sign in on it to merge its history into your account.</div>'
-    + '<div><button class="lnk">resign from a board</button></div></div>', 'you');
+    + (B(b).chairs.includes('you') ? '<div class="mh" data-go="chair" role="button" tabindex="0"><span>board settings · you\'re a chair</span><span>→</span></div>' : '')
+    + '</div>', 'you');
 }
 
-/* ---------------- 11 invitation ---------------- */
+/* ---------------- 11 chair ---------------- */
+function scrChair(pid, copy){
+  const t = (l, on, s) => '<div class="tg"><span><span class="nm" style="display:block">'+l+'</span><span class="sub">'+s+'</span></span><span class="sw'+(on?' on':'')+'"></span></div>';
+  const rule = g => { const G = GAMES[g]; return '<div class="acc"><div class="field"><label>counts</label><div class="opt"><span class="'+(G.ranked?'on':'')+'">ranked</span><span class="'+(G.ranked?'':'on')+'">for fun</span></div></div>'
+    + (G.ranked ? '<div class="field"><label>rank by</label><div class="opt"><span class="on">'+esc(G.rankBy)+'</span>'+(g==='wiki'?'<span>time, then steps</span>':'')+'</div></div>' : '')
+    + '<div class="field"><label>hidden until you file</label><div class="opt"><span class="on">'+esc(G.hide)+'</span><span>nothing</span></div></div></div>'; };
+  return shell(pid, copy, head(pid, 'soup daily.xlsx', 'board settings', false) + fx(pid, 'settings', [['board','board','soup daily',null,'']]) + '<div class="bd">'
+    + t('filing late', true, 'the previous puzzle can be filed until the next reset')
+    + '<div class="sec2">games · defaults come from the parser</div>'
+    + '<div class="rows">'+B('soup').games.map(g=>'<div class="it1" data-rule="'+g+'" role="button" tabindex="0">'+tile(g)+'<span class="nm">'+esc(GAMES[g].n)+'</span><span class="plc">'+esc(GAMES[g].ranked ? GAMES[g].rankBy : 'for fun')+'</span><span class="car">'+(S.rule===g?'▴':'▾')+'</span></div>'+(S.rule===g?rule(g):'')).join('')+'</div>'
+    + '<div class="sec2">seat claims · 1 pending</div>'
+    + '<div class="pc"><div class="pc-h">'+av('kunal')+'<div><b>kunal wants his seat back</b><small>new phone, old one lost · tenure 6d</small></div></div><div class="pc-a"><button class="btn">approve</button><button class="lnk">deny</button></div></div>'
+    + '</div>', 'you', '', 'settings');
+}
+
+/* ---------------- 12 invitation ---------------- */
 function scrInvite(pid, copy){
-  if (S.joined) return shell(pid, copy, '<div class="bd" style="justify-content:center"><div class="plain big">welcome aboard, walter.</div><div class="plain sub wrap">you now sit on 4 boards. pick your games from puzzle pals\' library; maptap and connections are already filed today, so they count there straight away.</div><div class="plain"><button class="btn wide" data-unjoin>back to the invitation</button></div></div>', null);
+  if (S.joined) return shell(pid, copy, '<div class="bd" style="justify-content:center"><div class="plain big">welcome aboard, walter.</div><div class="plain sub wrap">pick your games from puzzle pals\' library. maptap and connections are already filed today, so they count there straight away.</div><div class="plain"><button class="btn wide" data-unjoin>back to the invitation</button></div></div>', null);
   return shell(pid, copy, '<div class="bd" style="justify-content:center">'
     + '<div class="plain big">ivan invited you to the puzzle pals board</div>'
     + '<div class="plain sub wrap">9 board members · connections, maptap, travle and 4 more in the library</div>'
     + '<div class="plain field"><label>your name on puzzle pals</label><div class="input">walter</div></div>'
-    + '<div class="plain" style="display:flex;flex-direction:column;gap:6px"><button class="btn wide" data-join>join as walter</button><button class="btn wide ghost">join as someone else (guest seat)</button></div>'
-    + '<div class="plain sub wrap">you\'re signed in on this phone, so results you\'ve filed today count there as soon as you add those games.</div></div>', null);
-}
-
-/* ---------------- 12 chair ---------------- */
-function scrChair(pid, copy){
-  const t = (l, on, s) => '<div class="tg"><span><span class="nm" style="display:block">'+l+'</span><span class="sub">'+s+'</span></span><span class="sw'+(on?' on':'')+'"></span></div>';
-  const g = 'wiki', G = GAMES[g];
-  return shell(pid, copy, head(pid, 'soup daily.xlsx', 'board settings', false) + fx(pid, 'settings', [['board','board','soup daily',null,''],['role','role','chair',null,'']]) + '<div class="bd">'
-    + '<div class="sub wrap">13 members · chairs: ivan, you · '+B('soup').games.length+' games in the library</div>'
-    + t('filing late', true, 'the previous puzzle can be filed until the next reset')
-    + t('chair approves new members', false, 'anyone with the invitation joins')
-    + t('reset reminders', true, '1h before a game on your agenda resets, if you haven\'t filed')
-    + '<div class="sec">per game · defaults come from the parser</div>'
-    + B('soup').games.slice(0,7).map(x=>'<div class="mrow"><span class="who2">'+tile(x)+esc(GAMES[x].n)+'</span><span class="mv" style="font-weight:400">'+esc(GAMES[x].ranked?GAMES[x].rankBy:'for fun')+'</span></div>').join('')
-    + '<div class="pc"><div class="pc-h">'+tile(g)+'<div><b>wiki game rules</b><small>changing these re-ranks every past puzzle</small></div></div>'
-    + '<div class="field"><label>ranked</label><div class="opt"><span class="on">ranked</span><span>for fun</span></div></div>'
-    + '<div class="field"><label>rank by</label><div class="opt"><span class="on">steps, then time</span><span>time, then steps</span></div></div>'
-    + '<div class="field"><label>hidden until you file</label><div class="opt"><span class="on">route</span><span>nothing</span></div></div>'
-    + '<div class="field"><label>late filing</label><div class="opt"><span class="on">board default</span><span>off</span></div></div></div>'
-    + '<div class="sec">seat claims (1)</div>'
-    + '<div class="pc"><div class="pc-h">'+av('kunal')+'<div><b>kunal wants his seat back</b><small>new phone, old one lost · tenure 6d</small></div></div><div class="pc-a"><button class="btn">approve</button><button class="lnk">deny</button></div></div>'
-    + '<div class="mrow"><button class="lnk">strike a result</button><button class="lnk">remove a member</button></div></div>', 'you');
+    + '<div class="plain" style="display:flex;flex-direction:column;gap:6px"><button class="btn wide" data-join>join as walter</button><button class="btn wide ghost">join as someone else (guest seat)</button></div></div>', null);
 }
 
 /* ---------------- 13 notifications ---------------- */
@@ -1272,29 +1237,27 @@ function scrNotif(pid, copy){
   const n = (h, w, b, t) => '<div class="nt"><div class="h"><span>boredroom · '+h+'</span><span>'+w+'</span></div><div class="b"><b>'+b+'</b>'+t+'</div></div>';
   return shell(pid, copy, '<div class="lk"><div class="lk-t">23:02</div><div class="lk-d">tuesday 28 october</div>'
     + n('soup daily','now','minute cryptic resets in 58m','you haven\'t filed it. strands and wiki game too.')
-    + n('soup daily','1h','memo · highlight','dev krilled · krillion #105.')
-    + n('soup daily','3h','memo · hostile takeover','ivan took #1 in daily wins this week.')
-    + n('soup daily','11h','the daily bored meeting is in','a record in maptap, and judy\'s 9-day tenure ended.')
-    + n('family puzzles','1d','memo · rivalry','didi leads ma 9–6 on strands this month.')
+    + n('soup daily','1h','◆ dev krilled','krillion #105. it\'s in the minutes.')
+    + n('soup daily','3h','hostile takeover','ivan took #1 in today\'s daily wins.')
+    + n('soup daily','11h','the daily bored meeting is in','a maptap record, and judy\'s 9-day tenure ended.')
     + '</div>', null);
 }
 
 /* ---------------- screen list ---------------- */
 const SCREENS = [
-  ['agenda', 'your agenda + pasteboard', 'Home. Only the games you play, open ones first, sorted by how soon they reset; the clock is live (try "+1 hour"). Scores are public, so each line shows who\'s in and who leads. Paste, or tap "play" and come back. After filing, "send to soup" forwards it to whatsapp.', 'agenda · reset clock · whatsapp', (p,c)=>scrAgenda(p,c,true)],
-  ['share', 'filed from the share sheet', 'Android: share from the game, pick boredroom. It files everywhere, then offers to forward the same text to the group, so the result is shared once, not twice.', 'boredroom first, then forward', (p,c)=>scrShare(p,c)],
-  ['boards', 'switch boards', 'Tap the sheet title on any screen. Each board shows your own agenda\'s progress; guest seats are marked.', 'boards', (p,c)=>scrAgenda(p,c,false)],
-  ['ra', 'performance review · today', 'The default: today · all games · daily wins. One column per game; tap one for its standings. Ties share a place. Two memos on top. Edit any part of the formula, or send it to whatsapp.', 'review · daily wins · ties', (p,c)=>scrReview(p,c)],
-  ['rb', 'performance review · another question', 'Same screen: maptap · this month · average, comparing you and ivan. Comparing two people adds a rivalry memo.', 'review · rivalry', (p,c)=>scrReview(p,c)],
-  ['wa', 'send to whatsapp', 'What "send this review to whatsapp" posts: screen 4\'s numbers, written for the group chat, with a link back. It follows screen 4 as you change it.', 'whatsapp export', (p,c)=>scrReview(p,c)],
-  ['memos', 'the daily bored meeting', 'Memos, kept simple: standings, highlights (krill, perfect, under par), records, rivalries, broken tenure. Each opens the review behind it.', 'memos', (p,c)=>scrMemos(p,c)],
-  ['minutes', 'minutes', 'One game, one puzzle. Scores and places are public before you file; routes, grids and clues unlock after (tap a blurred one). Shows the board record, ties, stamps (amended, filed late) and who\'s not in yet.', 'visibility · spoilers by game', (p,c)=>scrMinutes(p,c)],
-  ['library', 'library', 'The board\'s library (everything soup plays) and your agenda (what you play). Flip the view to the catalogue to add a game to the board.', 'personal agenda', (p,c)=>scrLibrary(p,c)],
-  ['aob', 'any other business', 'Where "add perceptle and file" lands when you want to check the details: prefilled from the pasted result.', 'new games', (p,c)=>scrAob(p,c)],
-  ['you', 'your seat', 'Your name per board (try editing it; whatsapp exports use it), tenure, your agenda with what ends at the next reset, and the seats on this phone.', 'nicknames', (p,c)=>scrYou(p,c)],
-  ['invite', 'board invitation', 'Join, set your name for that board, then pick your games from its library.', 'boards', (p,c)=>scrInvite(p,c)],
-  ['chair', 'chair · board settings', 'Board-wide switches, then rules per game with defaults from the parser: ranked or for fun, rank order, what\'s hidden until filed, late filing.', 'per-game rules', (p,c)=>scrChair(p,c)],
-  ['notif', 'notifications', 'Reminders come before a game resets, only for games on your agenda that you haven\'t filed. Then memos and the daily bored meeting.', 'reset reminders', (p,c)=>scrNotif(p,c)]
+  ['agenda', 'agenda (home)', 'Open games first, sorted by time to reset, with a live clock (try "+1 hour"). Under them, the top three memos from the daily bored meeting, then what you\'ve filed with your place on each. Tap any row to open its minutes; "play" opens the game.', 'home', (p,c)=>scrAgenda(p,c,true)],
+  ['share', 'filed from the share sheet', 'Android: share from the game, pick boredroom. It files everywhere, then offers to forward the same text to the group.', 'share once', (p,c)=>scrShare(p,c)],
+  ['boards', 'switch boards', 'Tap the sheet title.', 'boards', (p,c)=>scrAgenda(p,c,false)],
+  ['rt', 'review · today', 'Two views, today and all time. Today: daily wins (top five, you pinned), then each game\'s leader, how many are present and your place. Tap a game for its minutes. Week and month live in the formula bar.', 'review', (p,c)=>scrReview(p,c)],
+  ['ra', 'review · all time', 'All-time daily wins out of days played, then the board\'s records. Tap a record to open that game.', 'review', (p,c)=>scrReview(p,c)],
+  ['game', 'one game', 'Opened from a record, a memo or the formula bar, as a temporary tab. Your average and best against the record, the ranking by average, and your last 30 days. Tap a name for a head-to-head.', 'drill-in', (p,c)=>scrGame(p,c)],
+  ['minutes', 'minutes', 'Opened by tapping a game anywhere. Scores public, details unlock when you file (tap a blurred one). The share button sends it to the group.', 'drill-in', (p,c)=>scrMinutes(p,c)],
+  ['meeting', 'the daily bored meeting', 'All of today\'s memos, grouped by kind. Each is one row: a glyph, who, one line and the number that matters. Tap to open what it\'s about.', 'memos', (p,c)=>scrMeeting(p,c)],
+  ['wa', 'send to whatsapp', 'The share button on a review: today\'s numbers written for the group chat, with a link back.', 'whatsapp', (p,c)=>scrReview(p,c)],
+  ['you', 'you', 'Your name on this board, your games (the board\'s library, with yours ticked), reminders, seats. Chairs get board settings at the bottom.', 'you', (p,c)=>scrYou(p,c)],
+  ['chair', 'board settings', 'Late filing, then each game\'s rules (tap one), then pending seat claims. Rough for now.', 'chair', (p,c)=>scrChair(p,c)],
+  ['invite', 'board invitation', 'Join, set your name, pick your games.', 'boards', (p,c)=>scrInvite(p,c)],
+  ['notif', 'notifications', 'Reset reminders for your unfiled games, highlights, the takeover, and the meeting.', 'nudges', (p,c)=>scrNotif(p,c)]
 ];
 
 /* ---------------- render ---------------- */
@@ -1332,17 +1295,16 @@ function goto(id){ const el = document.getElementById('scr-'+id); if (el) el.scr
 let toastT, banT;
 function toast(msg, snap, wa){ S.toast = { msg, snap, wa }; clearTimeout(toastT); toastT = setTimeout(()=>{ S.toast = null; render(); }, 8000); }
 function banner(k, t, s){ S.ban = { k, t, s }; clearTimeout(banT); banT = setTimeout(()=>{ S.ban = null; render(); }, 6000); }
-const weekLeader = () => { dirty(); const r = rank({ board:'soup', game:'all', stat:'wins', period:'week' }, range(-6,0)).ranked; return !r.length ? null : r[1] && same(r[0].v, r[1].v) ? 'tie' : r[0].m; };
 function fileValues(list, msg, wa){
-  const before = weekLeader();
+  const before = todayLeader();
   const snap = list.map(([g,d])=>[g, d, val('you',g,d), STAMP['you|'+g+'|'+d], HL['you|'+g+'|'+d]]);
   list.forEach(([g,d,v,stamp,h])=>{ if (!DATA.you[g]) DATA.you[g] = Array(N).fill(null); DATA.you[g][d] = v; const k = 'you|'+g+'|'+d;
     if (stamp) STAMP[k] = stamp; else delete STAMP[k];
     if (h!==undefined){ if (h) HL[k] = h; else delete HL[k]; }
     if (d===cur(g)) S.just[g] = true; });
   dirty(); toast(msg, snap, wa);
-  const after = weekLeader();
-  if (after==='you' && before!=='you') banner('soup daily · just now', 'hostile takeover', 'you passed '+(before==='tie'||!before?'ivan':before)+' for #1 in daily wins this week. the board is shaken.');
+  const after = todayLeader();
+  if (after==='you' && before!=='you') banner('soup daily · just now', 'hostile takeover', 'you passed '+(before==='tie'||!before?'ivan':before)+' for #1 in today\'s daily wins. the board is shaken.');
   render();
 }
 function fileNow(){
@@ -1351,26 +1313,30 @@ function fileNow(){
   S.text = ''; S.back = null;
   const to = [...new Set(f.flatMap(r=>boardsWith(r.id)))];
   fileValues(f.map(r=>{ const s = slot(r), re = val('you',r.id,s.d)!=null; return [r.id, s.d, r.v, re ? 'amended' : s.late ? 'filed late' : null, r.badges.includes('krill') ? 'krill' : r.badges.includes('under par') ? 'under par' : r.badges.includes('flawless') ? 'flawless' : null]; }),
-    'filed '+f.map(r=>GAMES[r.id].n+(r.key?' '+r.key:'')).join(' + ')+' → '+to.map(b=>B(b).n+(B(b).seat==='guest'?' (guest)':'')).join(', '), f.length===1 && plays('soup','you',f[0].id) ? f[0].id : null);
+    'filed '+f.map(r=>GAMES[r.id].n).join(' + ')+' → '+to.map(b=>B(b).n+(B(b).seat==='guest'?' (guest)':'')).join(', '), f.length===1 && plays('soup','you',f[0].id) ? f[0].id : null);
 }
 function undo(){ if (!S.toast || !S.toast.snap) return; S.toast.snap.forEach(([g,d,v,st,h])=>{ DATA.you[g][d] = v; const k = 'you|'+g+'|'+d; if (st) STAMP[k] = st; else delete STAMP[k]; if (h) HL[k] = h; else delete HL[k]; }); S.toast = null; clearTimeout(toastT); dirty(); render(); }
+function go(spec){
+  const [k, a, c] = spec.split(':'); S.wa = null; S.toast = k==='minutes' ? null : S.toast;
+  if (k==='minutes'){ S.mgame = a; S.mpuz = 'current'; render(); goto('minutes'); }
+  else if (k==='game'){ S.game = { g:a, period:'all', vs:null }; render(); goto('game'); }
+  else if (k==='vs'){ S.game = { g:a, period:'all', vs:c }; render(); goto('game'); }
+  else if (k==='meeting'){ S.mday = 'today'; render(); goto('meeting'); }
+  else if (k==='review'){ const pid = a==='all' ? 'ra' : 'rt'; Q[pid].period = a; render(); goto(pid); }
+  else { render(); goto(k); }
+}
 
 function setTok(pid, k, v){
-  if (Q[pid]){ const q = Q[pid]; q.sel = null;
-    if (k==='board'){ q.board = v; q.cmp = q.cmp.filter(m=>B(v).members.includes(m)); if (q.game!=='all' && !B(v).games.includes(q.game)){ q.game = 'all'; q.stat = 'wins'; } }
-    else if (k==='game'){ q.game = v; q.stat = v==='all' ? 'wins' : 'average'; }
-    else q[k] = v;
-    return; }
+  if (Q[pid]){ const q = Q[pid]; if (k==='board') q.board = v; if (k==='period') q.period = v; return; }
+  if (pid==='game'){ if (k==='game') S.game = { g:v, period:S.game.period, vs:null }; if (k==='period') S.game.period = v; if (k==='vs') S.game.vs = v || null; return; }
   if (pid==='agenda' || pid==='minutes'){ if (k==='board') S.board = v; if (k==='puzzles') S.puz = v; if (k==='show') S.show = v; if (k==='game') S.mgame = v; if (k==='puzzle') S.mpuz = v; return; }
-  if (pid==='library'){ if (k==='view') S.libv = v; if (k==='board') S.board = v; return; }
-  if (pid==='memos'){ if (k==='board') S.mboard = v; return; }
+  if (pid==='meeting'){ if (k==='day') S.mday = v; return; }
   if (pid==='you'){ if (k==='board') S.seatb = v; return; }
 }
 
 document.addEventListener('input', e=>{
   const k = e.target.dataset && e.target.dataset.in; if (!k) return;
   if (k==='pbx'){ S.text = e.target.value; if (S.text) S.back = null; syncInputs('pbx', S.text, e.target); region('pbout', output(S.text, true)); }
-  if (k==='libq'){ S.libq = e.target.value; syncInputs('libq', S.libq, e.target); region('lib', libRows()); }
   if (k==='nick'){ S.nick[S.seatb] = e.target.value.toLowerCase().slice(0,20); syncInputs('nick', S.nick[S.seatb], e.target); }
   if (k==='menuq' && S.menu){ S.menu.q = e.target.value; syncInputs('menuq', S.menu.q, e.target); const t = (TOKS[S.menu.pid]||[]).find(x=>x[0]===S.menu.k); if (t) region('menuopts', menuOpts(t)); }
 });
@@ -1379,68 +1345,63 @@ document.addEventListener('keydown', e=>{
   const k = e.target.dataset && e.target.dataset.in;
   if (k==='pbx' && e.key==='Enter' && !e.shiftKey){ e.preventDefault(); fileNow(); }
   if (k==='menuq' && e.key==='Enter'){ e.preventDefault(); const first = e.target.closest('.menu').querySelector('.opts button'); if (first) first.click(); }
+  if (e.key==='Enter' && e.target.dataset && (e.target.dataset.go || e.target.dataset.vs!=null || e.target.dataset.rule)){ e.preventDefault(); e.target.click(); }
   if (e.key==='Escape' && (S.menu || S.ovl || S.wa)){ S.menu = null; S.ovl = null; S.wa = null; render(); }
 });
 document.addEventListener('click', e=>{
   const nd = e.target.closest('[data-nudge]'); if (nd){ S.nudge = true; render(); return; }
   const b = e.target.closest('button');
   if (S.menu && !e.target.closest('.menu') && !(b && b.dataset.tk)){ S.menu = null; if (!b){ render(); return; } }
+  const row = !b && e.target.closest('[data-go],[data-vs],[data-rule]');
+  if (row){ const phR = row.closest('.ph'); if (phR && ['boards','wa'].includes(phR.dataset.pid)) return;
+    if (row.dataset.go) go(row.dataset.go);
+    else if (row.dataset.vs!=null){ S.game.vs = row.dataset.vs || null; render(); }
+    else { S.rule = S.rule===row.dataset.rule ? null : row.dataset.rule; render(); }
+    return; }
   if (!b) return;
   const D = b.dataset, phEl = b.closest('.ph'), pid = D.pid || (phEl && phEl.dataset.pid);
   if (D.view){ view = D.view; try { localStorage.setItem('br-ux-view', view); } catch(err) {} renderView(); render(); return; }
   if (D.s){ S.text = SAMPLES[D.s]; S.back = null; S.board = 'soup'; S.puz = 'current'; render(); goto('agenda'); return; }
   if (D.sim==='reset'){ clearTimeout(toastT); clearTimeout(banT); build(); reset(); render(); return; }
   if (D.sim==='hour'){ const before = new Set(Object.keys(GAMES).filter(crossed)); OFFSET = Math.min(CAP, OFFSET+60); const now = B('soup').games.filter(g=>crossed(g) && !before.has(g));
-    if (now.length) banner('soup daily · '+clockLabel(), (now.length>3 ? now.length+' games' : now.map(g=>GAMES[g].n).join(', '))+' just reset', 'new puzzles are up'+(now.some(g=>plays('soup','you',g)) ? '. anything you didn\'t file from before can still go in late.' : ' (not on your agenda).'));
+    if (now.length) banner('soup daily · '+clockLabel(), (now.length>3 ? now.length+' games' : now.map(g=>GAMES[g].n).join(', '))+' just reset', 'new puzzles are up'+(now.some(g=>plays('soup','you',g)) ? '. anything you didn\'t file from before can still go in late.' : ' (not in your games).'));
     render(); return; }
-  if (D.sim==='judy'){ if (val('judy','krillion',cur('krillion'))==null){ DATA.judy.krillion[cur('krillion')] = 495; dirty(); HL['judy|krillion|'+cur('krillion')] = 'krill'; banner('soup daily · just now', 'judy filed krillion', '495 and a krill. back after missing yesterday.'); } render(); goto('agenda'); return; }
+  if (D.sim==='judy'){ if (val('judy','krillion',cur('krillion'))==null){ DATA.judy.krillion[cur('krillion')] = 495; HL['judy|krillion|'+cur('krillion')] = 'krill'; dirty(); banner('soup daily · just now', 'judy filed krillion', '495 and a krill. back after missing yesterday.'); } render(); goto('agenda'); return; }
+  if (D.go && phEl && !['boards','wa'].includes(phEl.dataset.pid)){ go(D.go); return; }
   if (D.tk){ S.menu = S.menu && S.menu.pid===pid && S.menu.k===D.tk ? null : { pid, k:D.tk, q:'' }; const copy = phEl.dataset.copy; render();
     if (S.menu && matchMedia('(pointer: fine)').matches){ const el = document.querySelector('.ph[data-pid="'+pid+'"][data-copy="'+copy+'"] [data-in="menuq"]'); if (el) el.focus({ preventScroll:true }); } return; }
   if (D.opt!=null && S.menu){ setTok(S.menu.pid, S.menu.k, D.opt); S.menu = null; render(); return; }
   if (D.bopen){ if (D.bopen==='boards' || D.bopen==='wa') return; S.ovl = S.ovl===D.bopen ? null : D.bopen; render(); return; }
   if (b.hasAttribute('data-oclose')){ S.ovl = null; render(); return; }
   if (D.bpick){ if (pid==='boards') return; setTok(Q[pid] ? pid : 'agenda', 'board', D.bpick); S.ovl = null; render(); return; }
-  if (D.wa){ if (pid==='wa') return; const ph2 = D.wa==='result' ? 'agenda' : pid;
-    S.wa = D.wa==='result' ? { pid:'agenda', kind:'result', g:D.g, b:'soup' } : D.wa==='minutes' ? { pid:ph2, kind:'minutes', g:B(S.board).games.includes(S.mgame)?S.mgame:B(S.board).games[0], d:cur(S.mgame)-(S.mpuz==='previous'?1:0), b:S.board } : { pid:ph2, kind:'review', q:Q[ph2], b:Q[ph2].board };
+  if (D.wa){ if (pid==='wa') return;
+    S.wa = D.wa==='result' ? { pid:'agenda', kind:'result', g:D.g, b:'soup' } : D.wa==='minutes' ? { pid, kind:'minutes', g:B(S.board).games.includes(S.mgame)?S.mgame:B(S.board).games[0], d:cur(S.mgame)-(S.mpuz==='previous'?1:0), b:S.board } : { pid, kind:'review', period:Q[pid].period, b:Q[pid].board };
     if (D.wa==='result') S.toast = null; render(); return; }
   if (b.hasAttribute('data-waclose')){ S.wa = null; render(); return; }
   if (b.hasAttribute('data-wacopy')){ if (pid!=='wa'){ S.wa = null; toast('copied for whatsapp', null); render(); } return; }
   if (b.hasAttribute('data-wago')){ if (pid!=='wa'){ S.wa = null; toast('opening whatsapp…', null); render(); } return; }
-  if (D.period && Q[pid]){ Q[pid].period = D.period; Q[pid].sel = null; render(); return; }
-  if (D.game && Q[pid]){ setTok(pid, 'game', D.game); render(); return; }
-  if (D.stat && Q[pid]){ Q[pid].stat = D.stat; Q[pid].sel = null; render(); return; }
-  if (D.col!=null && Q[pid]){ const i = +D.col; Q[pid].sel = Q[pid].sel===i ? null : i; render(); return; }
-  if (D.cmp && Q[pid]){ const c = Q[pid].cmp, i = c.indexOf(D.cmp); if (i>=0) c.splice(i,1); else { c.push(D.cmp); if (c.length>3) c.shift(); } render(); return; }
-  if (D.cmpclear){ Q[D.cmpclear].cmp = []; render(); return; }
-  if (D.memo!=null && Q[pid]){ const m = memosFor(Q[pid])[+D.memo]; if (m){ setQ(pid, JSON.parse(JSON.stringify(m.q))); render(); } return; }
-  if (D.feed!=null){ const m = feed(S.mboard)[+D.feed]; if (m){ setQ('ra', JSON.parse(JSON.stringify(m.q))); render(); goto('ra'); } return; }
+  if (D.period && Q[pid]){ Q[pid].period = D.period; render(); return; }
+  if (D.open && Q[D.open]){ Q[D.open].open = !Q[D.open].open; render(); return; }
+  if (D.open2 && Q[D.open2]){ Q[D.open2].open2 = !Q[D.open2].open2; render(); return; }
+  if (D.vs!=null){ S.game.vs = D.vs || null; render(); return; }
   if (b.hasAttribute('data-file')){ fileNow(); return; }
   if (b.hasAttribute('data-undo')){ undo(); return; }
   if (b.hasAttribute('data-ban')){ S.ban = null; clearTimeout(banT); render(); return; }
   if (b.hasAttribute('data-back')){ S.text = SAMPLES[S.back] || ''; fileNow(); return; }
-  if (b.hasAttribute('data-golib')){ S.libv = 'board'; render(); goto('library'); return; }
   if (D.play){ S.back = D.play; S.text = ''; toast('opening '+GAMES[D.play].n+'… come back after you play', null); render(); return; }
   if (D.played){ const g = D.played; S.text = ''; S.back = null; fileValues([[g, cur(g), 'p', null]], 'filed '+GAMES[g].n+' as played → '+boardsWith(g).map(x=>B(x).n).join(', ')); return; }
   if (D.late){ const g = D.late; fileValues([[g, cur(g)-1, 'p', 'filed late']], 'filed '+GAMES[g].n+' '+pkey(g,cur(g)-1)+' late'); return; }
   if (D.amend){ const g = D.amend, d = cur(g)-(S.mpuz==='previous'?1:0); STAMP['you|'+g+'|'+d] = 'amended'; toast('paste the corrected result on the agenda · marked amended', null); render(); return; }
-  if (D.mg){ S.mgame = D.mg; S.mpuz = S.puz; render(); goto('minutes'); return; }
-  if (D.mine){ const g = D.mine; AG[S.board].you.push(g); dirty(); toast('added '+GAMES[g].n+' to your agenda', null); render(); return; }
-  if (D.unmine){ const g = D.unmine; AG[S.board].you = AG[S.board].you.filter(x=>x!==g); dirty(); toast('took '+GAMES[g].n+' off your agenda · your history stays', null); render(); return; }
-  if (D.add || D.adopt){ const name = D.add || D.name, id = name.replace(/\s+/g,'');
+  if (D.mine){ const g = D.mine; AG[S.seatb].you.push(g); dirty(); toast('added '+GAMES[g].n+' to your games', null); render(); return; }
+  if (D.unmine){ const g = D.unmine; AG[S.seatb].you = AG[S.seatb].you.filter(x=>x!==g); dirty(); toast('took '+GAMES[g].n+' off your games · your history stays', null); render(); return; }
+  if (D.adopt){ const name = D.name, id = D.adopt;
     if (!GAMES[id]) GAMES[id] = mkGame(id, name);
     if (!B(S.board).games.includes(id)) B(S.board).games.push(id);
     if (!AG[S.board].you.includes(id)) AG[S.board].you.push(id);
     if (!DATA.you[id]) DATA.you[id] = Array(N).fill(null);
-    dirty();
-    if (D.adopt){ S.text = ''; fileValues([[id, cur(id), 'p', null]], 'added '+name+' to '+B(S.board).n+' and filed it as played'); return; }
-    toast('added '+name+' to '+B(S.board).n+'\'s library and your agenda', null); render(); return; }
+    dirty(); S.text = ''; fileValues([[id, cur(id), 'p', null]], 'added '+name+' to '+B(S.board).n+' and filed it as played'); return; }
   if (b.hasAttribute('data-join')){ S.joined = true; render(); return; }
   if (b.hasAttribute('data-unjoin')){ S.joined = false; render(); return; }
-});
-document.addEventListener('pointermove', e=>{
-  if (e.pointerType==='mouse' || !e.buttons) return;
-  const el = document.elementFromPoint(e.clientX, e.clientY); const c = el && el.closest('.cols button'); if (!c) return;
-  const pid = c.dataset.pid, i = +c.dataset.col; if (Q[pid] && Q[pid].sel!==i){ Q[pid].sel = i; render(); }
 });
 
 renderView(); render();

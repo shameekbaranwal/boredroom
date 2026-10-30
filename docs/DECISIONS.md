@@ -154,3 +154,16 @@ See docs/UX-NOTES.md for the functional requirements that came with this.
 - **Agenda and reset clock lead the UI;** review stays central.
 - **Voice:** "board" stays the word; "bored" only in a few spots (Boredroom, the daily
   bored meeting).
+
+## 2026-10-30 — Navigation and review, second pass
+
+- **Three tabs: agenda · review · you.** Minutes, a single game, and the daily bored
+  meeting open as one temporary tab from whatever you tapped (a row, a memo, a record).
+  The library ("your games") and the chair's board settings live under "you".
+- **Home = agenda:** open games by time to reset, then the top three memos, then what
+  you've filed with your place on each.
+- **Memos are sheet rows:** a glyph for the kind, who, one line, the number that matters.
+- **Review shows today and all time only.** Week and month stay reachable as values of
+  the period token in the formula bar. Charts and the member × day grid are gone; a
+  game opens as a drill-in (ranking by average, head-to-head, a 30-day strip).
+- **Chair settings** need another pass later.
