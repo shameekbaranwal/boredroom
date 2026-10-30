@@ -1,0 +1,17 @@
+import { go } from '../router'
+import { Overlay, useApp } from '../ui'
+
+export default function Boards({ current, onClose }: { current: string; onClose: () => void }) {
+  const { me } = useApp()
+  return (
+    <Overlay title="your boards" onClose={onClose}>
+      {me.boards.map(b => (
+        <button key={b.slug} className={`bopt${b.slug === current ? ' on' : ''}`} onClick={() => { onClose(); go(`/b/${b.slug}`) }}>
+          <span style={{ flex: 1 }}><b>{b.name}</b><div className="sub">as {b.nickname}{b.role === 'chair' ? ' · chair' : ''}</div></span>
+        </button>
+      ))}
+      <button className="bopt" onClick={() => { onClose(); go('/new') }}><b style={{ color: 'var(--accent)' }}>+ start a board</b></button>
+      <div className="ph-h" style={{ borderBottom: 0, fontWeight: 400 }}>to join one, open its invite link.</div>
+    </Overlay>
+  )
+}

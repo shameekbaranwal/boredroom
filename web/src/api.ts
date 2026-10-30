@@ -1,0 +1,91 @@
+// The JSON API (/api/v1, docs/SERVER.md part 5). One bearer token per seat, kept in
+// localStorage; the server is always same-origin (Vite proxies it in development).
+
+export type Kind = 'guest' | 'account' | 'placeholder'
+export type BoardRef = { slug: string; name: string; nickname: string; role: string }
+export type Me = { username: string; kind: Kind; tz: string; email: string | null; boards: BoardRef[] }
+export type Metric = { name: string; kind: string; better: 'high' | 'low'; max: number | null; unit: string | null }
+export type Game = { id: string; name: string; key: string; ranked: boolean; links: string[]; ranker: string[]; metrics: Metric[] }
+export type Field = { name: string; value: unknown; visibility: 'public' | 'detail' | 'spoiler' }
+
+export type Row = {
+  id: number | null; nickname: string; me: boolean; place: string; puzzle: string
+  outcome: 'solved' | 'failed' | 'played'; metrics: Record<string, number>; highlights: string[]
+  late: boolean; amended: boolean; fields: Field[]; hidden: number; comment: string
+  raw: string | null; forward: string | null; filed_at: string
+}
+export type Item = {
+  game: string; name: string; ranked: boolean; links: string[]; day: string; puzzle: string | null
+  resets_at: string; filed: boolean; place: string; present: number; players: number; filed_by: string[]
+  leader: { nickname: string | null; tied: number; metrics: Record<string, number> } | null
+  mine: Row | null
+}
+export type Today = { now: string; items: Item[] }
+export type Minutes = {
+  game: string; name: string; ranked: boolean; day: string; current: boolean; resets_at: string | null
+  open: boolean; rows: Row[]; not_in: string[]
+}
+export type Member = { nickname: string; username: string; role: string; kind: Kind; games: number }
+export type Board = {
+  slug: string; name: string; settings: Record<string, unknown>; invite_code: string
+  you: { nickname: string; role: string; agenda: string[] }
+  members: Member[]
+  library: { game: string; name: string; rules: Record<string, unknown>; players: number }[]
+}
+export type Invite = { name: string; slug: string; chair: string | null; members: number; library: string[] }
+export type Event = {
+  kind: 'filed' | 'merged' | 'duplicate' | 'conflict' | 'not_out_yet'
+  game: string; puzzle: string; result_id: number | null; added: string[]; confidence: string; late: boolean
+}
+export type Unknown = { name: string; link: string | null; score: string | null; raw: string }
+export type Filing = { paste_id: number; events: Event[]; unknown: Unknown[]; note: string }
+
+const TOKEN = 'boredroom.token'
+
+export function token(): string | null {
+  try { return localStorage.getItem(TOKEN) } catch { return null }
+}
+export function setToken(t: string | null) {
+  try { if (t) localStorage.setItem(TOKEN, t); else localStorage.removeItem(TOKEN) } catch { /* private mode */ }
+}
+
+export class ApiError extends Error {
+  status: number
+  constructor(status: number, message: string) { super(message); this.status = status }
+}
+
+async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = {}
+  const t = token()
+  if (t) headers.Authorization = `Bearer ${t}`
+  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  const r = await fetch(`/api/v1${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
+  const data = await r.json().catch(() => ({}))
+  if (!r.ok) throw new ApiError(r.status, data.error ?? `the server said ${r.status}`)
+  return data as T
+}
+
+const tz = () => Intl.DateTimeFormat().resolvedOptions().timeZone
+
+export const api = {
+  config: () => call<{ google_client_id: string | null }>('GET', '/config'),
+  games: () => call<Game[]>('GET', '/games'),
+  me: () => call<Me>('GET', '/me'),
+  updateMe: (b: Partial<{ tz: string; username: string }>) => call<Me>('PATCH', '/me', b),
+  guest: (username?: string) => call<{ token: string; me: Me }>('POST', '/guests', { username, tz: tz() }),
+  google: (credential: string) => call<{ token: string; created: boolean; me: Me }>('POST', '/auth/google', { credential, tz: tz() }),
+  signOut: () => call<{ signed_out: boolean }>('POST', '/auth/signout'),
+  newBoard: (name: string) => call<Board>('POST', '/boards', { name }),
+  invite: (code: string) => call<Invite>('GET', `/invites/${encodeURIComponent(code)}`),
+  join: (code: string) => call<Board>('POST', '/boards/join', { code }),
+  board: (slug: string) => call<Board>('GET', `/boards/${slug}`),
+  nickname: (slug: string, nickname: string) => call<Board>('PATCH', `/boards/${slug}/me`, { nickname }),
+  agenda: (slug: string, game: string, on: boolean) => call<Board>(on ? 'PUT' : 'DELETE', `/boards/${slug}/agenda/${game}`),
+  claim: (slug: string, username: string) => call<{ moved: number; board: Board }>('POST', `/boards/${slug}/claim`, { username }),
+  today: (slug: string) => call<Today>('GET', `/boards/${slug}/today`),
+  minutes: (slug: string, game: string, day?: string) =>
+    call<Minutes>('GET', `/boards/${slug}/minutes/${game}${day ? `?day=${day}` : ''}`),
+  paste: (text: string, source: 'paste' | 'share' = 'paste') => call<Filing>('POST', '/pastes', { text, source }),
+  replace: (id: number, paste_id: number) => call<unknown>('POST', `/results/${id}/replace`, { paste_id }),
+  withdraw: (id: number) => call<unknown>('DELETE', `/results/${id}`),
+}

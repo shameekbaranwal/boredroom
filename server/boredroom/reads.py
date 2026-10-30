@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from .filing import to_parsed
 from .models import Agenda, Board, Membership, Person, Result, utcnow
 from .parser import REGISTRY
+from .parser.forward import forward_text
 from .parser.rank import rank
 
 
@@ -72,6 +73,7 @@ def result_view(row: Result, nickname: str, place: str, open_: bool, me: bool) -
         "hidden": 0 if full else sum(f["visibility"] != "public" for f in row.fields),
         "comment": row.comment if full else "",
         "raw": row.raw if full else None,
+        "forward": forward_text(to_parsed(row)) if me else None,  # what "send to whatsapp" sends
         "filed_at": row.filed_at.isoformat(),
     }
 

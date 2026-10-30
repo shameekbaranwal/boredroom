@@ -75,3 +75,12 @@ def test_next_reset_for_a_local_midnight_game():
     p = Person(username="x", tz="Asia/Kolkata")
     at = reads.next_reset("wordle", p, datetime(2026, 10, 30, 20, 0, tzinfo=timezone.utc))
     assert at.isoformat() == "2026-11-01T00:00:00+05:30"
+
+
+def test_invite_preview_needs_no_sign_in(client, seat):
+    a = seat("ivan")
+    code = a.post("/boards", {"name": "soup"}).json["invite_code"]
+    a.put("/boards/soup/agenda/wiki")
+    assert client.get(f"/api/v1/invites/{code}").json == {
+        "name": "soup", "slug": "soup", "chair": "ivan", "members": 1, "library": ["wiki game"]}
+    assert client.get("/api/v1/invites/nope").status_code == 404

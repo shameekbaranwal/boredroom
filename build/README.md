@@ -11,20 +11,16 @@ the `boredroom` container on port 5077, public at boredroom.shmk.dev through the
 Cloudflare tunnel. These names stay when the content changes, so the homeserver config
 and the tunnel never need touching.
 
-**Temporary (what's in the image today):** `demo.Dockerfile` packages the early
-parser demo (`server/demo/`) for friends to try. It's not the app.
-
-## When the web app lands
-
-- `server.Dockerfile` replaces `demo.Dockerfile`: the Flask app (API, and the built
-  `web/` assets as static files) under gunicorn, still on port 5077.
-- `build-docker-image.sh` builds that instead (a web build stage if `web/` needs one).
-- Delete `demo.Dockerfile`, its `.dockerignore`, and `server/demo/`.
+**What's in it:** `server.Dockerfile` builds `web/` in a node stage, then packages the
+Flask app (the API, serving the built web app with an index.html fallback) under
+gunicorn on 5077. It runs `alembic upgrade head` before starting. The database is the
+`boredroom-db` container (postgres:16), configured in the homeserver repo.
 
 ## Files
 
 | file | what |
 |---|---|
 | `build-docker-image.sh` | builds `boredroom:latest`; `bea build boredroom` runs it |
-| `demo.Dockerfile` | temporary: the parser demo image (context `server/`) |
-| `demo.Dockerfile.dockerignore` | docker reads it from beside the Dockerfile |
+| `server.Dockerfile` | the app image (context: the repo root) |
+| `server.Dockerfile.dockerignore` | docker reads it from beside the Dockerfile |
+| `dev-db.sh` | the development postgres container (start, stop, reset) |

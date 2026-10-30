@@ -14,7 +14,7 @@ from . import boards, claims, filing, reads
 from . import auth
 from .auth import auth_required, create_guest, valid_tz, USERNAME
 from .errors import fail
-from .models import Membership, Person, Result
+from .models import Board, Membership, Person, Result
 from .parser import REGISTRY
 
 api = Blueprint("api", __name__, url_prefix="/api/v1")
@@ -129,6 +129,18 @@ def new_board():
     g.db.commit()
     m = g.db.get(Membership, (board.id, g.person.id))
     return jsonify(boards.board_json(g.db, board, m)), 201
+
+
+@api.get("/invites/<code>")
+def invite(code):
+    """What an invitation shows before you join. No sign-in needed: the code is the key."""
+    board = g.db.scalar(select(Board).where(Board.invite_code == code))
+    if board is None:
+        fail(404, "that invite link doesn't work")
+    live = [m for m in board.memberships if m.left_at is None]
+    chair = next((m.nickname for m in live if m.role == "chair"), None)
+    return jsonify({"name": board.name, "slug": board.slug, "chair": chair, "members": len(live),
+                    "library": [REGISTRY[bg.game_id].name for bg in sorted(board.library, key=lambda b: b.game_id)]})
 
 
 @api.post("/boards/join")
