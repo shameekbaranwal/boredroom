@@ -12,3 +12,5 @@ class Config:
     database_url: str = os.environ.get("DATABASE_URL", DEV_DATABASE_URL)
     default_tz: str = os.environ.get("BOREDROOM_DEFAULT_TZ", "Asia/Kolkata")
     max_paste_bytes: int = 256 * 1024
+    # sign-in only needs the client id; the client secret is never read
+    google_client_id: str | None = os.environ.get("GOOGLE_OAUTH_CLIENT_ID") or None

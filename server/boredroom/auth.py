@@ -1,10 +1,11 @@
-"""Bearer tokens, one per seat. Guests get one from POST /api/v1/guests; Google sign-in
-will mint them the same way once the OAuth client exists (docs/SERVER.md choice 2)."""
+"""Bearer tokens, one per seat. Guests get one from POST /api/v1/guests, accounts from
+POST /api/v1/auth/google, which checks a Google ID token (docs/SERVER.md choice 2)."""
 from __future__ import annotations
 
 import hashlib
 import re
 import secrets
+from dataclasses import dataclass
 from functools import wraps
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -52,18 +53,82 @@ def create_guest(s: Session, username: str | None, tz: str, device: str | None =
     return person, issue_token(s, person, device)
 
 
+def bearer() -> str:
+    header = request.headers.get("Authorization", "")
+    return header[7:].strip() if header.lower().startswith("bearer ") else ""
+
+
+def token_row(s: Session, token: str) -> AuthToken | None:
+    return s.scalar(select(AuthToken).where(AuthToken.token_hash == hash_token(token))) if token else None
+
+
 def auth_required(view):
     """Sets g.person from the Authorization: Bearer header, or answers 401."""
     @wraps(view)
     def wrapped(*args, **kwargs):
-        header = request.headers.get("Authorization", "")
-        token = header[7:].strip() if header.lower().startswith("bearer ") else ""
+        token = bearer()
         if not token:
             fail(401, "sign in first")
-        row = g.db.scalar(select(AuthToken).where(AuthToken.token_hash == hash_token(token)))
+        row = token_row(g.db, token)
         if row is None:
             fail(401, "that token isn't valid")
         row.last_seen = utcnow()
-        g.person = row.person
+        g.person, g.token = row.person, row
         return view(*args, **kwargs)
     return wrapped
+
+
+# -- google ----------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class GoogleId:
+    sub: str
+    email: str
+    name: str | None
+
+
+def verify_google(credential: str, client_id: str) -> GoogleId:
+    """Checks a Google ID token's signature, audience, issuer and expiry."""
+    from google.auth.transport import requests as google_requests
+    from google.oauth2 import id_token
+
+    try:
+        claims = id_token.verify_oauth2_token(credential, google_requests.Request(), client_id)
+    except ValueError:
+        fail(401, "google didn't vouch for that sign-in; try again")
+    if not claims.get("email_verified"):
+        fail(401, "that google account's email isn't verified")
+    return GoogleId(claims["sub"], claims["email"].lower(), claims.get("name"))
+
+
+def username_for(s: Session, email: str) -> str:
+    """The email's local part, cleaned up, with a number added if it's taken."""
+    base = re.sub(r"[^a-z0-9_.-]", "", email.split("@")[0].lower()).lstrip("._-")[:26]
+    if len(base) < 2:
+        base = "member"
+    name, n = base, 1
+    while s.scalar(select(Person.id).where(Person.username == name)):
+        n += 1
+        name = f"{base}{n}"
+    return name
+
+
+def sign_in_google(s: Session, who: GoogleId, tz: str, seat: Person | None,
+                   device: str | None = None) -> tuple[Person, str, bool]:
+    """Finds the account for this google id, or makes one: from the guest seat if one is
+    signed in (keeping its history), else fresh. Returns (person, token, created)."""
+    person = s.scalar(select(Person).where(Person.google_sub == who.sub))
+    created = False
+    if person is None:
+        if seat is not None and seat.kind == "guest":
+            person = seat
+        else:
+            if not valid_tz(tz):
+                fail(400, f"unknown timezone {tz}")
+            person = Person(username=username_for(s, who.email), tz=tz)
+            s.add(person)
+            created = True
+        person.kind, person.google_sub = "account", who.sub
+    person.email = who.email
+    s.flush()
+    return person, issue_token(s, person, device), created

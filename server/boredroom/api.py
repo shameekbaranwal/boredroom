@@ -10,6 +10,7 @@ from flask import Blueprint, current_app, g, jsonify, request
 from sqlalchemy import select
 
 from . import boards, filing
+from . import auth
 from .auth import auth_required, create_guest, valid_tz, USERNAME
 from .errors import fail
 from .models import Membership, Person, Result
@@ -30,7 +31,7 @@ def body() -> dict[str, Any]:
 def me_json(p: Person) -> dict[str, Any]:
     live = [m for m in p.memberships if m.left_at is None]
     return {
-        "username": p.username, "kind": p.kind, "tz": p.tz,
+        "username": p.username, "kind": p.kind, "tz": p.tz, "email": p.email,
         "boards": [{"slug": m.board.slug, "name": m.board.name, "nickname": m.nickname, "role": m.role}
                    for m in sorted(live, key=lambda m: m.board.name)],
     }
@@ -45,6 +46,41 @@ def new_guest():
     person, token = create_guest(g.db, b.get("username"), tz, request.headers.get("User-Agent", "")[:200])
     g.db.commit()
     return jsonify({"token": token, "me": me_json(person)}), 201
+
+
+@api.get("/config")
+def client_config():
+    """What a client needs before signing in. The google client id is public by design."""
+    return jsonify({"google_client_id": current_app.config["BOREDROOM"].google_client_id})
+
+
+@api.post("/auth/google")
+def google_sign_in():
+    """{credential: <google id token>, tz?}. Signed in as a guest, the seat becomes the
+    account (history kept); otherwise it signs in to, or creates, the google account."""
+    client_id = current_app.config["BOREDROOM"].google_client_id
+    if not client_id:
+        fail(503, "google sign-in isn't set up on this server")
+    b = body()
+    credential = b.get("credential")
+    if not isinstance(credential, str) or not credential:
+        fail(400, "send the google credential")
+    verify = current_app.config.get("GOOGLE_VERIFY", auth.verify_google)  # swapped in tests
+    who = verify(credential, client_id)
+    row = auth.token_row(g.db, auth.bearer())
+    tz = b.get("tz") or current_app.config["BOREDROOM"].default_tz
+    person, token, created = auth.sign_in_google(
+        g.db, who, tz, row.person if row else None, request.headers.get("User-Agent", "")[:200])
+    g.db.commit()
+    return jsonify({"token": token, "created": created, "me": me_json(person)}), 201 if created else 200
+
+
+@api.post("/auth/signout")
+@auth_required
+def sign_out():
+    g.db.delete(g.token)
+    g.db.commit()
+    return jsonify({"signed_out": True})
 
 
 @api.get("/me")
