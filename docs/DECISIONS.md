@@ -122,3 +122,35 @@ Sample data uses the board "soup daily" with members ivan and judy.
     becomes CSS variables on web and a Compose theme on Android.
 
 See docs/UX-NOTES.md for the functional requirements that came with this.
+
+## 2026-10-30 — From the soup chat (see docs/CHAT-FINDINGS.md)
+
+- **"Today" is per game:** a game's today is the user's current puzzle for it. Minutes,
+  presence and review group by puzzle key, not calendar date. The agenda shows a live
+  reset countdown per item and sorts open items by time to reset.
+- **Your agenda vs the board's library:** each member picks the games they play from
+  the board's library. Presence counts only members who play that game ("3/3 present").
+- **Visibility:** scores, standings and presence are public before you file (the bait).
+  Gameplay details (grids, routes, clues, paths) unlock once you've filed that puzzle.
+  The parser marks which fields are details and which are spoilers per game (cryptic
+  clue and wiki route are; the strands theme isn't).
+- **Ranking:** each game has a ranker (metrics in order, direction, tiebreaks). Some
+  games have no score; they count as played and produce no wins. Ties share a rank.
+- **Cross-game standing:** daily wins (games you placed #1 in). No per-game weights.
+  Review, minutes and memos are modular (rankers, views as queries, memos as
+  independent rules) so this can change drastically later.
+- **Review defaults to today.**
+- **Filing:** late filing and editing your own result are allowed. Re-filing a puzzle
+  asks to replace. Results show "filed late" / "amended".
+- **Names:** a nickname per board, defaulting to the username.
+- **WhatsApp stays the place for talk.** Boredroom-first, then forward: after filing,
+  "send to soup" passes the original text on. Minutes can be shared to WhatsApp for
+  one result, one game, or the review so far.
+- **Chair rules per game** (ranked or logged, tiebreak order, spoilers, late filing),
+  with sensible defaults.
+- **Memos stay simple:** standings, highlights (krill, perfect, personal best), later
+  records and rivalries.
+- **Chat-export import** is an internal tool for seeding soup, not a user feature yet.
+- **Agenda and reset clock lead the UI;** review stays central.
+- **Voice:** "board" stays the word; "bored" only in a few spots (Boredroom, the daily
+  bored meeting).
