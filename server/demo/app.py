@@ -1,4 +1,5 @@
-"""Paste-box demo for the parser.
+"""Paste-box demo for the parser. TEMPORARY: an early demo for friends, deployed
+until the real web app replaces it (see build/README.md).
 
     cd server && uv run python demo/app.py [--host 0.0.0.0] [--port 5077]
 

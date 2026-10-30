@@ -16,9 +16,9 @@ server/          Flask backend (a uv project)
   boredroom/     the package; parser/ turns pasted share texts into results
   tests/         server tests, including a regression run over the chat export
   scripts/       dev scripts (corpus.py: measure the parser against an export)
-  demo/          paste-box playground for the parser
+  demo/          early paste-box demo (temporary: deployed until the web app replaces it)
 web/             the PWA frontend (not started); its tests live inside it
-build/           Dockerfiles and build scripts
+build/           Dockerfiles and build scripts (see build/README.md)
 tests/           end-to-end tests across server and web (none yet)
 docs/            decisions, specs, UX
 research/        private source material (gitignored)
@@ -33,7 +33,8 @@ uv run python demo/app.py              # demo at http://127.0.0.1:5077
 
 **Deploy (homeserver):** `bea build boredroom` builds `boredroom:latest` via
 `build/build-docker-image.sh`. It runs as the `boredroom` service in yams on port 5077
-(172.60.0.60), public at boredroom.shmk.dev through the Cloudflare tunnel.
+(172.60.0.60), public at boredroom.shmk.dev through the Cloudflare tunnel. Today that
+image is the early parser demo; the web app replaces it behind the same name and port.
 
 - [`docs/ux/boredroom-ux.html`](docs/ux/boredroom-ux.html) — design philosophy, UX
   requirements, core flows and screen mockups (also published as an artifact)

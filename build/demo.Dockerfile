@@ -1,5 +1,6 @@
-# The server image: the parser demo (Flask under gunicorn) for now.
-# Build context is server/; see build-docker-image.sh.
+# TEMPORARY: the early parser demo (server/demo/, Flask under gunicorn), shared with
+# friends while the real web app is built. It goes away when the app lands; see
+# build/README.md. Build context is server/.
 FROM python:3.12-slim
 COPY --from=ghcr.io/astral-sh/uv:0.10.8 /uv /usr/local/bin/uv
 WORKDIR /app
