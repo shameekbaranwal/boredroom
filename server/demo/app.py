@@ -19,11 +19,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from boredroom.parser import REGISTRY, forward_text, merge, parse  # noqa: E402
 from boredroom.parser import games  # noqa: E402,F401
 from boredroom.parser.forward import PADDING  # noqa: E402
+from boredroom.legal import legal  # noqa: E402
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 256 * 1024  # it's public: pastes are small
 HERE = Path(__file__).resolve().parent
 MAX_PASTES = 100
+app.register_blueprint(legal)  # /privacy and /terms, kept when the app replaces the demo
 
 
 @app.get("/health")

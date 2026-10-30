@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }} · boredroom</title>
+<style>
+:root { --bg:#ffffff; --fg:#1d1f1e; --muted:#626866; --line:#dcdfdc; --accent:#217346; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0b0f19; --fg:#e6e9f2; --muted:#8f98ad; --line:#232b3f; --accent:#5ee6a8; color-scheme:dark; } }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 "Helvetica Neue", Arial, sans-serif; padding:32px max(16px, env(safe-area-inset-left, 0px)) 64px; }
+main { max-width:680px; margin:0 auto; }
+h1 { font-size:28px; margin:0 0 4px; }
+h2 { font-size:18px; margin:28px 0 6px; padding-top:14px; border-top:1px solid var(--line); }
+p, li { margin:6px 0; }
+.muted { color:var(--muted); font-size:14px; }
+a { color:var(--accent); }
+nav { margin-bottom:24px; font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+<nav><a href="/">boredroom</a> · <a href="/privacy">privacy</a> · <a href="/terms">terms</a></nav>
+{{ body }}
+</main>
+</body>
+</html>

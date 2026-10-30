@@ -8,6 +8,7 @@ from . import errors
 from .api import api
 from .config import Config
 from .db import make_engine, make_sessionmaker
+from .legal import legal
 
 
 def create_app(config: Config | None = None, engine: Engine | None = None) -> Flask:
@@ -37,4 +38,5 @@ def create_app(config: Config | None = None, engine: Engine | None = None) -> Fl
 
     errors.register(app)
     app.register_blueprint(api)
+    app.register_blueprint(legal)
     return app
