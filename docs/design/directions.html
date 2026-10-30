@@ -1,0 +1,939 @@
+<title>Boredroom Design Directions</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;800;900&family=Zilla+Slab:wght@600;700&family=Carlito:wght@400;700&family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Manrope:wght@400;600;800&family=Space+Grotesk:wght@400;500;700&display=swap">
+<style>
+/* Layout: brief, a layout × finish matrix of the twelve directions, a contact sheet of agendas, then the
+   live bench (seven screens, a working pasteboard and simulated board activity). Page chrome stays neutral;
+   every phone carries its own direction's tokens, plus an "alt" token set for its light/dark pair. */
+:root {
+  --bg: #f3f3f0; --fg: #1b1c1d; --muted: #66696c; --line: #d8d9d4; --card: #ffffff; --accent: #2f7a3b; --accent-soft: rgba(47,122,59,.12);
+  --f-ui: "Libre Franklin", "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #131415; --fg: #ececE8; --muted: #9da0a3; --line: #2d2f32; --card: #1b1c1e; --accent: #7cc374; --accent-soft: rgba(124,195,116,.14); color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #131415; --fg: #ececE8; --muted: #9da0a3; --line: #2d2f32; --card: #1b1c1e; --accent: #7cc374; --accent-soft: rgba(124,195,116,.14); color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 90px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 64px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.intro { display: flex; flex-direction: column; gap: 14px; max-width: 760px; }
+.intro h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 900; letter-spacing: -.02em; line-height: 1.08; }
+.intro p { font-size: 18px; }
+.muted { color: var(--muted); }
+section { display: flex; flex-direction: column; gap: 20px; }
+section > h2 { font-size: 28px; font-weight: 900; letter-spacing: -.01em; }
+.lede { max-width: 720px; }
+.changes { display: flex; flex-wrap: wrap; gap: 8px; }
+.changes span { font-size: 13px; font-weight: 600; padding: 5px 11px; border-radius: 99px; border: 1.5px solid var(--line); }
+.changes .k { border-color: var(--accent); } .changes .x { color: var(--muted); text-decoration: line-through; }
+
+/* matrix */
+.mx-wrap { overflow-x: auto; }
+.mx { display: grid; grid-template-columns: 150px repeat(4, minmax(130px, 1fr)); gap: 6px; min-width: 700px; }
+.mx > div { padding: 10px 12px; border-radius: 10px; font-size: 14px; min-width: 0; }
+.mx .h { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-bottom: 2px; }
+.mx .rh { font-weight: 800; font-size: 14px; display: flex; align-items: center; }
+.mx .c { background: var(--card); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.mx .c.e { background: transparent; border-style: dashed; color: var(--muted); }
+.mx button { font: inherit; font-size: 14px; font-weight: 700; text-align: left; background: none; border: 0; padding: 0; color: var(--fg); cursor: pointer; display: flex; gap: 8px; align-items: center; }
+.mx button:hover { color: var(--accent); }
+.mx button i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.mx button small { color: var(--muted); font-weight: 600; }
+
+/* contact sheet */
+.sheet-top { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; }
+.sheet { display: grid; grid-template-columns: repeat(auto-fill, minmax(262px, 1fr)); gap: 36px 22px; }
+.card { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.card .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.card h3 { font-size: 18px; font-weight: 900; }
+.card .tag { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.card .tag.kept { color: var(--accent); }
+.card p { font-size: 14px; color: var(--muted); }
+.open { align-self: flex-start; font: inherit; font-size: 13px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border: 0; padding: 6px 12px; border-radius: 99px; cursor: pointer; }
+.open:focus-visible, .sw-btn:focus-visible, .try:focus-visible, .modes button:focus-visible, .mx button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.modes { display: inline-flex; border: 1.5px solid var(--line); border-radius: 99px; padding: 2px; gap: 2px; }
+.modes button { font: inherit; font-size: 13px; font-weight: 700; padding: 5px 12px; border-radius: 99px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.modes button.on { background: var(--fg); color: var(--bg); }
+
+/* bench */
+.bench { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+@media (max-width: 560px) { .bench { padding: 16px; border-radius: 14px; } }
+.switch { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.sw-btn { flex: none; font: inherit; font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 99px; border: 1.5px solid var(--line); background: transparent; color: var(--fg); cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.sw-btn i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.sw-btn.on { border-color: var(--fg); background: var(--fg); color: var(--bg); }
+.binfo { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px 32px; }
+@media (max-width: 820px) { .binfo { grid-template-columns: 1fr; } }
+.binfo h2 { font-size: 26px; font-weight: 900; }
+.binfo .pitch { font-size: 16px; margin-top: 6px; }
+.facts { display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+.facts .k { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.swatch { display: flex; gap: 5px; flex-wrap: wrap; } .swatch span { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--line); }
+.ctl { display: flex; flex-direction: column; gap: 8px; }
+.tries { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; }
+.tries .lab { color: var(--muted); min-width: 92px; font-weight: 600; }
+.try { font: inherit; font-size: 13px; padding: 5px 11px; border-radius: 8px; border: 1px dashed var(--muted); background: transparent; color: var(--fg); cursor: pointer; }
+.try:hover { border-style: solid; }
+.try.sim { border-style: solid; border-color: var(--line); background: var(--accent-soft); }
+.todo-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 4px 20px; font-size: 13px; color: var(--muted); padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; }
+.todo-list b { color: var(--fg); }
+.screens { display: flex; gap: 22px; overflow-x: auto; padding: 4px 2px 12px; scroll-snap-type: x proximity; }
+.shot { flex: none; display: flex; flex-direction: column; gap: 8px; scroll-snap-align: start; }
+.shot .cap { font-size: 13px; color: var(--muted); font-weight: 600; max-width: 252px; }
+.shot .cap b { color: var(--fg); display: block; }
+.motion { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.motion div { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.motion b { font-size: 15px; } .motion span { font-size: 14px; color: var(--muted); }
+.next { border-left: 6px solid var(--accent); background: var(--card); padding: 22px 24px; display: flex; flex-direction: column; gap: 10px; max-width: 780px; border-radius: 0 12px 12px 0; }
+.next h2 { font-size: 24px; font-weight: 900; }
+
+/* ============ phone + shared components (every direction re-skins these via tokens) ============ */
+.ph { --r: 10px; --tr: 6px; --pr: 99px; --br: 99px; --gap: 10px; --frame: rgba(0,0,0,.14); --ring: rgba(0,0,0,.08);
+  width: 252px; max-width: 100%; aspect-ratio: 9 / 19.5; border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; position: relative;
+  background: var(--p-bg); color: var(--ink); font-family: var(--fb); font-size: 12px; line-height: 1.35; border: 1px solid var(--frame);
+  box-shadow: 0 12px 30px -18px rgba(0,0,0,.35); transition: opacity .2s ease; }
+.ph, .ph * { text-transform: lowercase !important; }
+.ph.fade { opacity: 0; }
+.grain::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5; background-image: radial-gradient(var(--grain) 1px, transparent 1.2px); background-size: 4px 4px; }
+.sb { display: flex; justify-content: space-between; padding: 10px 20px 4px; font-size: 10px; font-weight: 700; opacity: .8; font-family: var(--fn); }
+.hd { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 6px 16px 10px; border-bottom: var(--hd-b, 1px solid var(--line)); }
+.hd .t { font-family: var(--fh); font-weight: var(--hw, 800); font-size: var(--hs, 21px); letter-spacing: var(--hls, -.01em); line-height: 1.05; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hd .m { font-size: 10.5px; color: var(--muted); white-space: nowrap; font-family: var(--fn); }
+.bd { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; padding: 10px 14px; display: flex; flex-direction: column; gap: var(--gap); }
+.nav { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; font-size: 9.5px; padding: 8px 4px 14px; border-top: var(--nav-b, 1px solid var(--line)); color: var(--muted); font-weight: 600; }
+.nav span { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.nav span::before { content: ""; width: 15px; height: 15px; border: 1.6px solid currentColor; border-radius: var(--tr); opacity: .9; }
+.nav .on { color: var(--ink); font-weight: 800; }
+.nav .on::before { background: currentColor; }
+button { font: inherit; }
+
+/* pasteboard */
+.pb { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--pb-bg, var(--surface)); border: var(--pb-b, 1px solid var(--line)); border-radius: var(--r); color: var(--muted); transition: border-color .2s, box-shadow .2s; }
+.pb:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+.pb svg { width: 14px; height: 14px; flex: none; }
+.pb textarea { flex: 1; min-width: 0; border: 0; background: transparent; resize: none; font: inherit; color: var(--ink); outline: none; height: 17px; line-height: 17px; padding: 0; overflow: hidden; white-space: nowrap; }
+.pb textarea::placeholder, .pb .ph-t { color: var(--muted); opacity: 1; }
+.pb .ph-t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pb .ph-t.filled { color: var(--ink); opacity: .55; }
+.pb .kbd { font-size: 9.5px; border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; font-family: var(--fn); white-space: nowrap; color: var(--muted); background: transparent; line-height: 15px; }
+.pb button.kbd { cursor: pointer; } .pb button.kbd:hover { color: var(--ink); border-color: var(--ink); }
+.sug { display: flex; gap: 5px; align-items: center; font-size: 10.5px; color: var(--muted); padding: 0 2px; margin-top: -4px; animation: rise .25s ease-out both; min-width: 0; }
+.sug b { color: var(--ink); font-weight: 700; white-space: nowrap; }
+.sug .go { margin-left: auto; color: var(--accent); font-weight: 800; background: none; border: 0; padding: 0; cursor: pointer; font-size: 10.5px; white-space: nowrap; }
+.out { display: flex; flex-direction: column; gap: 6px; }
+.out:empty { display: none; }
+.pc { border: var(--card-b, 1px solid var(--line)); background: var(--card-bg, var(--p-bg)); border-radius: var(--r); padding: 9px 10px; display: flex; flex-direction: column; gap: 7px; animation: rise .2s ease-out both; }
+.pc-h { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.pc-h > div { min-width: 0; }
+.pc-h b { display: block; font-size: 12.5px; }
+.pc-h small { color: var(--muted); font-size: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font-size: 10.5px; padding: 2px 7px; border-radius: var(--pr); background: var(--surface); border: 1px solid var(--line); white-space: nowrap; font-family: var(--fn); color: var(--ink); }
+.chip.badge { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+button.chip { cursor: pointer; }
+button.chip:hover { border-color: var(--accent); }
+.gridp { font-size: 10px; line-height: 1.12; letter-spacing: .5px; white-space: pre; }
+.gridp.mini { font-size: 7.5px; letter-spacing: 0; }
+.blur { filter: blur(3.5px); user-select: none; cursor: pointer; }
+.pc-a { display: flex; gap: 8px; align-items: center; }
+.btn { background: var(--btn, var(--ink)); color: var(--btn-ink, var(--p-bg)); border: var(--btn-b, 0); border-radius: var(--br); padding: 6px 14px; font-weight: 700; font-size: 11.5px; cursor: pointer; font-family: var(--fb); }
+.lnk { background: none; border: 0; color: var(--muted); font-size: 10.5px; text-decoration: underline; cursor: pointer; padding: 0; }
+.dup { font-size: 10.5px; color: var(--muted); padding: 0 2px; animation: rise .2s ease-out both; }
+.hint { font-size: 9.5px; color: var(--muted); font-family: var(--fn); }
+
+/* overlays: board activity banner + undo toast */
+.ban { position: absolute; left: 8px; right: 8px; top: 30px; z-index: 6; background: var(--ink); color: var(--p-bg); border-radius: calc(var(--r) + 6px); padding: 8px 11px; font-size: 10.5px; line-height: 1.3; box-shadow: 0 10px 24px -10px rgba(0,0,0,.5); animation: drop .3s ease-out both; cursor: pointer; text-align: left; border: 0; font-family: var(--fb); }
+.ban b { display: block; font-size: 11.5px; }
+.ban small { opacity: .75; font-size: 9px; display: block; margin-bottom: 2px; font-family: var(--fn); }
+.toast { position: absolute; left: 10px; right: 10px; bottom: 54px; z-index: 6; background: var(--ink); color: var(--p-bg); border-radius: var(--r); padding: 7px 10px; font-size: 10.5px; display: flex; align-items: center; gap: 8px; animation: rise .2s ease-out both; box-shadow: 0 8px 20px -10px rgba(0,0,0,.5); }
+.toast span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toast button { margin-left: auto; background: none; border: 0; color: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; font-size: 10.5px; padding: 0; }
+
+/* agenda */
+.prog { display: flex; flex-direction: column; gap: 5px; }
+.pn { font-weight: 700; font-size: 12px; font-family: var(--fb); }
+.pn b { font-weight: 800; }
+.bar { height: 6px; background: var(--surface); border-radius: var(--bar-r, 0); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--ok); transition: width .4s ease; }
+.it { --gc: var(--g1); display: flex; align-items: center; gap: 9px; min-width: 0; padding: var(--it-pad, 0); }
+.ic { width: 28px; height: 28px; flex: none; display: grid; place-items: center; font-family: var(--fh); font-weight: 800; font-size: 13px; color: var(--tile-ink, #fff); background: var(--gc); border-radius: var(--tr); position: relative; }
+.it .g { flex: 1; min-width: 0; }
+.nm { font-weight: 700; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sub { color: var(--muted); font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pill { font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: var(--pr); white-space: nowrap; font-family: var(--fn); }
+.pill.done { background: var(--ok); color: var(--ok-ink); }
+.pill.todo { border: 1.5px solid var(--ink); color: var(--ink); background: transparent; }
+button.pill { cursor: pointer; }
+button.pill.todo:hover { border-color: var(--accent); color: var(--accent); }
+.pill.wait { animation: breathe 1s ease-in-out infinite; }
+.it.just .pill { animation: pop .5s ease-out; }
+.it.just { animation: glow 1.2s ease-out; }
+.cmd { font-size: 11px; font-weight: 800; color: var(--accent); animation: pop .5s ease-out both; }
+
+/* review */
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--surface); padding: 3px; border-radius: var(--r); font-size: 10.5px; font-weight: 700; text-align: center; gap: 3px; }
+.seg button { background: transparent; border: 0; padding: 5px 0; color: var(--muted); border-radius: calc(var(--r) - 2px); cursor: pointer; font-weight: 700; font-size: 10.5px; font-family: var(--fb); }
+.seg button.on { background: var(--p-bg); color: var(--ink); box-shadow: var(--seg-sh, 0 1px 2px rgba(0,0,0,.08)); }
+.chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; height: 96px; touch-action: pan-y; }
+.day { display: flex; flex-direction: column; align-items: stretch; gap: 3px; cursor: pointer; background: transparent; border: 0; padding: 2px 1px 0; border-radius: 6px; min-width: 0; }
+.day.sel { background: var(--surface); }
+.bars { flex: 1; display: flex; align-items: flex-end; gap: 1.5px; }
+.bars i { flex: 1; background: var(--m1); border-radius: var(--bar-r, 1px) var(--bar-r, 1px) 0 0; min-height: 2px; transform-origin: bottom; transition: height .35s ease, opacity .2s; }
+.bars i:nth-child(2) { background: var(--m2); } .bars i:nth-child(3) { background: var(--m3); }
+.bars i.none { background: repeating-linear-gradient(0deg, var(--line) 0 2px, transparent 2px 4px) !important; }
+.bars i.dim { opacity: .16; }
+.day span { font-size: 9px; color: var(--muted); text-align: center; font-family: var(--fn); }
+.day.sel span { color: var(--ink); font-weight: 800; }
+.legend { display: flex; gap: 10px; font-size: 10px; color: var(--muted); }
+.legend button { background: none; border: 0; padding: 0; color: inherit; font-size: 10px; cursor: pointer; font-family: var(--fb); }
+.legend button.off { opacity: .4; }
+.legend i { display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 2px; vertical-align: -1px; }
+.det { font-size: 10.5px; color: var(--muted); min-height: 14px; font-family: var(--fn); }
+.det b { color: var(--ink); }
+.rk { display: grid; grid-template-columns: 14px 1fr auto auto; gap: 8px; align-items: center; font-variant-numeric: tabular-nums; }
+.rk .n { font-weight: 800; color: var(--muted); font-family: var(--fn); }
+.rk .t2 { font-size: 10.5px; color: var(--muted); font-family: var(--fn); }
+.rk .v { font-family: var(--fn); font-weight: 700; }
+.rk.me .nm { color: var(--accent); }
+.memo { border: var(--card-b, 1px solid var(--line)); padding: 8px 10px; border-radius: var(--r); font-size: 11.5px; font-weight: 600; }
+.memo small { display: block; color: var(--muted); font-size: 10px; font-weight: 400; }
+.memo.hot { animation: pop .5s ease-out; }
+
+/* minutes, library, you, invite */
+.mrow { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.who { display: flex; align-items: center; gap: 7px; font-weight: 700; }
+.av { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 10px; font-weight: 800; color: var(--tile-ink, #fff); background: var(--m1); flex: none; }
+.mv { font-family: var(--fn); font-size: 10.5px; font-weight: 700; }
+.lock { font-size: 10.5px; color: var(--muted); }
+.lock.nudge { color: var(--accent); font-weight: 700; animation: shake .3s ease 2; }
+.dist { display: flex; flex-direction: column; gap: 3px; font-size: 10.5px; font-family: var(--fn); }
+.dist div { display: grid; grid-template-columns: 30px 1fr; gap: 6px; align-items: center; }
+.dist span { display: block; background: var(--miss); color: var(--tile-ink, #fff); text-align: right; padding: 1px 5px; font-weight: 700; border-radius: var(--bar-r, 0); transition: width .4s ease; }
+.dist span.hl { background: var(--ok); color: var(--ok-ink); }
+.srch { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: var(--pb-b, 1px solid var(--line)); border-radius: var(--r); background: var(--pb-bg, var(--surface)); color: var(--muted); }
+.srch input { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; color: var(--ink); outline: none; padding: 0; }
+.srch input::placeholder { color: var(--muted); }
+.fch { display: flex; gap: 4px; flex-wrap: wrap; }
+.fch button { font-size: 10px; padding: 3px 8px; border: 1px solid var(--line); border-radius: var(--pr); font-weight: 600; background: transparent; color: var(--muted); cursor: pointer; font-family: var(--fb); }
+.fch .on { border-color: var(--ink); color: var(--ink); }
+.add { font-size: 10.5px; font-weight: 800; color: var(--accent); white-space: nowrap; background: none; border: 0; padding: 0; cursor: pointer; font-family: var(--fb); }
+.add:disabled { color: var(--muted); cursor: default; }
+.stat { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat > div { border: var(--card-b, 1px solid var(--line)); border-radius: var(--r); padding: 8px; min-width: 0; }
+.stat b { display: block; font-family: var(--fh); font-size: 22px; font-weight: var(--hw, 800); line-height: 1.05; }
+.stat small { color: var(--muted); font-size: 10px; display: block; }
+.stat .pop { animation: pop .5s ease-out; }
+.wk { display: flex; gap: 4px; align-items: center; }
+.wk i { width: 14px; height: 14px; border-radius: var(--tr); background: var(--surface); border: 1px solid var(--line); }
+.wk i.on { background: var(--m1); border-color: transparent; }
+.wk span { font-size: 10px; color: var(--muted); margin-left: auto; font-family: var(--fn); }
+.risk { color: var(--accent); font-weight: 700; }
+.inv { justify-content: center; gap: 12px; padding: 18px; }
+.inv .big { font-family: var(--fh); font-size: 20px; font-weight: var(--hw, 800); line-height: 1.15; animation: rise .25s ease-out both; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 10.5px; font-weight: 700; }
+.input { border: var(--pb-b, 1.5px solid var(--line)); padding: 7px 9px; border-radius: var(--r); font: inherit; font-size: 12px; background: var(--pb-bg, transparent); color: var(--ink); outline: none; width: 100%; }
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+.btn.wide { width: 100%; padding: 9px; font-size: 12.5px; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
+
+@keyframes rise { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@keyframes drop { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+@keyframes pop { 0% { transform: scale(.6); } 60% { transform: scale(1.12); } 100% { transform: none; } }
+@keyframes glow { 0% { background-color: var(--ring); } 100% { background-color: transparent; } }
+@keyframes breathe { 50% { opacity: .4; } }
+@keyframes shake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+@media (prefers-reduced-motion: reduce) { .ph *, .ph { animation: none !important; transition: none !important; } }
+
+/* ============ shared structure: spreadsheet grid (.sx) ============ */
+.sx .sb { background: var(--sx-hd); color: var(--sx-hd-ink); opacity: 1; }
+.sx .hd { background: var(--sx-hd); color: var(--sx-hd-ink); border: 0; padding: 4px 12px 8px; }
+.sx .hd .m { color: var(--sx-hd-m); }
+.sx .fx { display: flex; gap: 6px; border-bottom: 1px solid var(--sx-rule); padding: 4px 8px; font-size: 10.5px; color: var(--sx-fx-ink); background: var(--sx-fx-bg); white-space: nowrap; overflow: hidden; font-family: var(--fn); }
+.sx .fx i { color: var(--accent); font-weight: 700; }
+.sx .bd { padding: 0; counter-reset: r; }
+.sx .bd > * { position: relative; padding: 6px 10px 6px 32px; border-bottom: 1px solid var(--line); counter-increment: r; flex: none; }
+.sx .bd > *::before { content: counter(r); position: absolute; left: 0; top: 0; bottom: 0; width: 22px; background: var(--sx-gut); border-right: 1px solid var(--line); color: var(--sx-gut-ink); font-size: 9px; display: grid; place-items: center; font-family: var(--fn); }
+.sx .pb, .sx .srch { border: 0; background: transparent; border-radius: 0; box-shadow: none; }
+.sx .bd > .pbw:focus-within { outline: 2px solid var(--accent); outline-offset: -2px; }
+.sx .ic { width: 20px; height: 20px; font-size: 10px; }
+.sx .pill.todo { border: 0; background: var(--sx-todo); color: var(--sx-todo-ink); }
+.sx .nav { background: var(--sx-gut); text-align: left; display: flex; padding: 0 0 12px; border-top: 1px solid var(--sx-rule); }
+.sx .nav span { flex-direction: row; padding: 6px 9px; border-right: 1px solid var(--sx-rule); }
+.sx .nav span::before { display: none; }
+.sx .nav .on { background: var(--p-bg); color: var(--accent); box-shadow: inset 0 -2px var(--accent); }
+.sx .memo, .sx .pc { border: 1px solid var(--sx-note-b); background: var(--sx-note); }
+.sx .seg { background: transparent; padding: 0; }
+.sx .seg button.on { background: var(--sx-seg); color: var(--accent); box-shadow: none; }
+
+/* ============ directions ============ */
+/* 1 puzzle page (kept) */
+.t-puzzle { --p-bg:#ffffff; --surface:#f1f2f4; --ink:#1a1a1b; --muted:#787c7e; --line:#d3d6da; --accent:#3f8a3a; --accent-ink:#fff; --ok:#6aaa64; --ok-ink:#fff; --miss:#787c7e;
+  --g1:#a27bc6; --g2:#4b8bbe; --g3:#1a1a1b; --g4:#c9b458; --g5:#2f7f8f; --g6:#6aaa64; --g7:#d86f45; --m1:#6aaa64; --m2:#c9b458; --m3:#9aa0a6;
+  --fh:"Zilla Slab", Georgia, serif; --fb:"Libre Franklin", Arial, sans-serif; --fn:"Libre Franklin", Arial, sans-serif; --r:0px; --tr:0px; --pr:99px; --hs:23px; --ring: rgba(106,170,100,.18); }
+.t-puzzle.alt { --p-bg:#121213; --surface:#2a2a2c; --ink:#f5f5f5; --muted:#8e9092; --line:#3a3a3c; --accent:#6aaa64; --ok:#538d4e; --miss:#3a3a3c;
+  --g1:#9a76c0; --g2:#4f8fc4; --g3:#565758; --g4:#b59f3b; --g5:#3a8d9c; --g6:#538d4e; --g7:#d1703f; --m1:#538d4e; --m2:#b59f3b; --m3:#818384; --frame: rgba(255,255,255,.08); --ring: rgba(106,170,100,.28); }
+/* 2 spreadsheet (kept) */
+.t-sheet { --p-bg:#ffffff; --surface:#f3f3f3; --ink:#222; --muted:#6b6b6b; --line:#e1e1e1; --accent:#217346; --accent-ink:#fff; --ok:#c6efce; --ok-ink:#006100; --miss:#bfbfbf;
+  --g1:#217346; --g2:#4472c4; --g3:#7f6000; --g4:#c55a11; --g5:#2e75b6; --g6:#70ad47; --g7:#7030a0; --m1:#217346; --m2:#70ad47; --m3:#ffc000;
+  --fh:"Carlito", Calibri, Arial, sans-serif; --fb:"Carlito", Calibri, Arial, sans-serif; --fn:"Carlito", Calibri, Arial, sans-serif; --r:0px; --tr:0px; --pr:0px; --br:2px; --hs:15px; --hw:700; --gap:0px; --ring: rgba(33,115,70,.2); --btn:#217346; --btn-ink:#fff;
+  --sx-hd:#217346; --sx-hd-ink:#fff; --sx-hd-m:#cfe6d7; --sx-fx-bg:#fafafa; --sx-fx-ink:#444; --sx-gut:#f3f3f3; --sx-gut-ink:#777; --sx-rule:#d4d4d4; --sx-todo:#ffeb9c; --sx-todo-ink:#9c5700; --sx-note:#fff9c4; --sx-note-b:#c9b200; --sx-seg:#e2efda; }
+.t-sheet.alt { /* dark pair = night ledger's palette on the spreadsheet: navy cells, mint conditional formatting, mono numbers */
+  --p-bg:#0f1420; --surface:#182033; --ink:#e6e9f2; --muted:#8a93a8; --line:#222b40; --accent:#5ee6a8; --accent-ink:#0b1a14; --ok:#12382b; --ok-ink:#5ee6a8; --miss:#3b4762;
+  --g1:#b39cff; --g2:#8ab4ff; --g3:#ffd38a; --g4:#ff9cb8; --g5:#6fe0d2; --g6:#5ee6a8; --g7:#ffb38a; --m1:#5ee6a8; --m2:#8ab4ff; --m3:#ff9cb8; --tile-ink:#0f1420;
+  --fn:"IBM Plex Mono", monospace; --frame: rgba(255,255,255,.08); --ring: rgba(94,230,168,.2); --btn:#5ee6a8; --btn-ink:#0b1a14;
+  --sx-hd:#182033; --sx-hd-ink:#5ee6a8; --sx-hd-m:#8a93a8; --sx-fx-bg:#121829; --sx-fx-ink:#b9c0d4; --sx-gut:#131a2a; --sx-gut-ink:#5d6780; --sx-rule:#263049; --sx-todo:#3a2f12; --sx-todo-ink:#ffd38a; --sx-note:#221d3a; --sx-note-b:#6b5bb0; --sx-seg:#12382b; }
+/* 3 riso zine (refined) */
+.t-riso { --p-bg:#fbfaf7; --surface:#eef3f8; --ink:#0b5fa5; --muted:#5a87b3; --line:#bcd3ea; --accent:#ff3fa4; --accent-ink:#fff; --ok:#ff3fa4; --ok-ink:#fff; --miss:#8fb2d4;
+  --g1:#ff3fa4; --g2:#0b5fa5; --g3:#ff3fa4; --g4:#0b5fa5; --g5:#ff3fa4; --g6:#0b5fa5; --g7:#ff3fa4; --m1:#ff3fa4; --m2:#0b5fa5; --m3:#ffb3d9;
+  --fh:"Bricolage Grotesque", Arial, sans-serif; --fb:"Bricolage Grotesque", Arial, sans-serif; --fn:"Bricolage Grotesque", Arial, sans-serif; --r:4px; --tr:3px; --hs:26px; --hw:800; --hls:-.03em; --ring: rgba(255,63,164,.2); --btn:#0b5fa5;
+  --grain: rgba(11,95,165,.06); --mis: rgba(255,63,164,.55); --mis2: rgba(11,95,165,.5); }
+.t-riso.alt { --p-bg:#141a33; --surface:#1d2547; --ink:#a9d0ff; --muted:#7896c4; --line:#2e3a69; --accent:#ff5bb4; --accent-ink:#141a33; --ok:#ff5bb4; --ok-ink:#141a33; --miss:#3e4d82;
+  --g2:#a9d0ff; --g4:#a9d0ff; --g6:#a9d0ff; --g1:#ff5bb4; --g3:#ff5bb4; --g5:#ff5bb4; --g7:#ff5bb4; --m1:#ff5bb4; --m2:#a9d0ff; --m3:#8a4f8f; --tile-ink:#141a33; --btn:#a9d0ff; --btn-ink:#141a33;
+  --grain: rgba(169,208,255,.06); --mis2: rgba(255,91,180,.5); --frame: rgba(255,255,255,.08); }
+.t-riso .hd { border-bottom: 0; }
+.t-riso .hd .t { text-shadow: 1.5px 1px 0 var(--mis); }
+.t-riso .ic { box-shadow: 2px 2px 0 var(--mis2); }
+.t-riso .it { border-bottom: 1.5px dotted var(--line); padding-bottom: 8px; }
+.t-riso .pill.done { box-shadow: 1.5px 1.5px 0 var(--mis2); }
+.t-riso .bar { height: 8px; background: radial-gradient(var(--line) 1.1px, transparent 1.3px) 0 0 / 4px 4px; }
+/* 4 riso sunset */
+.t-sunset { --p-bg:#f6eedc; --surface:#efe2c6; --ink:#0d6469; --muted:#5b8a88; --line:#dccaa3; --accent:#ff6a2b; --accent-ink:#fff8ec; --ok:#ff6a2b; --ok-ink:#fff8ec; --miss:#a8c3bc;
+  --g1:#ff6a2b; --g2:#0d6469; --g3:#a94f2e; --g4:#0d6469; --g5:#ff6a2b; --g6:#a94f2e; --g7:#0d6469; --m1:#ff6a2b; --m2:#0d6469; --m3:#f2b48c;
+  --fh:"Space Grotesk", Arial, sans-serif; --fb:"Space Grotesk", Arial, sans-serif; --fn:"Space Grotesk", Arial, sans-serif; --r:2px; --tr:50%; --hs:28px; --hw:700; --hls:-.03em; --hd-b: 3px solid var(--accent); --ring: rgba(255,106,43,.22); --btn:#0d6469; --btn-ink:#f6eedc;
+  --grain: rgba(255,106,43,.08); --mis2: rgba(13,100,105,.5); --bar-r: 99px; }
+.t-sunset.alt { --p-bg:#0f2a2c; --surface:#163a3c; --ink:#f6e3c4; --muted:#9fbab3; --line:#24494a; --accent:#ff7a3d; --accent-ink:#0f2a2c; --ok:#ff7a3d; --ok-ink:#0f2a2c; --miss:#2f5b5a;
+  --g2:#5fc2bf; --g4:#5fc2bf; --g7:#5fc2bf; --g3:#e08a5f; --g6:#e08a5f; --m2:#5fc2bf; --m3:#8a5a44; --tile-ink:#0f2a2c; --btn:#f6e3c4; --btn-ink:#0f2a2c;
+  --grain: rgba(246,227,196,.05); --mis2: rgba(95,194,191,.5); --frame: rgba(255,255,255,.08); }
+.t-sunset .hd .t { color: var(--accent); text-shadow: -1.5px 1px 0 var(--mis2); }
+.t-sunset .ic { box-shadow: 2px -1px 0 var(--mis2); }
+.t-sunset .pill.todo { border-style: dashed; }
+/* 5 midnight riso (riso × night) */
+.t-mriso { --p-bg:#161a3d; --surface:#20265a; --ink:#ffe45c; --muted:#b9ab6a; --line:#2f3670; --accent:#ff4fa8; --accent-ink:#161a3d; --ok:#ff4fa8; --ok-ink:#161a3d; --miss:#3d4590;
+  --g1:#ff4fa8; --g2:#ffe45c; --g3:#ff4fa8; --g4:#ffe45c; --g5:#ff4fa8; --g6:#ffe45c; --g7:#ff4fa8; --m1:#ff4fa8; --m2:#ffe45c; --m3:#7f86d6; --tile-ink:#161a3d;
+  --fh:"Bricolage Grotesque", Arial, sans-serif; --fb:"Bricolage Grotesque", Arial, sans-serif; --fn:"Bricolage Grotesque", Arial, sans-serif; --r:4px; --tr:3px; --hs:26px; --hw:800; --hls:-.03em;
+  --frame: rgba(255,255,255,.08); --ring: rgba(255,79,168,.3); --btn:#ffe45c; --btn-ink:#161a3d; --grain: rgba(255,228,92,.05); --mis: rgba(255,79,168,.75); --mis2: rgba(255,79,168,.6); }
+.t-mriso.alt { --p-bg:#fff3c4; --surface:#fbe7a1; --ink:#232a7a; --muted:#6b6a9a; --line:#ecd88a; --accent:#ff3d9e; --accent-ink:#fff; --ok:#ff3d9e; --ok-ink:#fff; --miss:#c7c2e6;
+  --g2:#232a7a; --g4:#232a7a; --g6:#232a7a; --m2:#232a7a; --m3:#f4a7cf; --tile-ink:#fff3c4; --btn:#232a7a; --btn-ink:#fff3c4; --grain: rgba(35,42,122,.06); --mis: rgba(255,61,158,.55); --frame: rgba(0,0,0,.14); }
+.t-mriso .hd { border-bottom: 0; }
+.t-mriso .hd .t { text-shadow: 2px 1.5px 0 var(--mis); }
+.t-mriso .ic { box-shadow: 2px 2px 0 var(--mis2); }
+.t-mriso .pill.done { box-shadow: 0 0 10px rgba(255,79,168,.45); }
+.t-mriso .it { border-bottom: 1.5px dotted var(--line); padding-bottom: 8px; }
+/* 6 night shift (refined) */
+.t-night { --p-bg:#0f1420; --surface:#182033; --ink:#e6e9f2; --muted:#8a93a8; --line:#263049; --accent:#8ab4ff; --accent-ink:#0f1420; --ok:#5ee6a8; --ok-ink:#0b1a14; --miss:#3b4762;
+  --g1:#b39cff; --g2:#8ab4ff; --g3:#ffd38a; --g4:#ff9cb8; --g5:#6fe0d2; --g6:#5ee6a8; --g7:#ffb38a; --m1:#5ee6a8; --m2:#8ab4ff; --m3:#ff9cb8; --tile-ink:#0f1420;
+  --fh:"Manrope", Arial, sans-serif; --fb:"Manrope", Arial, sans-serif; --fn:"Manrope", Arial, sans-serif; --r:12px; --tr:8px; --hs:22px; --hw:800; --frame: rgba(255,255,255,.08); --ring: rgba(138,180,255,.25); --btn:#8ab4ff; --btn-ink:#0f1420; --bar-r: 3px; --seg-sh: none; --gap: 7px; }
+.t-night.alt { --p-bg:#f6f7fb; --surface:#eceff6; --ink:#161b2c; --muted:#626b82; --line:#dde1ec; --accent:#3d6fd9; --accent-ink:#fff; --ok:#1e9e68; --ok-ink:#fff; --miss:#c3c9d8;
+  --g1:#7b5ce0; --g2:#3d6fd9; --g3:#c98a12; --g4:#d24f7a; --g5:#1a9e90; --g6:#1e9e68; --g7:#d9733a; --m1:#1e9e68; --m2:#3d6fd9; --m3:#d24f7a; --frame: rgba(0,0,0,.12); --btn:#3d6fd9; --btn-ink:#fff; --seg-sh: 0 1px 2px rgba(0,0,0,.08); }
+.t-night .hd { border-bottom: 0; }
+.t-night .ic { background: color-mix(in srgb, var(--gc) 22%, transparent); color: var(--gc); }
+.t-night .it { background: var(--surface); border-radius: 12px; padding: 7px 8px; }
+.t-night .pill.todo { border-color: var(--line); color: var(--muted); }
+.t-night .pill.done { box-shadow: 0 0 12px color-mix(in srgb, var(--ok) 40%, transparent); }
+.t-night .pb { background: transparent; }
+/* 7 late puzzle (1 × night) */
+.t-latep { --p-bg:#11151f; --surface:#1b2130; --ink:#eef0f6; --muted:#8b93a7; --line:#2a3245; --accent:#5ee6a8; --accent-ink:#0b1a14; --ok:#5ee6a8; --ok-ink:#0b1a14; --miss:#3a4459;
+  --g1:#b39cff; --g2:#8ab4ff; --g3:#eef0f6; --g4:#ffd38a; --g5:#6fe0d2; --g6:#5ee6a8; --g7:#ffb38a; --m1:#5ee6a8; --m2:#ffd38a; --m3:#8ab4ff; --tile-ink:#11151f;
+  --fh:"Zilla Slab", Georgia, serif; --fb:"Libre Franklin", Arial, sans-serif; --fn:"Libre Franklin", Arial, sans-serif; --r:0px; --tr:0px; --pr:99px; --hs:23px; --frame: rgba(255,255,255,.08); --ring: rgba(94,230,168,.22); --btn:#eef0f6; --btn-ink:#11151f; --seg-sh: none; }
+.t-latep.alt { --p-bg:#fbfaf6; --surface:#f0efe9; --ink:#1b1f2a; --muted:#6f7482; --line:#dedcd3; --accent:#2fa57a; --accent-ink:#fff; --ok:#2fa57a; --ok-ink:#fff; --miss:#9aa0aa;
+  --g1:#8f74e8; --g2:#4f86e8; --g3:#1b1f2a; --g4:#e0a52e; --g5:#2db3a3; --g6:#2fa57a; --g7:#e8834f; --m1:#2fa57a; --m2:#e0a52e; --m3:#4f86e8; --tile-ink:#fff; --btn:#1b1f2a; --btn-ink:#fff; --frame: rgba(0,0,0,.14); }
+/* 8 night ledger (2 × night) */
+.t-ledger { --p-bg:#0f1420; --surface:#182033; --ink:#e6e9f2; --muted:#8a93a8; --line:#222b40; --accent:#5ee6a8; --accent-ink:#0b1a14; --ok:#12382b; --ok-ink:#5ee6a8; --miss:#3b4762;
+  --g1:#b39cff; --g2:#8ab4ff; --g3:#ffd38a; --g4:#ff9cb8; --g5:#6fe0d2; --g6:#5ee6a8; --g7:#ffb38a; --m1:#5ee6a8; --m2:#8ab4ff; --m3:#ff9cb8; --tile-ink:#0f1420;
+  --fh:"IBM Plex Sans Condensed", Arial Narrow, sans-serif; --fb:"IBM Plex Sans Condensed", Arial Narrow, sans-serif; --fn:"IBM Plex Mono", monospace; --r:0px; --tr:0px; --pr:0px; --br:2px; --hs:15px; --hw:700; --gap:0px;
+  --frame: rgba(255,255,255,.08); --ring: rgba(94,230,168,.2); --btn:#5ee6a8; --btn-ink:#0b1a14;
+  --sx-hd:#182033; --sx-hd-ink:#5ee6a8; --sx-hd-m:#8a93a8; --sx-fx-bg:#121829; --sx-fx-ink:#b9c0d4; --sx-gut:#131a2a; --sx-gut-ink:#5d6780; --sx-rule:#263049; --sx-todo:#3a2f12; --sx-todo-ink:#ffd38a; --sx-note:#221d3a; --sx-note-b:#6b5bb0; --sx-seg:#12382b; }
+.t-ledger.alt { --p-bg:#ffffff; --surface:#f3f4f8; --ink:#1c2233; --muted:#667089; --line:#e3e6ee; --accent:#3b5bdb; --accent-ink:#fff; --ok:#dbe4ff; --ok-ink:#2742b0; --miss:#c3c8d6;
+  --g1:#3b5bdb; --g2:#7048e8; --g3:#1098ad; --g4:#e8590c; --g5:#2b8a3e; --g6:#c2255c; --g7:#1c2233; --m1:#3b5bdb; --m2:#7048e8; --m3:#f59f00; --tile-ink:#fff; --btn:#3b5bdb; --btn-ink:#fff; --frame: rgba(0,0,0,.14);
+  --sx-hd:#2742b0; --sx-hd-ink:#fff; --sx-hd-m:#c5d0ff; --sx-fx-bg:#fafbfd; --sx-fx-ink:#444b5e; --sx-gut:#f3f4f8; --sx-gut-ink:#7a8196; --sx-rule:#d7dbe6; --sx-todo:#fff3bf; --sx-todo-ink:#8a6100; --sx-note:#edf2ff; --sx-note-b:#91a7ff; --sx-seg:#dbe4ff; }
+/* 9 puzzle print (1 × riso) */
+.t-print { --p-bg:#fdfaf2; --surface:#f3eee0; --ink:#0078bf; --muted:#5f95c4; --line:#cfe0ef; --accent:#ff48b0; --accent-ink:#fff; --ok:#ff48b0; --ok-ink:#fff; --miss:#9cc0e0;
+  --g1:#ff48b0; --g2:#0078bf; --g3:#5b3fa8; --g4:#ff48b0; --g5:#0078bf; --g6:#5b3fa8; --g7:#ff48b0; --m1:#ff48b0; --m2:#0078bf; --m3:#ffd400; --tile-ink:#fdfaf2;
+  --fh:"Zilla Slab", Georgia, serif; --fb:"Bricolage Grotesque", Arial, sans-serif; --fn:"Bricolage Grotesque", Arial, sans-serif; --r:0px; --tr:0px; --pr:99px; --hs:24px; --hd-b: 2px solid var(--ink); --ring: rgba(255,72,176,.2); --btn:#0078bf; --btn-ink:#fdfaf2;
+  --grain: rgba(0,120,191,.06); --mis: rgba(255,72,176,.55); --mis2: rgba(0,120,191,.45); --hl:#ffd400; }
+.t-print.alt { --p-bg:#15161a; --surface:#1f2026; --ink:#7cc4f2; --muted:#6e93b0; --line:#2a2d36; --accent:#ff5cba; --accent-ink:#15161a; --ok:#ff5cba; --ok-ink:#15161a; --miss:#2f4152;
+  --g2:#7cc4f2; --g5:#7cc4f2; --g3:#a088e0; --g6:#a088e0; --g1:#ff5cba; --g4:#ff5cba; --g7:#ff5cba; --m1:#ff5cba; --m2:#7cc4f2; --m3:#e6c200; --tile-ink:#15161a; --btn:#7cc4f2; --btn-ink:#15161a;
+  --grain: rgba(124,196,242,.05); --mis2: rgba(255,92,186,.45); --hl: rgba(230,194,0,.45); --frame: rgba(255,255,255,.08); }
+.t-print .hd .t { text-shadow: 1.5px 1px 0 var(--mis); }
+.t-print .ic { box-shadow: 2px 1.5px 0 var(--mis2); }
+.t-print .pn b { background: linear-gradient(transparent 52%, var(--hl) 52%); padding: 0 2px; }
+/* 10 riso ledger (2 × riso) */
+.t-rledger { --p-bg:#fbf8f0; --surface:#f1ecdf; --ink:#0b5fa5; --muted:#5a87b3; --line:rgba(11,95,165,.22); --accent:#ff3fa4; --accent-ink:#fff; --ok:#ffd8ec; --ok-ink:#d4247f; --miss:#b9d0e8;
+  --g1:#ff3fa4; --g2:#0b5fa5; --g3:#ff3fa4; --g4:#0b5fa5; --g5:#ff3fa4; --g6:#0b5fa5; --g7:#ff3fa4; --m1:#ff3fa4; --m2:#0b5fa5; --m3:#ffb3d9;
+  --fh:"Bricolage Grotesque", Arial, sans-serif; --fb:"Bricolage Grotesque", Arial, sans-serif; --fn:"IBM Plex Mono", monospace; --r:0px; --tr:0px; --pr:0px; --br:2px; --hs:16px; --hw:800; --gap:0px; --ring: rgba(255,63,164,.2); --btn:#ff3fa4; --btn-ink:#fff;
+  --sx-hd:#0b5fa5; --sx-hd-ink:#fbf8f0; --sx-hd-m:#bcd3ea; --sx-fx-bg:#fbf8f0; --sx-fx-ink:#0b5fa5; --sx-gut:#eef3f8; --sx-gut-ink:#5a87b3; --sx-rule:rgba(11,95,165,.35); --sx-todo:#dceaf7; --sx-todo-ink:#0b5fa5; --sx-note:#ffeaf5; --sx-note-b:#ff3fa4; --sx-seg:#ffd8ec;
+  --grain: rgba(11,95,165,.06); --mis: rgba(255,63,164,.75); }
+.t-rledger.alt { --p-bg:#10192b; --surface:#17233b; --ink:#9cc8ff; --muted:#6f8fbf; --line:rgba(156,200,255,.16); --accent:#ff5bb4; --accent-ink:#10192b; --ok:#3a1a33; --ok-ink:#ff8fcc; --miss:#33466e;
+  --g2:#9cc8ff; --g4:#9cc8ff; --g6:#9cc8ff; --g1:#ff5bb4; --g3:#ff5bb4; --g5:#ff5bb4; --g7:#ff5bb4; --m1:#ff5bb4; --m2:#9cc8ff; --m3:#7a4a7a; --tile-ink:#10192b; --btn:#ff5bb4; --btn-ink:#10192b; --frame: rgba(255,255,255,.08);
+  --sx-hd:#1c2a48; --sx-hd-ink:#9cc8ff; --sx-hd-m:#6f8fbf; --sx-fx-bg:#10192b; --sx-fx-ink:#9cc8ff; --sx-gut:#141f35; --sx-gut-ink:#6f8fbf; --sx-rule:rgba(156,200,255,.22); --sx-todo:#1d2e52; --sx-todo-ink:#9cc8ff; --sx-note:#2a1830; --sx-note-b:#ff5bb4; --sx-seg:#3a1a33;
+  --grain: rgba(156,200,255,.05); }
+.t-rledger .hd .t { text-shadow: 1.5px 1px 0 var(--mis); }
+/* 11 score sheet (1 × 2) */
+.t-tally { --p-bg:#ffffff; --surface:#f4f4f2; --ink:#1a1a1b; --muted:#787c7e; --line:#e2e2de; --accent:#3f8a3a; --accent-ink:#fff; --ok:#6aaa64; --ok-ink:#fff; --miss:#787c7e;
+  --g1:#a27bc6; --g2:#4b8bbe; --g3:#1a1a1b; --g4:#c9b458; --g5:#2f7f8f; --g6:#6aaa64; --g7:#d86f45; --m1:#6aaa64; --m2:#c9b458; --m3:#9aa0a6;
+  --fh:"Zilla Slab", Georgia, serif; --fb:"Libre Franklin", Arial, sans-serif; --fn:"Libre Franklin", Arial, sans-serif; --r:0px; --tr:0px; --pr:0px; --br:0px; --hs:18px; --hw:700; --gap:0px; --ring: rgba(106,170,100,.2); --btn:#1a1a1b;
+  --sx-hd:#1a1a1b; --sx-hd-ink:#fff; --sx-hd-m:#b8bbbd; --sx-fx-bg:#fafaf8; --sx-fx-ink:#444; --sx-gut:#f4f4f2; --sx-gut-ink:#8a8d8f; --sx-rule:#d3d6da; --sx-todo:#c9b458; --sx-todo-ink:#fff; --sx-note:#f6f1d9; --sx-note-b:#c9b458; --sx-seg:#e7f1e5; }
+.t-tally.alt { --p-bg:#121213; --surface:#232325; --ink:#f5f5f5; --muted:#8e9092; --line:#2e2e30; --accent:#6aaa64; --ok:#538d4e; --miss:#3a3a3c;
+  --g1:#9a76c0; --g2:#4f8fc4; --g3:#565758; --g4:#b59f3b; --g5:#3a8d9c; --g6:#538d4e; --g7:#d1703f; --m1:#538d4e; --m2:#b59f3b; --m3:#818384; --btn:#f5f5f5; --btn-ink:#121213; --frame: rgba(255,255,255,.08);
+  --sx-hd:#232325; --sx-hd-m:#8e9092; --sx-fx-bg:#18181a; --sx-fx-ink:#c8c8c8; --sx-gut:#1a1a1c; --sx-gut-ink:#6d6f71; --sx-rule:#3a3a3c; --sx-todo:#b59f3b; --sx-note:#2c2914; --sx-note-b:#b59f3b; --sx-seg:#1f3a1d; }
+.t-tally .hd .t { font-weight: 700; }
+/* 12 all hands (1 × 2 × riso × night) */
+.t-allh { --p-bg:#141936; --surface:#1c2248; --ink:#f1eedd; --muted:#9c9ac0; --line:rgba(255,228,92,.14); --accent:#ff4fa8; --accent-ink:#141936; --ok:#ff4fa8; --ok-ink:#141936; --miss:#3a4180;
+  --g1:#ff4fa8; --g2:#ffe45c; --g3:#8ab4ff; --g4:#5ee6a8; --g5:#ff4fa8; --g6:#ffe45c; --g7:#8ab4ff; --m1:#ff4fa8; --m2:#ffe45c; --m3:#8ab4ff; --tile-ink:#141936;
+  --fh:"Zilla Slab", Georgia, serif; --fb:"Bricolage Grotesque", Arial, sans-serif; --fn:"IBM Plex Mono", monospace; --r:0px; --tr:0px; --pr:99px; --br:99px; --hs:18px; --hw:700; --gap:0px;
+  --frame: rgba(255,255,255,.08); --ring: rgba(255,79,168,.3); --btn:#ffe45c; --btn-ink:#141936; --grain: rgba(255,228,92,.05); --mis: rgba(255,228,92,.7);
+  --sx-hd:#ff4fa8; --sx-hd-ink:#141936; --sx-hd-m:#5a1840; --sx-fx-bg:#10142c; --sx-fx-ink:#ffe45c; --sx-gut:#10142c; --sx-gut-ink:#6d6fa0; --sx-rule:rgba(255,228,92,.18); --sx-todo:#2c2a14; --sx-todo-ink:#ffe45c; --sx-note:#2a1838; --sx-note-b:#ff4fa8; --sx-seg:#3a1838; }
+.t-allh.alt { --p-bg:#fdf8ea; --surface:#f4eed8; --ink:#1d2470; --muted:#6b6f9a; --line:rgba(29,36,112,.16); --accent:#ff3d9e; --accent-ink:#fff; --ok:#ff3d9e; --ok-ink:#fff; --miss:#c5c8e6;
+  --g2:#c99a00; --g6:#c99a00; --g3:#1d2470; --g7:#1d2470; --g4:#1a9e70; --m2:#1d2470; --m3:#e0b800; --tile-ink:#fff; --btn:#1d2470; --btn-ink:#fdf8ea; --grain: rgba(29,36,112,.05); --mis: rgba(255,61,158,.5); --frame: rgba(0,0,0,.14);
+  --sx-hd:#1d2470; --sx-hd-ink:#fdf8ea; --sx-hd-m:#b3b8e6; --sx-fx-bg:#fdf8ea; --sx-fx-ink:#1d2470; --sx-gut:#f4eed8; --sx-gut-ink:#6b6f9a; --sx-rule:rgba(29,36,112,.22); --sx-todo:#fff0a8; --sx-todo-ink:#6b5a00; --sx-note:#ffe6f3; --sx-note-b:#ff3d9e; --sx-seg:#ffd8ec; }
+.t-allh .hd .t { text-shadow: 1.5px 1px 0 var(--mis); }
+.t-allh .ic { box-shadow: 1.5px 1.5px 0 var(--mis); }
+.t-allh .pill.done { box-shadow: 0 0 10px rgba(255,79,168,.4); }
+</style>
+
+<div class="wrap">
+
+  <header class="intro">
+    <div class="eyebrow">Boredroom · visual design · round 3</div>
+    <h1>Twelve boards from four you liked</h1>
+    <p>Puzzle Page and Spreadsheet stay exactly as they were. Riso Zine and Night Shift are refined. The other eight are crosses of the four: two at a time, three, or all four at once. Every direction now comes as a light and dark pair, and the demo does a lot more.</p>
+    <div class="changes">
+      <span class="k">Kept: 1 Puzzle Page</span><span class="k">Kept: 2 Spreadsheet</span><span class="k">Refined: Riso Zine</span><span class="k">Refined: Night Shift</span><span class="k">New: 8 crosses</span><span class="k">New: light/dark pairs</span><span class="k">Updated: Spreadsheet dark, now Night Ledger colors</span>
+      <span class="x">Whiteboard</span><span class="x">Graph Paper</span><span class="x">Morning Paper</span><span class="x">Chunky</span><span class="x">E-ink</span><span class="x">Annual Report</span><span class="x">Letter Tiles</span><span class="x">Handheld</span><span class="x">Departures</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="eyebrow">How they're made</div>
+    <h2>Layout × finish</h2>
+    <p class="lede muted">Puzzle Page and Spreadsheet are layouts: tiles and slab headings, or cells and a formula bar. Riso and Night are finishes: two-ink print with grain, or pastel on navy. Each cell crosses one of each. Pick any to try it on the bench.</p>
+    <div class="mx-wrap"><div class="mx" id="matrix"></div></div>
+  </section>
+
+  <section>
+    <div class="sheet-top">
+      <div style="display:flex;flex-direction:column;gap:8px;max-width:720px">
+        <div class="eyebrow">Contact sheet</div>
+        <h2 style="font-size:28px;font-weight:900">All twelve agendas</h2>
+        <p class="muted">Same data in each, with the clipboard suggestion you'd see when you open the app with a result already copied. Flip the whole sheet to light or dark to see each direction's pair.</p>
+      </div>
+      <div class="modes" data-modes role="group" aria-label="Phone mode"></div>
+    </div>
+    <div class="sheet" id="sheet"></div>
+  </section>
+
+  <section id="bench-sec">
+    <div class="eyebrow">The bench</div>
+    <h2>Try a direction</h2>
+    <div class="bench">
+      <div class="switch" id="switch" role="tablist" aria-label="Design direction"></div>
+      <div class="binfo" id="binfo"></div>
+      <div class="ctl">
+        <div class="tries"><span class="lab">Mode</span><span class="modes" data-modes role="group" aria-label="Phone mode"></span></div>
+        <div class="tries"><span class="lab">Paste</span>
+          <button class="try" data-s="strands">strands</button>
+          <button class="try" data-s="wordle">wordle (not on agenda)</button>
+          <button class="try" data-s="connections">connections again</button>
+          <button class="try" data-s="two">two in one message</button>
+          <button class="try" data-s="junk">something unreadable</button>
+        </div>
+        <div class="tries"><span class="lab">Board activity</span>
+          <button class="try sim" data-sim="judy">judy files krillion</button>
+          <button class="try sim" data-sim="evening">jump to 11:58 pm</button>
+          <button class="try sim" data-sim="reset">reset demo</button>
+        </div>
+      </div>
+      <div class="todo-list">
+        <span><b>Tap "play"</b> on an item: you come back with its result on the clipboard.</span>
+        <span><b>File everything</b> to stage a hostile takeover of #1.</span>
+        <span><b>Undo</b> any filing from the toast.</span>
+        <span><b>Scrub</b> the chart; tap a name to isolate it.</span>
+        <span><b>Tap a blurred grid</b> in the minutes.</span>
+        <span><b>Add a game</b> from the library; it lands on the agenda.</span>
+        <span><b>Join the board</b> with your own name.</span>
+        <span><b>"paste"</b> in the field reads your real clipboard, if the browser allows.</span>
+      </div>
+      <div class="screens" id="screens"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Motion</div>
+    <h2>Small moves, almost no cost</h2>
+    <p class="lede muted">Every animation is a CSS opacity or transform change, or a short width or height change. No JavaScript animation loops, no canvas, no libraries. Riso grain is one static background pattern. All motion switches off under reduced-motion.</p>
+    <div class="motion">
+      <div><b>Parse card rises</b><span>200 ms fade and lift when a paste is read.</span></div>
+      <div><b>Filed pop</b><span>The item's status pill pops and its row glows once.</span></div>
+      <div><b>Board banner drops</b><span>Someone files, it's late, or a takeover happens: a banner slides in from the top.</span></div>
+      <div><b>Undo toast</b><span>Rises above the nav for five seconds after any filing.</span></div>
+      <div><b>Bars regrow</b><span>Filing, switching metric or isolating a member re-heights the chart.</span></div>
+      <div><b>No peeking</b><span>Tap a confidential grid and the notice shakes twice.</span></div>
+      <div><b>"opening…"</b><span>The play pill breathes while you're away at the game.</span></div>
+    </div>
+  </section>
+
+  <section class="next">
+    <div class="eyebrow">Next</div>
+    <h2>Pick one, or two to compare</h2>
+    <p>Tell me which to lock (a cross of cells is fine too, e.g. "late puzzle, with riso grain"). The next step takes the winner to the full screen set in light and dark and rebuilds the UX artifact in it.</p>
+  </section>
+
+</div>
+
+<script>
+(function(){
+const THEMES = [
+  { id:'puzzle', n:'Puzzle Page', tag:'kept · 1', kept:true, native:'light', dot:'#6aaa64', pitch:'The puzzle sites\' own language: flat tiles, bold Franklin, Wordle green. The corporate joke lives in the words. Its dark pair follows the puzzle sites\' dark mode.', fonts:'Zilla Slab + Libre Franklin', sw:['#ffffff','#1a1a1b','#6aaa64','#c9b458','#a27bc6','#787c7e'] },
+  { id:'sheet', n:'Spreadsheet', tag:'kept · 2', kept:true, native:'light', struct:'sx', minx:true, dot:'#217346', pitch:'The board runs on a spreadsheet. Row numbers, gridlines, conditional formatting, sheet tabs and a formula bar for the jokes. Its dark pair now borrows Night Ledger\'s palette: navy cells, mint for done, amber for open, monospace numbers.', fonts:'Carlito (Calibri-compatible)', sw:['#217346','#ffffff','#c6efce','#ffeb9c','#fff9c4','#e1e1e1'],
+    labels:{ agenda:'agenda.xlsx', review:'soup daily.xlsx', library:'library.xlsx', filing:'agenda.xlsx', you:'you.xlsx', todo:'open', boards:'review' },
+    fx:{ agenda:'=countif(c:c,"done")', filing:'=parse(a1)', review:'=average(b2:b8)', minutes:'=hide(grids,"until filed")', library:'=filter(games,"daily")', you:'=tenure("you")', invite:'=join("soup daily")' } },
+  { id:'riso', n:'Riso Zine', tag:'refined', native:'light', grain:true, dot:'#ff3fa4', pitch:'The round 2 zine, tightened: blue ink for text, fluorescent pink for anything done, dotted rules between items and a halftone progress bar. The misregistration stays on headings and tiles, so body text is crisp.', fonts:'Bricolage Grotesque', sw:['#fbfaf7','#0b5fa5','#ff3fa4','#ffb3d9','#bcd3ea'] },
+  { id:'sunset', n:'Riso Sunset', tag:'riso · new inks', native:'light', grain:true, dot:'#ff6a2b', pitch:'Same print process, warmer inks: orange and teal on cream, with brick where they overlap. Round stamped tiles and an orange heading with a teal ghost.', fonts:'Space Grotesk', sw:['#f6eedc','#0d6469','#ff6a2b','#a94f2e','#f2b48c'] },
+  { id:'mriso', n:'Midnight Riso', tag:'riso × night', native:'dark', grain:true, dot:'#ffe45c', pitch:'The zine printed on navy stock: fluorescent yellow text, pink for done with a soft glow. Night Shift\'s late-hours mood with the zine\'s noise. Its light pair prints navy on yellow paper.', fonts:'Bricolage Grotesque', sw:['#161a3d','#ffe45c','#ff4fa8','#20265a','#7f86d6'] },
+  { id:'night', n:'Night Shift', tag:'refined', native:'dark', dot:'#8ab4ff', pitch:'Dark first, refined: each item sits on its own soft card, done pills glow a little, headers lose their rules. Its light pair is "day shift".', fonts:'Manrope', sw:['#0f1420','#182033','#e6e9f2','#8ab4ff','#5ee6a8','#ff9cb8'] },
+  { id:'latep', n:'Late Puzzle', tag:'1 × night', native:'dark', dot:'#5ee6a8', pitch:'Puzzle Page geometry (square tiles, slab headings, round pills) in Night Shift\'s pastel-on-navy palette. Like the puzzle sites\' dark mode, but warmer.', fonts:'Zilla Slab + Libre Franklin', sw:['#11151f','#eef0f6','#5ee6a8','#ffd38a','#b39cff','#8ab4ff'] },
+  { id:'ledger', n:'Night Ledger', tag:'2 × night', native:'dark', struct:'sx', dot:'#12382b', pitch:'The spreadsheet after hours: navy cells, mint conditional formatting, monospace numbers, and the formula bar now speaks sql. The light pair swaps green for indigo.', fonts:'IBM Plex Sans Condensed + Plex Mono', sw:['#0f1420','#182033','#5ee6a8','#12382b','#ffd38a','#6b5bb0'],
+    labels:{ agenda:'agenda', review:'soup_daily', library:'games', filing:'agenda', you:'you', todo:'pending', boards:'review' },
+    fx:{ agenda:'select * from agenda where day = today', filing:'insert into minutes …', review:'select member, sum(done) group by 1', minutes:'where filed = true -- no peeking', library:'select * from games where daily', you:'select tenure from seats', invite:'insert into members' } },
+  { id:'print', n:'Puzzle Print', tag:'1 × riso', native:'light', grain:true, dot:'#0078bf', pitch:'Puzzle Page run through a risograph: square pink and blue tiles with an offset ghost, purple where the inks overlap, and a yellow highlighter on the count.', fonts:'Zilla Slab + Bricolage Grotesque', sw:['#fdfaf2','#0078bf','#ff48b0','#5b3fa8','#ffd400'] },
+  { id:'rledger', n:'Riso Ledger', tag:'2 × riso', native:'light', struct:'sx', grain:true, dot:'#0b5fa5', pitch:'The spreadsheet as a printed accounts book: blue ink rules, pink for filed, a folio number for the date. Spreadsheet structure with a zine finish.', fonts:'Bricolage Grotesque + IBM Plex Mono', sw:['#fbf8f0','#0b5fa5','#ff3fa4','#ffd8ec','#dceaf7'],
+    labels:{ agenda:'agenda · folio 28', review:'accounts', library:'catalogue', filing:'agenda · folio 28', you:'personnel file', todo:'owing', boards:'accounts' },
+    fx:{ agenda:'items carried: 6', filing:'entry pending', review:'audited by the chair', minutes:'sealed until filed', library:'any other business', you:'tenure on record', invite:'new member entry' } },
+  { id:'tally', n:'Score Sheet', tag:'1 × 2', native:'light', struct:'sx', dot:'#c9b458', pitch:'Both layouts at once: spreadsheet rows, but with Puzzle Page\'s slab headings and tile colors. Done cells go Wordle green and open ones Wordle yellow, so the agenda reads like a guess grid.', fonts:'Zilla Slab + Libre Franklin', sw:['#ffffff','#1a1a1b','#6aaa64','#c9b458','#a27bc6'],
+    labels:{ agenda:'scoresheet', review:'standings', library:'library', filing:'scoresheet', you:'you', todo:'open', boards:'standings' },
+    fx:{ agenda:'greens today: 3 of 6', filing:'reading…', review:'ranked by items done', minutes:'grids hidden until filed', library:'any other business', you:'tenure', invite:'join soup daily' } },
+  { id:'allh', n:'All Hands', tag:'1 × 2 × riso × night', native:'dark', struct:'sx', grain:true, dot:'#ff4fa8', pitch:'All four at once: spreadsheet rows and a formula bar, puzzle-page tiles and round pills, riso pink and yellow inks with grain, on Night Shift navy. The loudest direction, and the most "boredroom".', fonts:'Zilla Slab + Bricolage + Plex Mono', sw:['#141936','#ff4fa8','#ffe45c','#8ab4ff','#5ee6a8'],
+    labels:{ agenda:'agenda', review:'all hands', library:'library', filing:'agenda', you:'your seat', todo:'play', boards:'review' },
+    fx:{ agenda:'quorum: 3 of 3 present', filing:'minuting…', review:'the chair will see you now', minutes:'confidential until filed', library:'any other business', you:'tenure on record', invite:'motion to admit' } }
+];
+const MATRIX = { cols:['as printed','riso ink','night palette','riso × night'],
+  rows:[ ['puzzle page',['puzzle'],['print'],['latep'],[]], ['spreadsheet',['sheet'],['rledger'],['ledger'],[]], ['both layouts',['tally'],[],[],['allh']], ['free layout',[],['riso','sunset'],['night'],['mriso']] ] };
+
+const AGENDA0 = [
+  { id:'connections', name:'connections', l:'c', p:3, key:'#870', done:true, score:'1 mistake', sub:'resets in 14h 19m', gc:1 },
+  { id:'maptap', name:'maptap', l:'m', p:3, key:'oct 28', done:true, score:'828', sub:'resets in 14h 19m', gc:2 },
+  { id:'cryptic', name:'minute cryptic', l:'✎', p:5, key:'oct 28', done:true, score:'2 hints', sub:'resets in 14h 19m', gc:3 },
+  { id:'strands', name:'strands', l:'s', p:1, key:'#612', done:false, sub:'ivan, judy present', gc:4 },
+  { id:'krillion', name:'krillion', l:'k', p:5, key:'oct 28', done:false, sub:'resets 5:30 am · 00:00 utc', gc:5 },
+  { id:'globle', name:'globle', l:'g', p:2, key:'oct 28', done:false, sub:'resets at your midnight', gc:6 }
+];
+const SAMPLES = {
+  strands: 'Strands #612\n“Feeling blue”\n🔵🔵💡🔵\n🟡🔵🔵',
+  wordle: 'Wordle 1,592 4/6*\n\n⬛🟨⬛⬛⬛\n🟩⬛🟨⬛⬛\n🟩🟩⬛🟩⬛\n🟩🟩🟩🟩🟩',
+  connections: 'Connections\nPuzzle #870\n🟨🟨🟨🟨\n🟩🟦🟩🟩\n🟩🟩🟩🟩\n🟦🟦🟦🟦\n🟪🟪🟪🟪',
+  two: '[28/10, 9:12 am] judy: Strands #612\n“Feeling blue”\n🔵🔵💡🔵\n🟡🔵🔵\n\nwww.maptap.gg October 28\n100🎯 90🎉 97🔥 85🌟 63🤨\nFinal score: 828',
+  junk: 'lol today\'s krillion was brutal',
+  /* demo-only formats: the real krillion and globle shares are still unknown (see docs/GAMES.md) */
+  krillion: 'Krillion · Oct 28\n🦐🦐🦐🦐 412 m deep\nkrillion.io',
+  globle: '🌎 Oct 28, 2026 🌍\n🔥 4 | Avg. Guesses: 5.1\n🟧🟨🟩🟩 = 4\n\nhttps://globle-game.com'
+};
+const DAYS = ['wed','thu','fri','sat','sun','mon','tue'];
+const MEM = ['ivan','you','judy'];
+const ITEMS = { ivan:[6,5,6,6,4,6,5], you:[6,6,5,6,6,4,3], judy:[2,3,1,4,2,0,1] };
+const CONN = { ivan:[0,1,0,0,1,0,0], you:[1,0,2,1,0,1,1], judy:[3,2,4,2,3,null,4] };
+const MAP = { ivan:[812,790,901,744,860,835,880], you:[760,845,690,812,905,720,828], judy:[640,null,702,588,null,null,655] };
+const TENURE = { ivan:41, you:23, judy:1 };
+const GAME_TEN = { connections:40, maptap:8, cryptic:2, strands:12, krillion:0, globle:5 };
+const MIN = {
+  strands: { title:'strands #612', rows:[['ivan','🔵🔵🟡🔵🔵🔵',1],['judy','💡🔵💡🔵🟡🔵💡',3]], you:'🔵🔵💡🔵🟡🔵', dl:'hints used · all time', dist:[['0',4],['1',11],['2',8],['3+',3]], hl:1 },
+  connections: { title:'connections #870', rows:[['ivan','🟨🟨🟨🟨\n🟩🟩🟩🟩\n🟦🟦🟦🟦\n🟪🟪🟪🟪',1],['judy','🟩🟦🟩🟩\n🟨🟨🟨🟨\n🟦🟪🟦🟦\n🟩🟩🟩🟩\n🟦🟦🟦🟦\n🟪🟪🟪🟪',3]], you:'🟨🟨🟨🟨\n🟩🟦🟩🟩\n🟩🟩🟩🟩\n🟦🟦🟦🟦\n🟪🟪🟪🟪', dl:'mistakes · all time', dist:[['0',9],['1',14],['2',7],['3',4],['x',2]], hl:1 },
+  maptap: { title:'maptap oct 28', text:true, rows:[['ivan','880',1],['judy','655',3]], you:'828', dl:'final score · all time', dist:[['<600',2],['600s',6],['700s',12],['800s',9],['900+',1]], hl:3 }
+};
+const LIB = [['wordle','w','words','local midnight',4],['travle','t','geography','',2],['metazooa','z','trivia','',6],['anno','a','trivia','',1],['fermi','f','trivia','',3],['daily red','r','puzzles','',7],['the wiki game daily','w','trivia','',5],['pindrop','p','geography','',2],['daily orbs','o','puzzles','',4],['system design daily','d','trivia','',3]];
+
+let S, mode = 'native', cur = 'sheet';
+function reset(){
+  S = { items: AGENDA0.map(x=>({...x})), metric:'items', day:6, iso:null, text:'', filed:{ connections:true, maptap:true, cryptic:true }, grids:{},
+    filter:'', cat:'all', mtab:'strands', nudge:false, ban:null, toast:null, playing:null, back:null, name:'walter', joined:false, judy:false, lead:false, hot:false };
+  ITEMS.judy[6] = 1; syncToday();
+}
+try { const v = localStorage.getItem('br-dir'); if (v && THEMES.some(t=>t.id===v)) cur = v; const m = localStorage.getItem('br-mode'); if (m) mode = m; } catch(e) {}
+reset();
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const L = (t,k,d) => (t.labels && t.labels[k]) || d;
+const sum = a => a.reduce((x,y)=>x+(y||0),0);
+const curT = () => THEMES.find(x=>x.id===cur);
+const CLIP = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3.5" y="2.75" width="9" height="11.5" rx="1.5"/><path d="M6 2.75h4v1.5H6z"/></svg>';
+const SRCH = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>';
+function syncToday(){ ITEMS.you[6] = S.items.filter(x=>x.done).length; }
+
+/* ---------- local parsers (demo) ---------- */
+function rowsAfter(text, from, re){
+  const lines = text.slice(from).split('\n'); const rows = []; let started = false;
+  for (const raw of lines){ const l = raw.trim();
+    if (!l){ if (started) break; else continue; }
+    if (re.test(l)){ rows.push(l); started = true; } else if (started || rows.length===0 && l.length>12) break; }
+  return rows;
+}
+const plural = (n,w,ws) => n + ' ' + (n===1 ? w : (ws || w+'s'));
+const mkey = (mon, d) => mon.slice(0,3).toLowerCase() + ' ' + (+d);
+function parse(raw){
+  const t0 = performance.now(); const t = raw.replace(/\r/g,''); const res = [];
+  for (const m of t.matchAll(/Wordle\s+([\d.,]+)\s+([1-6X])\/6(\*?)/g)){
+    const rows = rowsAfter(t, m.index+m[0].length, /^[⬛⬜🟨🟩]{5}$/u);
+    res.push({ at:m.index, id:'wordle', name:'wordle', l:'w', p:4, key:'#'+m[1], stats:[ m[2]==='X' ? 'missed target' : m[2]+'/6' ], badges: m[3]?['hard mode']:[], grid: rows.join('\n') });
+  }
+  for (const m of t.matchAll(/Connections\s*\n\s*Puzzle\s*#\s*([\d,]+)/g)){
+    const rows = rowsAfter(t, m.index+m[0].length, /^[🟨🟩🟦🟪]{4}$/u);
+    const uni = r => { const a=[...r]; return a.every(c=>c===a[0]); };
+    const solved = rows.filter(uni); const mis = rows.length - solved.length;
+    res.push({ at:m.index, id:'connections', name:'connections', l:'c', p:3, key:'#'+m[1],
+      stats:[ solved.length===4 ? (mis===0?'perfect':plural(mis,'mistake')) : 'missed target', solved.length+'/4 groups' ],
+      badges: solved.length && [...solved[0]][0]==='🟪' ? ['purple first'] : [], grid: rows.join('\n'), spoil:true });
+  }
+  for (const m of t.matchAll(/Strands\s*#\s*([\d,]+)\s*\n\s*[“"]([^”"\n]+)[”"]/g)){
+    const rows = rowsAfter(t, m.index+m[0].length, /^[🔵🟡💡]+$/u); const all=[...rows.join('')];
+    const hints = all.filter(c=>c==='💡').length; const words = all.filter(c=>c!=='💡');
+    res.push({ at:m.index, id:'strands', name:'strands', l:'s', p:1, key:'#'+m[1], stats:[ hints ? plural(hints,'hint') : 'no hints', words.length+' words' ],
+      badges: words[0]==='🟡' ? ['spangram first'] : [], grid: rows.join('\n'), theme:m[2], spoil:true });
+  }
+  for (const m of t.matchAll(/maptap\.gg\s+([A-Za-z]+)\s+(\d{1,2})\s*\n([^\n]*)\n\s*Final score:\s*(\d+)/gi)){
+    const r = (m[3].match(/\d+/g)||[]).map(Number);
+    res.push({ at:m.index, id:'maptap', name:'maptap', l:'m', p:3, key:mkey(m[1],m[2]), stats:[ m[4], 'best round '+Math.max(...r) ], badges: r.includes(100)?['bullseye']:[], grid:'' });
+  }
+  for (const m of t.matchAll(/Krillion\s*[·\-–]?\s*([A-Za-z]{3,})\s+(\d{1,2})[^\n]*\n[^\n]*?(\d+)\s*m\b/gi)){
+    const d = +m[3];
+    res.push({ at:m.index, id:'krillion', name:'krillion', l:'k', p:5, key:mkey(m[1],m[2]), stats:[ d+' m deep' ], badges:[ d<200?'sunlit zone':d<1000?'twilight zone':'midnight zone' ], grid:'' });
+  }
+  for (const m of t.matchAll(/🌎\s*([A-Za-z]{3,})\s+(\d{1,2}),?\s*\d{4}\s*🌍[\s\S]*?\n([🟥🟧🟨🟩⬜]+)\s*=\s*(\d+)/gu)){
+    const n = +m[4];
+    res.push({ at:m.index, id:'globle', name:'globle', l:'g', p:2, key:mkey(m[1],m[2]), stats:[ plural(n,'guess','guesses') ], badges: n===1?['first try']:[], grid:m[3] });
+  }
+  res.sort((a,b)=>a.at-b.at);
+  return { res, ms: Math.max(1, Math.round(performance.now()-t0)) };
+}
+function status(r){ const it = S.items.find(i=>i.id===r.id); if (!it) return 'new'; if (it.done && it.key===r.key) return 'dup'; return 'ok'; }
+
+/* ---------- screen parts ---------- */
+function head(t, k, d, meta){ return '<div class="hd"><span class="t">'+esc(L(t,k,d))+'</span><span class="m">'+esc(meta)+'</span></div>' + (t.fx && t.fx[k] ? '<div class="fx"><i>fx</i><span>'+esc(t.fx[k])+'</span></div>' : ''); }
+function nav(t, on){ return '<div class="nav">' + [['agenda','agenda'],['boards',L(t,'boards','boards')],['library','library'],['you','you']].map(([k,v]) => '<span class="'+(k===on?'on':'')+'">'+esc(v)+'</span>').join('') + '</div>'; }
+function isAlt(t, m){ m = m || mode; return (m==='light' && t.native==='dark') || (m==='dark' && t.native==='light'); }
+function phone(t, inner, on, over, m){ return '<div class="ph t-'+t.id+(t.struct?' '+t.struct:'')+(t.grain?' grain':'')+(isAlt(t,m)?' alt':'')+'"><div class="sb"><span>'+(S.late?'11:58':'9:41')+'</span><span>●●●</span></div>'+inner+nav(t,on)+(over||'')+'</div>'; }
+function tile(x){ return '<span class="ic" style="--gc:var(--g'+(x.gc||7)+')">'+esc(x.l)+'</span>'; }
+function item(t, x, i, live){
+  let pill;
+  if (x.done) pill = '<span class="pill done">'+esc(x.score)+'</span>';
+  else if (live && S.playing===x.id) pill = '<span class="pill todo wait">opening…</span>';
+  else pill = live ? '<button class="pill todo" data-play="'+esc(x.id)+'">'+esc(L(t,'todo','play'))+'</button>' : '<span class="pill todo">'+esc(L(t,'todo','play'))+'</span>';
+  return '<div class="it n'+(i%6)+(x.just?' just':'')+'">'+tile(x)+'<div class="g"><div class="nm">'+esc(x.name)+' '+esc(x.key && x.key[0]==='#'?x.key:'')+'</div><div class="sub">'+esc(x.sub)+'</div></div>'+pill+'</div>';
+}
+function progress(){ const d = S.items.filter(x=>x.done).length, n = S.items.length; return '<div class="prog"><span class="pn"><b>'+d+'</b> of '+n+' items done</span><span class="bar"><i style="width:'+Math.round(d/n*100)+'%"></i></span></div>'; }
+
+function card(t, r){
+  const st = status(r);
+  const grid = r.grid ? '<div class="gridp">'+esc(r.grid)+'</div>' : '';
+  const chips = r.stats.map(s=>'<span class="chip">'+esc(s)+'</span>').join('') + r.badges.map(b=>'<span class="chip badge">'+esc(b)+'</span>').join('') + (st==='new' ? '<span class="chip">new to agenda</span>' : '');
+  const gc = (S.items.find(i=>i.id===r.id) || LIB.map(x=>({id:x[0],gc:x[4]})).find(i=>i.id===r.id) || {gc:7}).gc;
+  return '<div class="pc"><div class="pc-h">'+tile({l:r.l,gc})+'<div><b>'+esc(r.name)+' '+esc(r.key)+'</b><small>'+(r.theme?'theme hidden from the board · ':'')+'filed to soup daily</small></div></div><div class="chips">'+chips+'</div>'+grid+'</div>';
+}
+function output(t, text, live){
+  if (!text.trim()) return '';
+  const { res, ms } = parse(text);
+  if (!res.length){
+    const open = S.items.filter(x=>!x.done);
+    return '<div class="pc"><div class="pc-h">'+tile({l:'?',gc:7})+'<div><b>couldn\'t read that one</b><small>file it as played for</small></div></div><div class="chips">'+(open.length ? open.map(x=>'<button class="chip" data-played="'+esc(x.id)+'">'+esc(x.name)+'</button>').join('') : '<span class="chip">everything is filed</span>')+'</div></div>';
+  }
+  const fresh = res.filter(r=>status(r)!=='dup'), dups = res.filter(r=>status(r)==='dup');
+  let h = fresh.map(r=>card(t,r)).join('');
+  h += dups.map(r=>'<div class="dup">already filed · '+esc(r.name)+' '+esc(r.key)+'</div>').join('');
+  if (fresh.length) h += '<div class="pc-a"><button class="btn"'+(live?' data-file':'')+'>'+(fresh.length>1?'file all '+fresh.length:'file')+'</button>'+(fresh.length===1?'<button class="lnk"'+(live?' data-clear':'')+'>not '+esc(fresh[0].name)+'?</button>':'')+'<span class="hint" style="margin-left:auto">read on your phone in '+ms+' ms</span></div>';
+  return h;
+}
+function backLine(){
+  const it = S.items.find(x=>x.id===S.back); if (!it || it.done) return '';
+  const smp = SAMPLES[it.id];
+  if (smp){ const r = parse(smp).res[0]; return '<div class="sug">back from '+esc(it.name)+' · clipboard: <b>'+esc(r.name+' '+r.key)+'</b><button class="go" data-back>file →</button></div>'; }
+  return '<div class="sug">back from '+esc(it.name)+' · nothing readable copied<button class="go" data-played="'+esc(it.id)+'">file as played →</button></div>';
+}
+
+function scrAgenda(t, live, m){
+  const pb = live
+    ? '<div class="pbw"><label class="pb">'+CLIP+'<textarea rows="1" id="pbx" placeholder="paste a result" aria-label="paste a result" spellcheck="false">'+esc(S.text)+'</textarea><button class="kbd" data-clip title="read the clipboard">paste</button></label></div>'+(S.text ? '' : backLine())+'<div class="out" id="pbout">'+output(t,S.text,true)+'</div>'
+    : '<div class="pbw"><div class="pb">'+CLIP+'<span class="ph-t">paste a result</span><span class="kbd">⌘v</span></div></div><div class="sug">clipboard · <b>strands #612</b><span class="go">file →</span></div>';
+  const all = live && S.items.every(x=>x.done);
+  let over = '';
+  if (live && S.ban) over += '<button class="ban" data-ban><small>'+esc(S.ban.k)+'</small><b>'+esc(S.ban.t)+'</b>'+esc(S.ban.s)+'</button>';
+  if (live && S.toast) over += '<div class="toast"><span>'+esc(S.toast.msg)+'</span><button data-undo>undo</button></div>';
+  return phone(t, head(t,'agenda','agenda', S.late ? 'tue 28 oct · 11:58 pm' : 'tue 28 oct') + '<div class="bd">'+pb+progress()+(all?'<div class="cmd">perfect attendance · the board thanks you</div>':'')+S.items.map((x,i)=>item(t,x,i,live)).join('')+'</div>', 'agenda', over, m);
+}
+function scrFiling(t){
+  const saved = S.items; S.items = AGENDA0.map(x=>({...x})); const h = output(t, SAMPLES.strands, false); S.items = saved;
+  return phone(t, head(t,'filing','agenda','tue 28 oct') + '<div class="bd"><div class="pbw"><div class="pb">'+CLIP+'<span class="ph-t filled">strands #612 “feeling blue” 🔵🔵💡🔵</span></div></div><div class="out">'+h+'</div>'
+    + progress() + AGENDA0.slice(0,2).map((x,i)=>item(t,x,i,false)).join('') + '</div>', 'agenda');
+}
+
+/* review */
+const METRICS = { items:{ src:ITEMS, label:'items done', low:false }, conn:{ src:CONN, label:'connections', low:true }, map:{ src:MAP, label:'maptap', low:false } };
+function maxFor(k){ return k==='conn' ? 4 : k==='map' ? 1000 : Math.max(6, S.items.length); }
+function detail(){
+  const M = METRICS[S.metric], d = DAYS[S.day];
+  return d+' · '+MEM.map(m=>{ const v=M.src[m][S.day]; return '<b>'+m+'</b> '+(v==null?'absent':S.metric==='conn'?(v>=4?'missed':plural(v,'mistake')):v); }).join(' · ');
+}
+function standings(){
+  const M = METRICS[S.metric];
+  return MEM.map(m=>{ const vs=M.src[m].filter(v=>v!=null); const tot=sum(vs); return { m, val: S.metric==='items' ? tot : tot/vs.length }; })
+    .sort((a,b)=> M.low ? a.val-b.val : b.val-a.val);
+}
+function memo(){
+  if (S.metric==='conn') return ['memo · connections', 'judy averages '+standings().find(r=>r.m==='judy').val.toFixed(1)+' mistakes. the board is concerned.'];
+  if (S.metric==='map') return ['memo · maptap', 'best round this week: ivan, 901 on friday'];
+  const you = sum(ITEMS.you), ivan = sum(ITEMS.ivan), left = S.items.filter(x=>!x.done).length;
+  if (you > ivan) return ['memo · just now', 'hostile takeover: you passed ivan for #1'];
+  const gap = ivan - you;
+  return ['memo · this week', 'ivan leads you by '+plural(gap,'item') + (left > gap ? '. file '+(gap+1)+' more to take #1.' : left ? '. '+plural(left,'item')+' left won\'t close it.' : '.')];
+}
+function scrReview(t){
+  const k = S.metric, M = METRICS[k], max = maxFor(k);
+  const chart = '<div class="chart">'+DAYS.map((d,i)=>'<button class="day'+(i===S.day?' sel':'')+'" data-day="'+i+'" aria-label="'+d+'"><div class="bars">'+MEM.map(m=>{ const v=M.src[m][i]; const dim = S.iso && S.iso!==m ? ' dim' : ''; return v==null ? '<i class="none'+dim+'" style="height:12%"></i>' : '<i class="'+dim.trim()+'" style="height:'+Math.max(4, (k==='conn' ? (v+.4) : v)/max*100)+'%"></i>'; }).join('')+'</div><span>'+d[0]+'</span></button>').join('')+'</div>';
+  const rows = standings();
+  const fmt = v => k==='items' ? v : k==='conn' ? v.toFixed(1) : Math.round(v);
+  const ranks = rows.map((r,i)=>'<div class="rk'+(r.m==='you'?' me':'')+'"><span class="n">'+(i+1)+'</span><span class="nm">'+r.m+'</span><span class="v">'+fmt(r.val)+'</span><span class="t2">'+(i===rows.length-1?'on a pip':'tenure '+TENURE[r.m]+'d')+'</span></div>').join('');
+  const [ms, mt] = memo();
+  return phone(t, head(t,'review','soup daily','3 members') + '<div class="bd"><div class="seg">'+Object.keys(METRICS).map(x=>'<button class="'+(x===k?'on':'')+'" data-metric="'+x+'">'+METRICS[x].label+'</button>').join('')+'</div>'
+    + '<div class="legend">'+MEM.map((m,i)=>'<button class="'+(S.iso && S.iso!==m?'off':'')+'" data-iso="'+m+'"><i style="background:var(--m'+(i+1)+')"></i>'+m+'</button>').join('')+'<span style="margin-left:auto">'+(k==='conn'?'lower is better':'this week')+'</span></div>'
+    + chart + '<div class="det">'+detail()+'</div>' + ranks
+    + '<div class="memo'+(S.hot && k==='items'?' hot':'')+'"><small>'+esc(ms)+'</small>'+esc(mt)+'</div></div>', 'boards');
+}
+
+function scrMinutes(t){
+  const k = S.mtab, M = MIN[k], open = !!S.filed[k];
+  const rows = M.rows.slice(); if (open) rows.splice(1, 0, ['you', S.grids[k] || M.you, 2]);
+  const cell = s => M.text ? '<span class="mv'+(open?'':' blur')+'"'+(open?'':' data-nudge')+'>'+esc(s)+'</span>'
+                           : '<span class="gridp mini'+(open?'':' blur')+'"'+(open?'':' data-nudge')+'>'+esc(s)+'</span>';
+  const max = Math.max(...M.dist.map(d=>d[1]));
+  const lock = open ? 'minutes unsealed · you filed '+M.title : S.nudge ? 'file '+k+' first. no peeking.' : 'minutes are confidential until you file today\'s '+k;
+  const h = phone(t, head(t,'minutes', t.minx ? k+'.xlsx' : M.title, 'soup daily') + '<div class="bd">'
+    + '<div class="seg">'+Object.keys(MIN).map(x=>'<button class="'+(x===k?'on':'')+'" data-mtab="'+x+'">'+x+'</button>').join('')+'</div>'
+    + rows.map(r=>'<div class="mrow"><span class="who"><span class="av" style="background:var(--m'+r[2]+')">'+r[0][0]+'</span>'+r[0]+'</span>'+cell(r[1])+'</div>').join('')
+    + '<div class="lock'+(S.nudge?' nudge':'')+'">'+lock+'</div>'
+    + '<div class="nm">'+M.dl+'</div><div class="dist">'+M.dist.map((d,i)=>'<div>'+d[0]+'<span class="'+(i===M.hl?'hl':'')+'" style="width:'+Math.round(d[1]/max*100)+'%">'+d[1]+'</span></div>').join('')+'</div>'
+    + '<div class="sub">your usual bar highlighted</div></div>', 'boards');
+  S.nudge = false; return h;
+}
+
+function scrLibrary(t){
+  const q = S.filter.toLowerCase();
+  const rows = LIB.filter(r=>(S.cat==='all' || r[2]===S.cat) && (!q || r[0].includes(q) || r[2].includes(q)));
+  const onA = name => S.items.some(x=>x.name===name);
+  return phone(t, head(t,'library','library','140 games') + '<div class="bd"><div class="pbw"><label class="srch">'+SRCH+'<input id="libq" placeholder="search games" aria-label="search games" value="'+esc(S.filter)+'"></label></div>'
+    + '<div class="fch">'+['all','words','geography','trivia','puzzles'].map(c=>'<button class="'+(c===S.cat?'on':'')+'" data-cat="'+c+'">'+c+'</button>').join('')+'</div>'
+    + rows.slice(0,6).map((r,i)=>'<div class="it n'+(i%6)+'">'+tile({l:r[1],gc:r[4]})+'<div class="g"><div class="nm">'+esc(r[0])+'</div><div class="sub">'+esc(r[2])+(r[3]?' · '+esc(r[3]):'')+'</div></div>'+(onA(r[0])?'<button class="add" disabled>on agenda ✓</button>':'<button class="add" data-add="'+esc(r[0])+'">add</button>')+'</div>').join('')
+    + (rows.length?'':'<div class="sub">no game called "'+esc(S.filter)+'" yet</div>')
+    + '<div class="memo"><small>any other business?</small>add any daily game with a link and its reset time</div></div>', 'library');
+}
+
+function scrYou(t){
+  const done = S.items.filter(x=>x.done).length, all = done===S.items.length;
+  const wk = ITEMS.you.map(v=>v>0);
+  const per = S.items.map(x=>({ n:x.name, d:(GAME_TEN[x.id]||0) + (x.done?1:0), risk:!x.done }));
+  return phone(t, head(t,'you','your seat', S.name) + '<div class="bd">'
+    + '<div class="stat"><div><b>'+(TENURE.you)+'d</b><small>tenure · filed something every day</small></div><div><b class="'+(all?'pop':'')+'">'+(all?1:0)+'d</b><small>perfect attendance · every item</small></div></div>'
+    + '<div class="wk">'+wk.map(on=>'<i class="'+(on?'on':'')+'"></i>').join('')+'<span>this week</span></div>'
+    + '<div class="nm">tenure by item</div>'
+    + per.map(p=>'<div class="mrow"><span>'+esc(p.n)+'</span><span class="mv">'+p.d+'d'+(p.risk && p.d ? ' · <span class="risk">ends at reset</span>' : '')+'</span></div>').join('')
+    + '<div class="nm">commendations</div><div class="chips"><span class="chip">first to file ×6</span><span class="chip">purple first ×2</span>'+(S.lead?'<span class="chip badge">hostile takeover ×1</span>':'')+(all?'<span class="chip badge">perfect attendance</span>':'')+'</div>'
+    + '<button class="lnk" style="align-self:flex-start">resign from the board</button></div>', 'you');
+}
+
+function scrInvite(t){
+  if (S.joined) return phone(t, '<div class="bd inv"><div class="big">welcome aboard, '+esc(S.name || 'walter')+'.</div><div class="sub" style="white-space:normal">your seat is on this phone. today\'s agenda has '+plural(S.items.length,'item')+'.</div>'
+    + '<button class="btn wide" data-goto>take your seat</button><button class="lnk" data-unjoin style="align-self:center">back to the invitation</button></div>', 'boards');
+  return phone(t, '<div class="bd inv"><div class="big">ivan invited you to the soup daily board</div><div class="sub" style="white-space:normal">3 board members · connections, strands and 4 more on the agenda</div>'
+    + '<div class="field"><label for="invname">what should the board call you?</label><input class="input" id="invname" value="'+esc(S.name)+'" autocomplete="off" spellcheck="false"></div><button class="btn wide" data-join>join as guest</button><button class="btn wide ghost" data-join>continue with google</button>'
+    + '<div class="sub" style="text-align:center;white-space:normal">have a seat on another phone? move it here</div></div>', 'boards');
+}
+const SCREENS = [
+  ['agenda', 'Agenda + pasteboard', 'Live: paste, type, or tap "play".', t=>scrAgenda(t,true)],
+  ['filing', 'Filing', 'What the parse card looks like mid-paste.', t=>scrFiling(t)],
+  ['review', 'Performance review', 'Scrub the chart; tap names; switch metric.', t=>scrReview(t)],
+  ['minutes', 'Minutes', 'Switch games. Strands stays sealed until you file it.', t=>scrMinutes(t)],
+  ['library', 'Library', 'Search, filter, add to the agenda.', t=>scrLibrary(t)],
+  ['you', 'Your seat', 'Tenure, perfect attendance, tenure by item.', t=>scrYou(t)],
+  ['invite', 'Board invitation', 'No signup wall. Try your own name.', t=>scrInvite(t)]
+];
+
+/* ---------- page ---------- */
+const $ = s => document.querySelector(s);
+const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function renderMatrix(){
+  const T = id => THEMES.find(t=>t.id===id), num = id => THEMES.findIndex(t=>t.id===id)+1;
+  let h = '<div class="h"></div>' + MATRIX.cols.map(c=>'<div class="h">'+c+'</div>').join('');
+  MATRIX.rows.forEach(r=>{ h += '<div class="rh">'+r[0]+'</div>' + r.slice(1).map(ids => ids.length
+    ? '<div class="c">'+ids.map(id=>'<button data-open="'+id+'" data-jump><i style="background:'+T(id).dot+'"></i>'+num(id)+' · '+T(id).n+(T(id).kept?' <small>kept</small>':'')+'</button>').join('')+'</div>'
+    : '<div class="c e">—</div>').join(''); });
+  $('#matrix').innerHTML = h;
+}
+function renderModes(){
+  document.querySelectorAll('[data-modes]').forEach(g=>{ g.innerHTML = [['native','as designed'],['light','light'],['dark','dark']].map(([k,v])=>'<button class="'+(k===mode?'on':'')+'" data-mode="'+k+'" aria-pressed="'+(k===mode)+'">'+v+'</button>').join(''); });
+}
+function renderSheet(){
+  const saved = S; S = { ...S, items: AGENDA0.map(x=>({...x})), late:false };
+  $('#sheet').innerHTML = THEMES.map((t,i)=>'<div class="card"><div class="top"><h3>'+(i+1)+' · '+t.n+'</h3><span class="tag'+(t.kept?' kept':'')+'">'+t.tag+'</span></div><p>'+t.pitch+'</p>'+scrAgenda(t,false)+'<button class="open" data-open="'+t.id+'" data-jump>Try it live ↓</button></div>').join('');
+  S = saved;
+}
+function renderSwitch(){
+  $('#switch').innerHTML = THEMES.map((t,i)=>'<button class="sw-btn'+(t.id===cur?' on':'')+'" role="tab" aria-selected="'+(t.id===cur)+'" data-open="'+t.id+'"><i style="background:'+t.dot+'"></i>'+(i+1)+' '+t.n+'</button>').join('');
+  const t = curT();
+  $('#binfo').innerHTML = '<div><div class="eyebrow">'+t.tag+'</div><h2>'+t.n+'</h2><p class="pitch">'+t.pitch+'</p></div><div class="facts"><div><div class="k">Type</div>'+t.fonts+'</div><div><div class="k">Palette</div><div class="swatch">'+t.sw.map(c=>'<span style="background:'+c+'"></span>').join('')+'</div></div><div><div class="k">Native mode</div>'+t.native+', with a '+(t.native==='dark'?'light':'dark')+' pair</div></div>';
+}
+const ANIM = [['.bars i','height'],['.bar i','width'],['.dist span','width']];
+function swapPh(shot, html){
+  const old = shot.querySelector('.ph'); const prev = ANIM.map(([sel,p])=>[...old.querySelectorAll(sel)].map(e=>e.style[p]));
+  const tmp = document.createElement('div'); tmp.innerHTML = html; const nu = tmp.firstElementChild; old.replaceWith(nu);
+  if (RM()) return;
+  const jobs = [];
+  ANIM.forEach(([sel,p],k)=>{ const els = [...nu.querySelectorAll(sel)]; if (els.length !== prev[k].length) return;
+    els.forEach((e,i)=>{ const to = e.style[p], from = prev[k][i]; if (from && from !== to){ e.style[p] = from; jobs.push([e,p,to]); } }); });
+  if (jobs.length){ nu.offsetHeight; requestAnimationFrame(()=>jobs.forEach(([e,p,v])=>{ e.style[p] = v; })); }
+}
+function keepFocus(fn){
+  const a = document.activeElement, id = a && a.id && $('#screens').contains(a) ? a.id : null, caret = id && a.selectionStart;
+  fn();
+  if (id){ const el = document.getElementById(id); if (el){ el.focus({ preventScroll:true }); try { el.setSelectionRange(caret, caret); } catch(e){} } }
+}
+function renderShot(key){
+  const shot = document.querySelector('.shot[data-k="'+key+'"]'); if (!shot) return;
+  keepFocus(()=>swapPh(shot, SCREENS.find(s=>s[0]===key)[3](curT())));
+  S.items.forEach(x=>{ x.just=false; }); S.hot = false;
+}
+function renderScreens(fresh){
+  const t = curT(), box = $('#screens');
+  if (fresh || box.children.length !== SCREENS.length) box.innerHTML = SCREENS.map(s=>'<div class="shot" data-k="'+s[0]+'">'+s[3](t)+'<div class="cap"><b>'+s[1]+'</b>'+s[2]+'</div></div>').join('');
+  else keepFocus(()=>SCREENS.forEach(s=>swapPh(box.querySelector('.shot[data-k="'+s[0]+'"]'), s[3](t))));
+  S.items.forEach(x=>{ x.just=false; }); S.hot = false;
+}
+function setTheme(id, jump){
+  cur = id; try { localStorage.setItem('br-dir', id); } catch(e) {}
+  $('#screens').querySelectorAll('.ph').forEach(p=>p.classList.add('fade'));
+  setTimeout(()=>{ renderSwitch(); renderScreens(true); }, RM() ? 0 : 160);
+  if (jump) $('#bench-sec').scrollIntoView({ behavior: RM() ? 'auto' : 'smooth', block: 'start' });
+}
+function setMode(m){ mode = m; try { localStorage.setItem('br-mode', m); } catch(e) {} renderModes(); renderSheet(); renderScreens(true); }
+function toLeft(){ $('#screens').scrollTo({ left: 0, behavior: RM() ? 'auto' : 'smooth' }); }
+
+/* ---------- actions ---------- */
+let toastT, banT;
+function snapshot(){ return JSON.stringify({ items:S.items, filed:S.filed, grids:S.grids }); }
+function toast(msg, snap){ S.toast = { msg, snap }; clearTimeout(toastT); toastT = setTimeout(()=>{ S.toast = null; renderShot('agenda'); }, 5000); }
+function banner(k, t, s){ S.ban = { k, t, s }; clearTimeout(banT); banT = setTimeout(()=>{ S.ban = null; renderShot('agenda'); }, 5000); }
+function afterChange(){
+  syncToday();
+  const lead = sum(ITEMS.you) > sum(ITEMS.ivan);
+  if (lead && !S.lead){ S.hot = true; banner('soup daily · just now', 'hostile takeover', 'you passed ivan for #1 this week. the board is shaken.'); }
+  S.lead = lead;
+  renderScreens(false);
+}
+function fileNow(){
+  const { res } = parse(S.text); const fresh = res.filter(r=>status(r)!=='dup'); if (!fresh.length) return;
+  const snap = snapshot();
+  fresh.forEach(r=>{
+    let it = S.items.find(i=>i.id===r.id);
+    if (!it){ const lib = LIB.find(x=>x[0]===r.name); it = { id:r.id, name:r.name, l:r.l, p:r.p, key:r.key, gc: lib ? lib[4] : 7 }; S.items.push(it); }
+    it.done = true; it.key = r.key; it.score = r.stats[0]; it.just = true; it.sub = 'filed just now';
+    S.filed[r.id] = true; if (r.grid) S.grids[r.id] = r.grid;
+  });
+  S.text = ''; S.back = null;
+  toast('filed '+fresh.map(r=>r.name+' '+r.key).join(' + '), snap);
+  afterChange();
+}
+function playedFor(id){
+  const it = S.items.find(i=>i.id===id); if (!it) return;
+  const snap = snapshot();
+  it.done = true; it.score = 'played'; it.just = true; it.sub = 'filed without a score'; S.filed[id] = true;
+  S.text = ''; S.back = null; toast('filed '+it.name+' as played', snap); afterChange();
+}
+function undo(){
+  if (!S.toast) return; const s = JSON.parse(S.toast.snap);
+  S.items = s.items.map(x=>({ ...x, just:false })); S.filed = s.filed; S.grids = s.grids; S.toast = null; clearTimeout(toastT); afterChange();
+}
+function play(id){
+  S.playing = id; S.back = null; S.text = ''; renderShot('agenda');
+  setTimeout(()=>{ if (S.playing !== id) return; S.playing = null; S.back = id; renderShot('agenda'); }, RM() ? 300 : 1300);
+}
+function addGame(name){
+  const r = LIB.find(x=>x[0]===name); if (!r || S.items.some(x=>x.name===name)) return;
+  const snap = snapshot();
+  S.items.push({ id: name==='wordle' ? 'wordle' : name.replace(/\s+/g,'-'), name, l:r[1], p:2, key: name==='wordle' ? '#1,592' : 'oct 28', done:false, sub:'added by you just now', gc:r[4] });
+  toast('added '+name+' to the agenda', snap); afterChange();
+}
+function setDay(d){
+  if (d === S.day) return; S.day = d;
+  const shot = document.querySelector('.shot[data-k="review"]'); if (!shot) return;
+  shot.querySelectorAll('.day').forEach(b=>b.classList.toggle('sel', +b.dataset.day===d));
+  shot.querySelector('.det').innerHTML = detail();
+}
+
+let tmr;
+document.addEventListener('input', e=>{
+  if (e.target.id==='pbx'){ S.text = e.target.value; if (S.text) S.back = null; clearTimeout(tmr); tmr = setTimeout(()=>{ const o = $('#pbout'); if (o) o.innerHTML = output(curT(), S.text, true); }, 60); }
+  if (e.target.id==='libq'){ S.filter = e.target.value; renderShot('library'); }
+  if (e.target.id==='invname'){ S.name = e.target.value.trim().toLowerCase(); }
+});
+document.addEventListener('keydown', e=>{
+  if (e.target.id==='pbx'){
+    if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); fileNow(); }
+    if (e.key==='Escape'){ S.text=''; e.target.value=''; const o = $('#pbout'); if (o) o.innerHTML = ''; }
+  }
+  if (e.target.id==='invname' && e.key==='Enter'){ S.joined = true; renderScreens(false); }
+});
+document.addEventListener('pointermove', e=>{
+  if (e.pointerType!=='mouse' && !e.buttons) return;
+  const el = document.elementFromPoint(e.clientX, e.clientY); const d = el && el.closest('.chart .day');
+  if (d) setDay(+d.dataset.day);
+});
+document.addEventListener('click', e=>{
+  const nd = e.target.closest('[data-nudge]'); if (nd){ S.nudge = true; renderShot('minutes'); return; }
+  const b = e.target.closest('button'); if (!b) return;
+  const D = b.dataset;
+  if (D.open){ setTheme(D.open, b.hasAttribute('data-jump')); return; }
+  if (D.mode){ setMode(D.mode); return; }
+  if (D.s){ S.text = SAMPLES[D.s]; S.back = null; renderShot('agenda'); toLeft(); return; }
+  if (D.sim){
+    if (D.sim==='reset'){ clearTimeout(toastT); clearTimeout(banT); reset(); renderScreens(true); return; }
+    if (D.sim==='judy'){
+      if (!S.judy){ S.judy = true; ITEMS.judy[6] += 1; const k = S.items.find(x=>x.id==='krillion'); if (k && !k.done) k.sub = 'judy present'; }
+      banner('soup daily · just now', 'judy filed krillion', '412 m deep. the twilight zone.');
+    }
+    if (D.sim==='evening'){
+      S.late = true; const left = S.items.filter(x=>!x.done);
+      if (left.length) banner('soup daily · 11:58 pm', 'the meeting started without you', plural(left.length,'item')+' left on today\'s agenda: '+left.map(x=>x.name).join(', ')+'.');
+      else banner('soup daily · 11:58 pm', 'all items filed', 'the board thanks you for your attendance. see you at 5:30.');
+    }
+    renderScreens(false); toLeft(); return;
+  }
+  if (b.hasAttribute('data-file')){ fileNow(); return; }
+  if (b.hasAttribute('data-clear')){ S.text = ''; renderShot('agenda'); const x = $('#pbx'); if (x) x.focus(); return; }
+  if (b.hasAttribute('data-back')){ S.text = SAMPLES[S.back] || ''; fileNow(); return; }
+  if (b.hasAttribute('data-undo')){ undo(); return; }
+  if (b.hasAttribute('data-ban')){ S.ban = null; clearTimeout(banT); renderShot('agenda'); return; }
+  if (b.hasAttribute('data-clip')){
+    e.preventDefault();
+    const x = $('#pbx');
+    const fail = ()=>{ if (x){ x.placeholder = 'clipboard blocked here · press ⌘v'; x.focus(); } };
+    if (navigator.clipboard && navigator.clipboard.readText) navigator.clipboard.readText().then(txt=>{ if (!txt) return fail(); S.text = txt; S.back = null; renderShot('agenda'); }).catch(fail);
+    else fail();
+    return;
+  }
+  if (D.play){ play(D.play); return; }
+  if (D.played){ playedFor(D.played); return; }
+  if (D.day){ setDay(+D.day); return; }
+  if (D.metric){ S.metric = D.metric; renderShot('review'); return; }
+  if (D.iso){ S.iso = S.iso===D.iso ? null : D.iso; renderShot('review'); return; }
+  if (D.mtab){ S.mtab = D.mtab; renderShot('minutes'); return; }
+  if (D.cat){ S.cat = D.cat; renderShot('library'); return; }
+  if (D.add){ addGame(D.add); return; }
+  if (b.hasAttribute('data-join')){ const i = $('#invname'); if (i) S.name = i.value.trim().toLowerCase() || 'walter'; S.joined = true; renderScreens(false); return; }
+  if (b.hasAttribute('data-unjoin')){ S.joined = false; renderShot('invite'); return; }
+  if (b.hasAttribute('data-goto')){ toLeft(); setTimeout(()=>{ const x = $('#pbx'); if (x) x.focus({ preventScroll:true }); }, 300); return; }
+});
+
+renderMatrix(); renderModes(); renderSheet(); renderSwitch(); renderScreens(true);
+})();
+</script>

@@ -1,0 +1,1147 @@
+<title>Boredroom UX Blueprint</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;800;900&family=Carlito:wght@400;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a reading column for the brief, then a wide wall of mockups. Every screen is shown in the
+   Spreadsheet direction, light and dark (Night Ledger palette), rendered from one shared demo state so
+   both copies change together. Page chrome borrows the same green/mint so the brief and the app match. */
+:root {
+  --bg: #ffffff; --surface: #f3f4f2; --fg: #1d1f1e; --muted: #626866; --line: #dcdfdc; --accent: #217346; --accent-soft: rgba(33,115,70,.1); --hl: #fff3b0;
+  --f-ui: "Libre Franklin", "Helvetica Neue", Arial, sans-serif; --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b0f19; --surface: #141a29; --fg: #e6e9f2; --muted: #8f98ad; --line: #232b3f; --accent: #5ee6a8; --accent-soft: rgba(94,230,168,.12); --hl: #3a2f12; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #0b0f19; --surface: #141a29; --fg: #e6e9f2; --muted: #8f98ad; --line: #232b3f; --accent: #5ee6a8; --accent-soft: rgba(94,230,168,.12); --hl: #3a2f12; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 16px; line-height: 1.55; margin: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 90px; }
+.wrap { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 64px; }
+.col { max-width: 740px; display: flex; flex-direction: column; gap: 10px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h2 { font-weight: 900; font-size: 28px; letter-spacing: -.01em; }
+h3 { font-weight: 800; font-size: 17px; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+section { display: flex; flex-direction: column; gap: 20px; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--f-mono); font-size: .9em; }
+a { color: var(--accent); }
+
+/* hero: the name as a row of cells */
+.hero { display: flex; flex-direction: column; gap: 20px; }
+.cells { display: inline-grid; grid-template-columns: 26px repeat(9, minmax(0, 52px)); border: 1px solid var(--line); max-width: 100%; font-family: var(--f-mono); }
+.cells > span { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); display: grid; place-items: center; min-width: 0; }
+.cells .ch { font-size: 10px; color: var(--muted); background: var(--surface); height: 20px; }
+.cells .c { height: 52px; font-family: var(--f-ui); font-weight: 900; font-size: clamp(16px, 4vw, 28px); animation: fill .4s ease both; animation-delay: calc(var(--i) * 60ms); }
+.cells .c.g { background: var(--accent-soft); color: var(--accent); } .cells .c.y { background: var(--hl); }
+@keyframes fill { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cells .c { animation: none; } }
+.fxline { font-family: var(--f-mono); font-size: 13px; color: var(--muted); border: 1px solid var(--line); border-top: 0; padding: 5px 10px; max-width: 494px; overflow-x: auto; white-space: nowrap; }
+.fxline i { color: var(--accent); font-style: normal; font-weight: 600; margin-right: 8px; }
+.hero h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.08; font-weight: 900; letter-spacing: -.02em; max-width: 820px; }
+.lede { font-size: 19px; max-width: 680px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips span { font-size: 13px; font-weight: 600; padding: 6px 12px; border: 1.5px solid var(--line); border-radius: 999px; }
+.chips .on { border-color: var(--accent); } .chips .off { color: var(--muted); text-decoration: line-through; } .chips .park { border-style: dashed; color: var(--muted); }
+
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 26px 32px; }
+.principles div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.principles b { font-size: 16px; font-weight: 800; }
+.principles span { color: var(--muted); font-size: 15px; }
+.principles i { font-style: normal; font-family: var(--f-mono); font-size: 12px; color: var(--accent); }
+.voice-ex { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.vx { border: 1px solid var(--line); border-left: 4px solid var(--accent); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.vx .k { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.vx .v { font-size: 17px; font-weight: 700; line-height: 1.3; }
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14.5px; }
+th { text-align: left; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 2px solid var(--fg); }
+td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.k { font-weight: 800; white-space: nowrap; } td.ex { color: var(--muted); }
+.pri { display: inline-block; font-size: 11px; font-weight: 800; padding: 2px 7px; white-space: nowrap; }
+.pri.m { background: var(--accent); color: var(--bg); } .pri.s { background: var(--hl); color: var(--fg); } .pri.l { border: 1px solid var(--line); color: var(--muted); }
+.notes6 { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; counter-reset: n; }
+.notes6 > div { border: 1px solid var(--line); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.notes6 b { font-size: 15.5px; display: flex; gap: 8px; align-items: baseline; }
+.notes6 b::before { counter-increment: n; content: counter(n); font-family: var(--f-mono); font-size: 12px; background: var(--accent); color: var(--bg); min-width: 20px; height: 20px; display: inline-grid; place-items: center; flex: none; }
+.notes6 span { color: var(--muted); font-size: 14.5px; }
+.notes6 em { font-style: normal; font-size: 12.5px; font-weight: 700; color: var(--accent); }
+.flows { display: flex; flex-direction: column; gap: 16px; }
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; margin-top: 6px; }
+.flow .st { background: var(--surface); border: 1px solid var(--line); padding: 6px 10px; font-weight: 600; }
+.flow .ar { color: var(--muted); }
+.callout { background: var(--surface); border-left: 6px solid var(--accent); padding: 20px 22px; display: flex; flex-direction: column; gap: 12px; }
+.plat { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+.plat div { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 14px; } .plat span { color: var(--muted); }
+.tokens { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.tokens > div { border: 1px solid var(--line); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; min-width: 0; font-size: 14.5px; }
+.tokens code { font-family: var(--f-mono); font-size: 12px; color: var(--accent); }
+
+/* mockup toolbar + grid */
+.bar { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); padding: 10px 0; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.seg-p { display: inline-flex; border: 1.5px solid var(--line); border-radius: 99px; padding: 2px; gap: 2px; }
+.seg-p button { font: inherit; font-size: 13px; font-weight: 700; padding: 5px 12px; border-radius: 99px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.seg-p button.on { background: var(--fg); color: var(--bg); }
+.bar .lab { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.try { font: inherit; font-size: 13px; padding: 5px 10px; border-radius: 8px; border: 1px dashed var(--muted); background: transparent; color: var(--fg); cursor: pointer; }
+.try:hover { border-style: solid; }
+.try.sim { border-style: solid; border-color: var(--line); background: var(--accent-soft); }
+.seg-p button:focus-visible, .try:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.scrs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 580px), 1fr)); gap: 44px 28px; }
+.scrs.single { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+.scr { display: flex; flex-direction: column; gap: 10px; min-width: 0; scroll-margin-top: 70px; }
+.scr-cap { display: flex; flex-direction: column; gap: 3px; max-width: 560px; }
+.scr-cap b { font-size: 16px; font-weight: 800; display: flex; gap: 8px; align-items: baseline; }
+.scr-cap b .n { font-family: var(--f-mono); font-size: 12px; color: var(--accent); }
+.scr-cap span { font-size: 14px; color: var(--muted); }
+.scr-cap em { font-style: normal; font-size: 12px; font-weight: 700; color: var(--accent); }
+.pair { display: flex; gap: 16px; overflow-x: auto; padding: 2px 2px 10px; }
+.pair > div { flex: none; display: flex; flex-direction: column; gap: 6px; }
+.pair .md { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* ============ phone: spreadsheet direction ============ */
+.ph { --p-bg:#ffffff; --surface:#f3f3f3; --ink:#222; --muted:#6b6b6b; --line:#e1e1e1; --accent:#217346; --accent-ink:#fff; --ok:#c6efce; --ok-ink:#006100; --miss:#bfbfbf; --bar-o:#cfe3d6;
+  --g1:#217346; --g2:#4472c4; --g3:#7f6000; --g4:#c55a11; --g5:#2e75b6; --g6:#70ad47; --g7:#7030a0; --tile-ink:#fff;
+  --fh:"Carlito", Calibri, Arial, sans-serif; --fb:"Carlito", Calibri, Arial, sans-serif; --fn:"Carlito", Calibri, Arial, sans-serif; --ring: rgba(33,115,70,.2); --btn:#217346; --btn-ink:#fff; --frame: rgba(0,0,0,.14); --av-l: 42%; --av-s: 45%; --av-ink: #fff; --dim: rgba(0,0,0,.35);
+  --sx-hd:#217346; --sx-hd-ink:#fff; --sx-hd-m:#cfe6d7; --sx-fx-bg:#fafafa; --sx-fx-ink:#444; --sx-gut:#f3f3f3; --sx-gut-ink:#777; --sx-rule:#d4d4d4; --sx-todo:#ffeb9c; --sx-todo-ink:#9c5700; --sx-note:#fff9c4; --sx-note-b:#c9b200; --sx-seg:#e2efda;
+  width: 272px; max-width: calc(100vw - 40px); aspect-ratio: 9 / 19.5; border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; position: relative;
+  background: var(--p-bg); color: var(--ink); font-family: var(--fb); font-size: 12px; line-height: 1.35; border: 1px solid var(--frame); box-shadow: 0 12px 30px -18px rgba(0,0,0,.35); }
+.ph.dk { --p-bg:#0f1420; --surface:#182033; --ink:#e6e9f2; --muted:#8a93a8; --line:#222b40; --accent:#5ee6a8; --accent-ink:#0b1a14; --ok:#12382b; --ok-ink:#5ee6a8; --miss:#3b4762; --bar-o:#2a3a55;
+  --g1:#b39cff; --g2:#8ab4ff; --g3:#ffd38a; --g4:#ff9cb8; --g5:#6fe0d2; --g6:#5ee6a8; --g7:#ffb38a; --tile-ink:#0f1420;
+  --fn:"IBM Plex Mono", monospace; --ring: rgba(94,230,168,.2); --btn:#5ee6a8; --btn-ink:#0b1a14; --frame: rgba(255,255,255,.08); --av-l: 72%; --av-s: 60%; --av-ink: #0f1420; --dim: rgba(0,0,0,.55);
+  --sx-hd:#182033; --sx-hd-ink:#5ee6a8; --sx-hd-m:#8a93a8; --sx-fx-bg:#121829; --sx-fx-ink:#b9c0d4; --sx-gut:#131a2a; --sx-gut-ink:#5d6780; --sx-rule:#263049; --sx-todo:#3a2f12; --sx-todo-ink:#ffd38a; --sx-note:#221d3a; --sx-note-b:#6b5bb0; --sx-seg:#12382b; }
+.ph, .ph * { text-transform: lowercase !important; }
+:where(.ph button) { font: inherit; color: inherit; }
+.sb { display: flex; justify-content: space-between; padding: 10px 20px 4px; font-size: 10px; font-weight: 700; font-family: var(--fn); background: var(--sx-hd); color: var(--sx-hd-ink); }
+.hd { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 4px 12px 8px; background: var(--sx-hd); color: var(--sx-hd-ink); }
+.hd .t { font-family: var(--fh); font-weight: 700; font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ttl { background: none; border: 0; padding: 0; cursor: pointer; display: inline-flex; gap: 4px; align-items: baseline; max-width: 100%; }
+.ttl .car { font-size: 10px; opacity: .8; }
+.hd .m { font-size: 10.5px; color: var(--sx-hd-m); white-space: nowrap; font-family: var(--fn); }
+.fxw { position: relative; z-index: 8; }
+.fx { display: flex; gap: 3px; align-items: center; border-bottom: 1px solid var(--sx-rule); padding: 4px 8px; font-size: 10px; color: var(--sx-fx-ink); background: var(--sx-fx-bg); white-space: nowrap; overflow-x: auto; scrollbar-width: none; font-family: var(--fn); }
+.fx > i { color: var(--accent); font-weight: 700; font-style: italic; margin-right: 3px; flex: none; }
+.fx .fn { color: var(--sx-fx-ink); flex: none; }
+.fx .cm { color: var(--muted); flex: none; }
+.tk { flex: none; font-family: var(--fn); font-size: 10px; background: var(--p-bg); border: 1px solid var(--sx-rule); padding: 0 4px; cursor: pointer; color: var(--muted); line-height: 15px; }
+.tk b { color: var(--accent); font-weight: 700; }
+.tk:hover, .tk.open { border-color: var(--accent); }
+.tk.open { box-shadow: 0 0 0 2px var(--ring); }
+.menu { position: absolute; top: 100%; left: 26px; right: 8px; background: var(--p-bg); border: 1px solid var(--accent); box-shadow: 0 12px 24px -10px rgba(0,0,0,.45); display: flex; flex-direction: column; max-height: 230px; animation: drop .15s ease-out both; }
+.menu input { border: 0; border-bottom: 1px solid var(--sx-rule); background: var(--sx-fx-bg); color: var(--ink); font-family: var(--fn); font-size: 10.5px; padding: 6px 8px; outline: none; }
+.menu .opts { overflow-y: auto; display: flex; flex-direction: column; }
+.menu .opts button { text-align: left; padding: 6px 9px; border: 0; border-bottom: 1px solid var(--line); background: none; font-family: var(--fn); font-size: 10.5px; cursor: pointer; }
+.menu .opts button:hover { background: var(--surface); }
+.menu .opts button.on { color: var(--accent); font-weight: 700; }
+.menu .opts button.on::after { content: " ✓"; }
+.menu .none { padding: 6px 9px; color: var(--muted); font-size: 10.5px; }
+.bd { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; counter-reset: r; }
+.bd > *:not(.rows), .rows > * { position: relative; padding: 6px 10px 6px 32px; border-bottom: 1px solid var(--line); counter-increment: r; flex: none; }
+.bd > *:not(.rows)::before, .rows > *::before { content: counter(r); position: absolute; left: 0; top: 0; bottom: 0; width: 22px; background: var(--sx-gut); border-right: 1px solid var(--line); color: var(--sx-gut-ink); font-size: 9px; display: grid; place-items: center; font-family: var(--fn); }
+.bd > .plain { border-bottom: 0; } .bd > .plain::before { content: ""; background: transparent; border: 0; }
+.nav { background: var(--sx-gut); display: flex; padding: 0 0 12px; border-top: 1px solid var(--sx-rule); font-size: 9.5px; color: var(--muted); font-weight: 600; }
+.nav span { padding: 6px 9px; border-right: 1px solid var(--sx-rule); }
+.nav .on { background: var(--p-bg); color: var(--accent); box-shadow: inset 0 -2px var(--accent); font-weight: 700; }
+
+/* pasteboard */
+.pb { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.bd > .pbw:focus-within { outline: 2px solid var(--accent); outline-offset: -2px; }
+.pb svg { width: 14px; height: 14px; flex: none; }
+.pb textarea { flex: 1; min-width: 0; border: 0; background: transparent; resize: none; font: inherit; color: var(--ink); outline: none; height: 17px; line-height: 17px; padding: 0; overflow: hidden; white-space: nowrap; }
+.pb textarea::placeholder { color: var(--muted); opacity: 1; }
+.kbd { font-size: 9.5px; border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; font-family: var(--fn); white-space: nowrap; color: var(--muted); }
+.sug { display: flex; gap: 5px; align-items: center; font-size: 10.5px; color: var(--muted); animation: rise .25s ease-out both; min-width: 0; }
+.sug b { color: var(--ink); white-space: nowrap; }
+.go { margin-left: auto; color: var(--accent); font-weight: 800; background: none; border: 0; padding: 0; cursor: pointer; font-size: 10.5px; white-space: nowrap; }
+.out { display: flex; flex-direction: column; gap: 6px; }
+.out:empty { display: none; }
+.pc { border: 1px solid var(--sx-note-b); background: var(--sx-note); padding: 8px 9px; display: flex; flex-direction: column; gap: 6px; animation: rise .2s ease-out both; }
+.pc-h { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.pc-h > div { min-width: 0; }
+.pc-h b { display: block; font-size: 12.5px; }
+.pc-h small, .to { color: var(--muted); font-size: 10px; }
+.to b { color: var(--ink); font-weight: 700; }
+.chipr { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font-size: 10px; padding: 1px 6px; background: var(--p-bg); border: 1px solid var(--line); white-space: nowrap; font-family: var(--fn); color: var(--ink); }
+.chip.badge { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.chip.seat { border-style: dashed; color: var(--muted); }
+button.chip { cursor: pointer; } button.chip:hover { border-color: var(--accent); }
+.gridp { font-size: 10px; line-height: 1.12; letter-spacing: .5px; white-space: pre; }
+.gridp.mini { font-size: 6.5px; letter-spacing: 0; line-height: 1.15; }
+.blur { filter: blur(3.5px); user-select: none; cursor: pointer; }
+.pc-a { display: flex; gap: 8px; align-items: center; }
+.btn { background: var(--btn); color: var(--btn-ink); border: 0; border-radius: 2px; padding: 5px 12px; font-weight: 700; font-size: 11.5px; cursor: pointer; font-family: var(--fb); }
+.btn.wide { width: 100%; padding: 8px; font-size: 12px; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--ink); }
+.lnk { background: none; border: 0; color: var(--muted); font-size: 10.5px; text-decoration: underline; cursor: pointer; padding: 0; }
+.dup, .hint { font-size: 10px; color: var(--muted); font-family: var(--fn); }
+
+/* agenda */
+.prog { display: flex; flex-direction: column; gap: 4px; }
+.pn { font-weight: 700; font-size: 12px; display: flex; justify-content: space-between; gap: 6px; }
+.pn span { font-weight: 400; color: var(--muted); font-size: 10.5px; font-family: var(--fn); }
+.prg { height: 5px; background: var(--surface); overflow: hidden; }
+.prg i { display: block; height: 100%; background: var(--accent); transition: width .4s ease; }
+.it { --gc: var(--g1); display: flex; align-items: center; gap: 8px; min-width: 0; }
+.it.just { animation: glow 1.2s ease-out; }
+.ic { width: 20px; height: 20px; flex: none; display: grid; place-items: center; font-family: var(--fh); font-weight: 800; font-size: 10px; color: var(--tile-ink); background: var(--gc); }
+.it .g { flex: 1; min-width: 0; }
+.nm { font-weight: 700; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sub { color: var(--muted); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; font-family: var(--fn); }
+.sub.wrap { white-space: normal; display: block; }
+button.sub { background: none; border: 0; padding: 0; cursor: pointer; width: 100%; text-align: left; }
+button.sub:hover { color: var(--ink); }
+.best { color: var(--ink); }
+.pr { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.pill { font-size: 10.5px; font-weight: 700; padding: 2px 7px; white-space: nowrap; font-family: var(--fn); border: 0; }
+.pill.done { background: var(--ok); color: var(--ok-ink); }
+.pill.todo { background: var(--sx-todo); color: var(--sx-todo-ink); cursor: pointer; }
+.it.just .pill { animation: pop .5s ease-out; }
+.rs { font-size: 8.5px; color: var(--muted); font-family: var(--fn); white-space: nowrap; }
+.stack { display: inline-flex; flex: none; }
+.av { width: 18px; height: 18px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 9px; font-weight: 800; color: var(--av-ink); background: hsl(var(--h) var(--av-s) var(--av-l)); flex: none; font-family: var(--fb); }
+.stack .av { width: 13px; height: 13px; font-size: 7px; box-shadow: 0 0 0 1.5px var(--p-bg); margin-left: -3px; }
+.stack .av:first-child { margin-left: 0; }
+.cmd { font-size: 11px; font-weight: 800; color: var(--accent); animation: pop .5s ease-out both; }
+
+/* review */
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; font-size: 10.5px; font-weight: 700; text-align: center; gap: 2px; }
+.seg button { background: transparent; border: 1px solid transparent; padding: 3px 0; color: var(--muted); cursor: pointer; font-weight: 700; font-size: 10.5px; }
+.seg button.on { background: var(--sx-seg); color: var(--accent); border-color: var(--sx-rule); }
+.gch { display: flex; gap: 3px; overflow-x: auto; scrollbar-width: none; }
+.gch button { flex: none; font-size: 10px; padding: 1px 6px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; font-family: var(--fn); white-space: nowrap; }
+.gch button.on { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.chart { display: flex; flex-direction: column; gap: 3px; }
+.cols { display: flex; align-items: flex-end; gap: 2px; height: 78px; touch-action: pan-y; }
+.cols button { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; background: none; border: 0; padding: 0; cursor: pointer; position: relative; }
+.cols button.sel { background: var(--surface); outline: 1px solid var(--sx-rule); }
+.cols .o { background: var(--bar-o); width: 100%; }
+.cols .y { background: var(--accent); width: 100%; }
+.cols .mk { position: absolute; left: -1px; right: -1px; height: 2px; background: var(--accent); }
+.cols .grp { display: flex; align-items: flex-end; gap: 1px; height: 100%; }
+.cols .grp i { flex: 1; background: hsl(var(--h) var(--av-s) var(--av-l)); }
+.cols .grp i.none { background: repeating-linear-gradient(0deg, var(--line) 0 2px, transparent 2px 4px); }
+.lbls { display: flex; gap: 2px; font-size: 8px; color: var(--muted); font-family: var(--fn); }
+.lbls span { flex: 1; text-align: center; min-width: 0; overflow: hidden; }
+.lbls span.on { color: var(--ink); font-weight: 700; }
+.key { display: flex; gap: 8px; font-size: 9.5px; color: var(--muted); align-items: center; flex-wrap: wrap; }
+.key i { display: inline-block; width: 8px; height: 8px; margin-right: 3px; vertical-align: -1px; }
+.det { font-size: 10px; color: var(--muted); font-family: var(--fn); }
+.det b { color: var(--ink); }
+.det .lnk { margin-left: 6px; }
+.hm { display: grid; grid-template-columns: 54px 1fr; row-gap: 2px; column-gap: 6px; align-items: center; }
+.hm .n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; background: none; border: 0; text-align: left; padding: 0; font-size: 9.5px; color: var(--ink); font-family: var(--fb); }
+.hm .n.me { color: var(--accent); font-weight: 700; }
+.hm .cl { display: flex; gap: 1px; }
+.hm .cl i { flex: 1; height: 10px; position: relative; background: var(--surface); min-width: 0; }
+.hm .cl i b { position: absolute; inset: 0; background: var(--accent); }
+.hm .cl i.sel { outline: 1px solid var(--ink); z-index: 1; }
+.hm .hdr i { background: none; height: auto; font-size: 7.5px; color: var(--muted); text-align: center; font-style: normal; font-family: var(--fn); overflow: hidden; }
+.hm .dim { opacity: .28; }
+.hm .on-c { box-shadow: inset 2px 0 0 hsl(var(--h) var(--av-s) var(--av-l)); padding-left: 4px; }
+.rk { display: grid; grid-template-columns: 14px 18px 1fr auto 52px; gap: 6px; align-items: center; font-variant-numeric: tabular-nums; }
+.rk .n { font-weight: 800; color: var(--muted); font-family: var(--fn); font-size: 10.5px; }
+.rk .who { background: none; border: 0; padding: 0; text-align: left; cursor: pointer; font-weight: 700; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk.me .who { color: var(--accent); }
+.rk.cmp { background: var(--surface); }
+.rk .v { font-family: var(--fn); font-weight: 700; font-size: 11px; }
+.rk .t2 { font-size: 9px; color: var(--muted); font-family: var(--fn); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk .t2.pip { color: var(--sx-todo-ink); }
+.absent { font-size: 10px; color: var(--muted); }
+.memo { border: 1px solid var(--sx-note-b); background: var(--sx-note); padding: 7px 9px; text-align: left; cursor: pointer; width: 100%; display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; font-weight: 700; color: var(--ink); animation: rise .25s ease-out both; }
+.memo small { color: var(--muted); font-size: 9px; font-weight: 400; font-family: var(--fn); display: flex; justify-content: space-between; gap: 6px; }
+.memo .q { font-family: var(--fn); font-size: 8.5px; color: var(--accent); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.memos { display: flex; flex-direction: column; gap: 5px; }
+.sec { font-size: 9.5px; font-weight: 700; color: var(--muted); letter-spacing: .04em; }
+
+/* minutes / library / you / misc */
+.mrow { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.who2 { display: flex; align-items: center; gap: 6px; font-weight: 700; min-width: 0; }
+.mv { font-family: var(--fn); font-size: 10.5px; font-weight: 700; text-align: right; }
+.lock { font-size: 10px; color: var(--muted); }
+.lock.nudge { color: var(--sx-todo-ink); font-weight: 700; animation: shake .3s ease 2; }
+.dist { display: flex; flex-direction: column; gap: 2px; font-size: 10px; font-family: var(--fn); }
+.dist div { display: grid; grid-template-columns: 34px 1fr; gap: 6px; align-items: center; }
+.dist span { display: block; background: var(--bar-o); color: var(--ink); text-align: right; padding: 0 4px; font-weight: 700; min-width: 14px; }
+.dist span.hl { background: var(--accent); color: var(--accent-ink); }
+.srch { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.srch input { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; color: var(--ink); outline: none; padding: 0; }
+.add { font-size: 10.5px; font-weight: 800; color: var(--accent); white-space: nowrap; background: none; border: 0; padding: 0; cursor: pointer; }
+.add:disabled { color: var(--muted); cursor: default; font-weight: 600; }
+.stat { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.stat > div { min-width: 0; }
+.stat b { display: block; font-family: var(--fn); font-size: 18px; line-height: 1.05; }
+.stat small { color: var(--muted); font-size: 9px; display: block; }
+.wk { display: flex; gap: 2px; align-items: center; }
+.wk i { flex: 1; height: 10px; background: var(--surface); }
+.wk i.on { background: var(--accent); }
+.risk { color: var(--sx-todo-ink); font-weight: 700; }
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field label { font-size: 10px; font-weight: 700; }
+.input { border: 1px solid var(--sx-rule); padding: 5px 7px; font-size: 11.5px; background: var(--p-bg); color: var(--ink); }
+.opt { display: flex; gap: 4px; flex-wrap: wrap; }
+.opt span { font-size: 10px; padding: 1px 6px; border: 1px solid var(--line); font-family: var(--fn); }
+.opt span.on { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.tg { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.sw { width: 24px; height: 13px; background: var(--miss); position: relative; flex: none; border-radius: 99px; }
+.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 9px; height: 9px; background: var(--p-bg); border-radius: 50%; }
+.sw.on { background: var(--accent); } .sw.on::after { left: 13px; }
+.big { font-family: var(--fh); font-size: 18px; font-weight: 700; line-height: 1.15; }
+
+/* overlays */
+.ovl { position: absolute; inset: 0; z-index: 9; background: var(--dim); display: flex; flex-direction: column; animation: fadein .15s ease-out both; }
+.ovl .panel { background: var(--p-bg); margin-top: 50px; border-top: 2px solid var(--accent); display: flex; flex-direction: column; max-height: calc(100% - 110px); overflow-y: auto; animation: drop .2s ease-out both; }
+.ovl .ph-h { padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--muted); display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.ovl .bopt { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border: 0; border-bottom: 1px solid var(--line); background: none; text-align: left; cursor: pointer; width: 100%; }
+.ovl .bopt:hover { background: var(--surface); }
+.ovl .bopt.on { box-shadow: inset 3px 0 var(--accent); }
+.ovl .bopt .g { flex: 1; min-width: 0; }
+.ovl .foot { padding: 8px 10px; font-size: 10px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+.ovl .close { flex: 1; background: none; border: 0; cursor: pointer; }
+.ban { position: absolute; left: 8px; right: 8px; top: 28px; z-index: 10; background: var(--ink); color: var(--p-bg); padding: 7px 10px; font-size: 10.5px; line-height: 1.3; box-shadow: 0 10px 24px -10px rgba(0,0,0,.5); animation: drop .3s ease-out both; cursor: pointer; text-align: left; border: 0; border-left: 4px solid var(--accent); }
+.ban b { display: block; font-size: 11.5px; }
+.ban small { opacity: .75; font-size: 9px; display: block; font-family: var(--fn); }
+.toast { position: absolute; left: 10px; right: 10px; bottom: 44px; z-index: 10; background: var(--ink); color: var(--p-bg); padding: 6px 9px; font-size: 10.5px; display: flex; align-items: center; gap: 8px; animation: rise .2s ease-out both; }
+.toast span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toast button { margin-left: auto; background: none; border: 0; color: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; font-size: 10.5px; padding: 0; }
+/* share sheet + lock screen (outside the app, so no sheet chrome) */
+.game { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 30px 14px; background: var(--surface); }
+.game .gt { font-family: Georgia, serif; font-weight: 700; font-size: 18px; }
+.game .gg { font-size: 15px; line-height: 1.1; white-space: pre; }
+.shade { position: absolute; inset: 0; background: var(--dim); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--p-bg); border-top: 2px solid var(--accent); padding: 12px 12px 18px; display: flex; flex-direction: column; gap: 8px; z-index: 2; }
+.grab { width: 34px; height: 4px; background: var(--line); margin: 0 auto; border-radius: 2px; }
+.lk { flex: 1; display: flex; flex-direction: column; gap: 7px; padding: 10px; background: var(--surface); }
+.lk-t { text-align: center; font-size: 42px; font-weight: 300; letter-spacing: -.02em; font-family: var(--fb); }
+.lk-d { text-align: center; font-size: 10.5px; color: var(--muted); margin-top: -8px; }
+.nt { background: var(--p-bg); border: 1px solid var(--sx-rule); display: flex; flex-direction: column; }
+.nt .h { display: flex; justify-content: space-between; font-size: 9px; padding: 3px 7px; background: var(--sx-hd); color: var(--sx-hd-ink); font-family: var(--fn); }
+.nt .b { font-size: 11px; padding: 5px 7px; } .nt .b b { display: block; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@keyframes drop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop { 0% { transform: scale(.6); } 60% { transform: scale(1.12); } 100% { transform: none; } }
+@keyframes glow { 0% { background-color: var(--ring); } 100% { background-color: transparent; } }
+@keyframes shake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+@media (prefers-reduced-motion: reduce) { .ph *, .ph { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div>
+      <div class="cells" aria-label="boredroom">
+        <span class="ch"></span><span class="ch">a</span><span class="ch">b</span><span class="ch">c</span><span class="ch">d</span><span class="ch">e</span><span class="ch">f</span><span class="ch">g</span><span class="ch">h</span><span class="ch">i</span>
+        <span class="ch">1</span><span class="c g" style="--i:0">b</span><span class="c" style="--i:1">o</span><span class="c y" style="--i:2">r</span><span class="c g" style="--i:3">e</span><span class="c" style="--i:4">d</span><span class="c y" style="--i:5">r</span><span class="c g" style="--i:6">o</span><span class="c" style="--i:7">o</span><span class="c g" style="--i:8">m</span>
+      </div>
+      <div class="fxline"><i>fx</i>=meeting(board:"your friends", every:"morning", agenda:"the daily puzzles")</div>
+    </div>
+    <h1>Your friends already meet every morning about Wordle. Boredroom takes the minutes.</h1>
+    <p class="lede">A leaderboard for the daily puzzles your friends already play, run like a very serious board that keeps everything in a spreadsheet. Share your result like you always do; the board keeps the tenure, the performance reviews and the memos.</p>
+    <p class="muted" style="font-size:14px">Draft of 28 Oct 2026 · visual direction: Spreadsheet, light and dark · game share formats beyond Wordle, Connections, Strands and MapTap are placeholders.</p>
+  </header>
+
+  <section>
+    <div class="eyebrow">Settled so far</div>
+    <div class="chips">
+      <span class="on">Name: Boredroom</span><span class="on">Corporate-meeting voice, all lowercase</span><span class="on">PWA for v1 (Android share target + web)</span><span class="on">Native Android later</span><span class="off">Native iOS app ($99/yr)</span>
+      <span class="on">Flask + Postgres</span><span class="on">Homeserver first, cloud-portable</span><span class="on">Results belong to people, not boards</span><span class="on">Keyed by puzzle, not clock</span>
+      <span class="on">Look: Spreadsheet (light) + Night Ledger palette (dark)</span><span class="on">Themes become user-selectable later</span><span class="park">WhatsApp bot (parked)</span><span class="park">iPhone Shortcut (later)</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="col"><div class="eyebrow">Design philosophy</div><h2>Eight rules every screen has to pass</h2></div>
+    <div class="principles">
+      <div><i>01</i><b>Filing beats pasting</b><span>Sharing a result to Boredroom must take fewer taps than pasting it into WhatsApp. Share → toast → done. If a flow needs a form, it's the wrong flow.</span></div>
+      <div><i>02</i><b>The day is the unit</b><span>Home is today's agenda: what's left, when it resets, who on the board is present. Everything else is one tap deeper.</span></div>
+      <div><i>03</i><b>Spoiler-safe by default</b><span>You see that a friend is present, never their grid, until you've filed the same puzzle. The minutes are confidential.</span></div>
+      <div><i>04</i><b>Rivalry, not guilt</b><span>Tenure, commendations and memos. No XP, no leagues, no sad mascot. One evening reminder, only if you've filed nothing that day.</span></div>
+      <div><i>05</i><b>The sheet is the joke</b><span>A very serious board keeps its records in a spreadsheet: rows, cells, a formula bar. The formula bar is real, and every screen is a query you can edit.</span></div>
+      <div><i>06</i><b>Built for a big board</b><span>Fifteen people, a different subset every day. Every list, chart and agenda line has to read at that size, not just with three friends.</span></div>
+      <div><i>07</i><b>Unknown never means rejected</b><span>A result we can't read still counts as "played". Scoring catches up when the game gets a parser.</span></div>
+      <div><i>08</i><b>Deadpan memo, plain buttons</b><span>Headings, chips, memos and notifications speak boardroom. Buttons never do: "join", "file", "add a game".</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="col"><div class="eyebrow">Feedback this round</div><h2>Six things the screens below have to solve</h2>
+      <p class="muted">From the notes in <span class="mono">docs/UX-NOTES.md</span>. Each mockup says which of these it covers.</p></div>
+    <div class="notes6">
+      <div><b>Review scales to 10+ members</b><span>Grouped bars break past four people. The chart now shows one bar per day for the whole board with you marked inside it, plus a member × day grid that reads at 15 rows. Pick up to three people to compare.</span><em>screens 4, 5</em></div>
+      <div><b>The formula bar is real</b><span>Every screen's query sits in the formula bar as editable parts. Tap one to change it, type to filter. Tapping tabs or the chart rewrites the bar; editing the bar changes the screen.</span><em>screens 1, 4–8, 10</em></div>
+      <div><b>Boards, guests and sync</b><span>The header title switches boards. Signed in, one filing reaches every board with that game. A guest seat on the same phone gets it too, because the phone keeps every seat's login. Signing in merges guest seats.</span><em>screens 1, 2, 3, 10, 11</em></div>
+      <div><b>One review dashboard</b><span>Period (today, week, month, all time) × game (all, or one) × stat. Defaults: this week · all games · items done. The same screen answers "who's best at connections, all time".</span><em>screens 4, 5</em></div>
+      <div><b>Memos are the heart of it</b><span>Generated notes turn numbers into board gossip: photo finishes, PIPs, broken tenure, "file 2 more to take #1". Each one opens the query behind it.</span><em>screens 4, 5, 6, 13</em></div>
+      <div><b>Richer agenda presence</b><span>Under each item: a small row of who has filed, "7/12 present", and the board's best once you've filed. Unplayed items say "no one yet · be first". Still one line.</span><em>screen 1</em></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="col"><div class="eyebrow">Mockups</div><h2>The screens, in Spreadsheet light and dark</h2>
+      <p class="muted">Sample board: <b>soup daily</b>, 13 members (you, ivan, judy and ten more), six items on the agenda, 120 days of history. You also sit on <b>family puzzles</b> (signed in) and <b>office wordle</b> (a guest seat on this phone). Both copies of each screen share one state, so what you do in one shows in the other. Everything in the formula bar is clickable.</p></div>
+    <div class="bar">
+      <span class="lab">show</span><span class="seg-p" id="view"></span>
+      <span class="lab">paste</span>
+      <button class="try" data-s="strands">strands</button><button class="try" data-s="wordle">wordle (other boards)</button><button class="try" data-s="two">two in one message</button><button class="try" data-s="connections">connections again</button><button class="try" data-s="junk">unreadable</button>
+      <span class="lab">board</span>
+      <button class="try sim" data-sim="judy">judy files krillion</button><button class="try sim" data-sim="reset">reset</button>
+    </div>
+    <div class="scrs" id="scrs"></div>
+  </section>
+
+  <section>
+    <div class="col"><div class="eyebrow">Voice &amp; nomenclature</div><h2>Every group is a board. Every morning is a meeting.</h2>
+      <p class="muted">Office-memo language applied to emoji grids, played completely straight. Nouns, memos and moments get the voice; controls stay plain. Members are board members, never "directors". Full rules in <span class="mono">docs/VOICE.md</span>.</p></div>
+    <div class="voice-ex">
+      <div class="vx"><span class="k">evening reminder</span><span class="v">the meeting started without you. 3 items left on today's agenda.</span></div>
+      <div class="vx"><span class="k">memo · new #1</span><span class="v">hostile takeover: ivan passed you for #1 this week.</span></div>
+      <div class="vx"><span class="k">memo · broken tenure</span><span class="v">judy's 9-day tenure ended yesterday.</span></div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Concept</th><th>We say</th><th>Example copy</th></tr></thead>
+      <tbody>
+        <tr><td>A group</td><td class="k">a boredroom, "the board"</td><td class="ex">create a boredroom · soup daily</td></tr>
+        <tr><td>Members / admin</td><td class="k">board members · the chair</td><td class="ex">13 board members · chairs: ivan, you</td></tr>
+        <tr><td>Home</td><td class="k">the agenda, items</td><td class="ex">3 of 6 items done</td></tr>
+        <tr><td>Played / didn't</td><td class="k">present / absent</td><td class="ex">7/12 present · absent (4): kunal, zoya…</td></tr>
+        <tr><td>Streaks</td><td class="k">tenure · perfect attendance · item tenure</td><td class="ex">tenure 23d (anything, every day) · perfect attendance (every item) · strands 12d</td></tr>
+        <tr><td>Logged</td><td class="k">filed · filed late</td><td class="ex">filed strands #612 → soup daily, family puzzles</td></tr>
+        <tr><td>Failed puzzle</td><td class="k">missed target</td><td class="ex">connections · missed target</td></tr>
+        <tr><td>A day's results</td><td class="k">the minutes (confidential)</td><td class="ex">confidential until you file strands today</td></tr>
+        <tr><td>Generated notes</td><td class="k">memos</td><td class="ex">memo · photo finish: priya and dev separated by 4</td></tr>
+        <tr><td>Daily recap</td><td class="k">the daily bored meeting</td><td class="ex">the daily bored meeting is in · 6 memos</td></tr>
+        <tr><td>Stats</td><td class="k">performance review</td><td class="ex">=review(game:"connections", period:"all time")</td></tr>
+        <tr><td>Last / new #1</td><td class="k">on a pip · hostile takeover</td><td class="ex">judy is on a pip · hostile takeover: you passed ivan</td></tr>
+        <tr><td>Add a custom game</td><td class="k">any other business</td><td class="ex">any other business?</td></tr>
+        <tr><td>Invite / join / leave</td><td class="k">board invitation · welcome aboard · resign</td><td class="ex">welcome aboard, walter.</td></tr>
+        <tr><td>Membership on a device</td><td class="k">your seat · guest seat</td><td class="ex">1 guest seat on this phone · sign in to merge it</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="col"><div class="eyebrow">Core flows</div><h2>Paths that have to feel effortless</h2></div>
+    <div class="flows col">
+      <div><h3>File a result (Android)</h3><div class="flow"><span class="st">finish strands</span><span class="ar">→</span><span class="st">share</span><span class="ar">→</span><span class="st">boredroom</span><span class="ar">→</span><span class="st">"filed → soup daily, family puzzles"</span></div></div>
+      <div><h3>File a result (iPhone / desktop)</h3><div class="flow"><span class="st">copy result</span><span class="ar">→</span><span class="st">open boredroom</span><span class="ar">→</span><span class="st">"clipboard: strands #612 · file →"</span></div></div>
+      <div><h3>Switch boards</h3><div class="flow"><span class="st">tap the sheet title</span><span class="ar">→</span><span class="st">pick a board</span><span class="ar">or</span><span class="st">edit board:"…" in the formula bar</span></div></div>
+      <div><h3>Join a friend's board</h3><div class="flow"><span class="st">tap the invitation</span><span class="ar">→</span><span class="st">"join as walter"</span><span class="ar">→</span><span class="st">today's results already filed there</span></div></div>
+      <div><h3>New phone: move your seat</h3><div class="flow"><span class="st">signed in? sign in again</span><span class="ar">or</span><span class="st">old phone: show code</span><span class="ar">or</span><span class="st">lost it: ask the chair</span></div></div>
+      <div><h3>Ask the board a question</h3><div class="flow"><span class="st">review</span><span class="ar">→</span><span class="st">game:"connections"</span><span class="ar">→</span><span class="st">period:"all time"</span><span class="ar">→</span><span class="st">share the link</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="col"><div class="eyebrow">Platform</div><h2>One web app for v1</h2></div>
+    <div class="callout col">
+      <p>An <b>installed web app (PWA) on Android appears in the share sheet</b> through the Web Share Target API, and gets push notifications. iPhone home-screen web apps get push too (iOS 16.4+). One web codebase covers Android, iPhone and desktop with no store fees. A native Android app comes after v1.</p>
+      <div class="plat">
+        <div><b>Android</b><span>Install from Chrome. Boredroom appears in the share sheet.</span></div>
+        <div><b>iPhone</b><span>Home-screen web app. Paste-based, or a free Shortcut later.</span></div>
+        <div><b>Desktop</b><span>Plain website. Clipboard suggestion when you come back to the tab.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="col"><div class="eyebrow">Themes</div><h2>Build it so the look can change</h2>
+      <p class="muted">Spreadsheet is the launch look, but people will pick from the other directions later. So the UI is written once against tokens, on web and Android alike.</p></div>
+    <div class="tokens">
+      <div><b>Semantic tokens only</b><span class="muted">Screens use <code>surface</code>, <code>ink</code>, <code>accent</code>, <code>ok</code>, <code>todo</code>, <code>note</code>, <code>g1–g7</code>, member hues, and heading, body and number fonts. Never a raw color.</span></div>
+      <div><b>Layout is a token too</b><span class="muted"><code>layout: sheet</code> gives rows, gutter numbers, a formula bar and sheet tabs. <code>layout: free</code> gives cards and pills. Components take the variant; screens never branch on a theme.</span></div>
+      <div><b>One query, many skins</b><span class="muted">The formula bar is one query model. Spreadsheet shows <code>=review(…)</code>, Night Ledger <code>select …</code>, free layouts plain chips.</span></div>
+      <div><b>Themes are data</b><span class="muted">Each theme is a JSON file: tokens, layout, finish, plus a light and dark pair. It becomes CSS variables on web and a Compose theme on Android.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="col"><div class="eyebrow">Requirements</div><h2>What v1 has to do</h2>
+      <p class="muted"><span class="pri m">MUST</span> v1 &nbsp; <span class="pri s">SHOULD</span> v1 if cheap &nbsp; <span class="pri l">LATER</span> after v1</p></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Area</th><th>Requirement</th><th>Priority</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Filing</td><td>Android share sheet plus a paste field on every client; local parsers read results instantly, the server re-checks</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td></td><td>Detect game and puzzle for the 15 launch games; unreadable text files as "played" for a picked item</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td></td><td>Duplicates ignored; several results in one paste; filing late allowed by default (the chair can limit it)</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td></td><td>One filing reaches every board with that game, including guest seats on the same phone</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td></td><td>Clipboard suggestion on open; undo after filing</td><td><span class="pri s">SHOULD</span></td></tr>
+        <tr><td></td><td>Import a WhatsApp chat export to backfill the minutes</td><td><span class="pri l">LATER</span></td></tr>
+        <tr><td class="k">Agenda</td><td>Today's items for the current board: your status, reset time, who's present (avatars + count) and the board's best once you've filed</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td></td><td>Board switcher in the title; yesterday view for filing late</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td class="k">Formula bar</td><td>Every screen shows its query as editable parts, kept in sync with the controls; queries are shareable links</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td class="k">Review</td><td>One dashboard: period × game × stat; board chart, member × day grid, standings, compare up to 3</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td></td><td>Works at 15+ members with partial attendance</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td class="k">Memos</td><td>Template + trigger + interest score; top one or two per view; each opens its query</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td></td><td>The daily bored meeting: recap screen and notification</td><td><span class="pri s">SHOULD</span></td></tr>
+        <tr><td class="k">Minutes</td><td>Per game and puzzle; grids confidential until you file; absent members collapsed</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td class="k">Boards</td><td>Create, invite by link, several boards; chair and member roles; join approval optional</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td class="k">Library</td><td>Search and filter known games; add to an agenda; any other business form (board-private)</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td class="k">Identity</td><td>Guest seats (server accounts, no email); Google sign-in that merges a phone's guest seats</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td></td><td>Move a seat with a code; chair-approved claims when the phone is lost</td><td><span class="pri s">SHOULD</span></td></tr>
+        <tr><td class="k">Nudges</td><td>Evening reminder, on by default, only if nothing filed that day</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td class="k">Look</td><td>Spreadsheet light + dark from theme tokens; installable PWA</td><td><span class="pri m">MUST</span></td></tr>
+        <tr><td></td><td>Theme picker with the other directions</td><td><span class="pri l">LATER</span></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="col"><div class="eyebrow">Decided</div><h2>Answers to the open questions</h2></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Question</th><th>Decision</th></tr></thead>
+      <tbody>
+        <tr><td>Android: web app or native?</td><td>PWA only for v1; native Android later</td></tr>
+        <tr><td>Spoilers</td><td>Hidden until you file, on by default; the parsers have to be strong enough to know what's safe to show</td></tr>
+        <tr><td>Streaks</td><td>Several kinds: tenure (anything, every day), perfect attendance (every item), tenure per item</td></tr>
+        <tr><td>Overall ranking</td><td>No cross-game normalization in v1; "items done" per day is the overall measure</td></tr>
+        <tr><td>Filing late</td><td>Allowed by default; the chair controls it</td></tr>
+        <tr><td>Joining / agenda</td><td>The chair controls joins and removals; members can add games</td></tr>
+        <tr><td>Custom games</td><td>Board-private for now</td></tr>
+        <tr><td>Guests</td><td>Real server accounts with no email</td></tr>
+        <tr><td>Notifications</td><td>Evening reminder, on by default, only if nothing filed all day</td></tr>
+        <tr><td>Audience</td><td>Friends only, built so going public needs no rework</td></tr>
+        <tr><td>Variants</td><td>A badge on the same result</td></tr>
+        <tr><td>Still open</td><td>iPhone Shortcut ("share to boredroom"): recommended for after v1</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="col">
+    <div class="eyebrow">Parked</div>
+    <h2>The WhatsApp bot</h2>
+    <p class="muted">A bot in the group itself: "strands just reset", the daily bored meeting at midnight, maybe reading results people paste. It sits on the same API, so nothing in v1 blocks it.</p>
+  </section>
+
+</div>
+
+<script>
+(function(){
+/* ---------------- sample data ---------------- */
+const N = 120, T = N - 1;              // 120 days of history; T = today (tue 28 oct)
+const SOUP = ['you','ivan','judy','priya','kabir','meera','dev','ishaan','tara','neel','zoya','kunal','ananya'];
+const BOARDS0 = {
+  soup:   { n:'soup daily', seat:'account', chairs:['ivan','you'], members:SOUP, games:['connections','strands','maptap','cryptic','krillion','globle'] },
+  family: { n:'family puzzles', seat:'account', chairs:['ma'], members:['you','ma','papa','didi'], games:['strands','wordle','globle'] },
+  office: { n:'office wordle', seat:'guest', chairs:['neha'], members:['you','neha','omar','lina','raj'], games:['wordle','connections'] }
+};
+let BOARDS;
+const plural = (n,w,ws) => n + ' ' + (n===1 ? w : (ws || w+'s'));
+const GAMES = {
+  connections:{ n:'connections', l:'c', gc:1, key:'#870', unit:'mistakes', lower:true, reset:'resets 00:00', gen:r=>pick(r,[0,0,0,1,1,1,2,2,3,4]), fmt:v=>v===0?'perfect':v>=4?'missed target':plural(v,'mistake'), short:v=>v>=4?'x':String(v) },
+  strands:{ n:'strands', l:'s', gc:4, key:'#612', unit:'hints', lower:true, reset:'resets 00:00', gen:r=>pick(r,[0,0,0,1,1,2,3]), fmt:v=>v?plural(v,'hint'):'no hints', short:String },
+  maptap:{ n:'maptap', l:'m', gc:2, key:'oct 28', unit:'points', lower:false, reset:'resets 00:00', gen:r=>Math.round(560+r()*420), fmt:v=>String(v), short:String },
+  cryptic:{ n:'minute cryptic', l:'✎', gc:3, key:'oct 28', unit:'hints', lower:true, reset:'resets 00:00', gen:r=>pick(r,[0,0,1,1,2,3]), fmt:v=>v?plural(v,'hint'):'no hints', short:String },
+  krillion:{ n:'krillion', l:'k', gc:5, key:'oct 28', unit:'m deep', lower:false, reset:'resets 5:30 am', gen:r=>Math.round(120+r()*780), fmt:v=>v+' m deep', short:String },
+  globle:{ n:'globle', l:'g', gc:6, key:'oct 28', unit:'guesses', lower:true, reset:'resets 00:00', gen:r=>1+Math.floor(r()*r()*12), fmt:v=>plural(v,'guess','guesses'), short:String },
+  wordle:{ n:'wordle', l:'w', gc:7, key:'#1,592', unit:'guesses', lower:true, reset:'resets 00:00', gen:r=>pick(r,[2,3,3,4,4,4,5,5,6,7]), fmt:v=>v>=7?'missed target':v+'/6', short:v=>v>=7?'x':String(v) }
+};
+function rng(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function hash(s){ let h=2166136261; for (const c of s){ h^=c.charCodeAt(0); h=Math.imul(h,16777619); } return h>>>0; }
+function pick(r,a){ return a[Math.floor(r()*a.length)]; }
+const range = (a,b) => { const o=[]; for (let i=a;i<=b;i++) o.push(i); return o; };
+const P = { you:.93, ivan:.96, judy:.5, priya:.85, kabir:.6, meera:.75, dev:.8, ishaan:.4, tara:.7, neel:.55, zoya:.35, kunal:.45, ananya:.65, ma:.8, papa:.5, didi:.9, neha:.85, omar:.6, lina:.7, raj:.4 };
+const TODAY_ON = { ivan:1, priya:1, dev:1, meera:1, tara:1, kabir:1, ananya:1, ma:1, didi:1, neha:1, omar:1 }; // present so far today (9:41 am)
+let DATA = {};
+function build(){
+  BOARDS = JSON.parse(JSON.stringify(BOARDS0));
+  Object.keys(GAMES).forEach(k=>{ if (GAMES[k].custom) delete GAMES[k]; });
+  DATA = {};
+  const plays = {};
+  Object.values(BOARDS).forEach(b=>b.members.forEach(m=>{ plays[m] = plays[m] || new Set(); b.games.forEach(g=>plays[m].add(g)); }));
+  Object.entries(plays).forEach(([m,gs])=>{
+    const r = rng(hash(m)); DATA[m] = {};
+    [...gs].sort().forEach(g=>{ const a=[]; for (let d=0; d<N; d++){ const p = d===T ? (TODAY_ON[m] ? .7 : 0) : P[m]; a.push(r()<p ? GAMES[g].gen(r) : null); } DATA[m][g] = a; });
+  });
+  for (let d=T-22; d<T; d++){ if (!Object.values(DATA.you).some(a=>a[d]!=null)) DATA.you.connections[d] = 1; }
+  Object.values(DATA.you).forEach(a=>{ a[T] = null; });
+  DATA.you.connections[T] = 1; DATA.you.maptap[T] = 828; DATA.you.cryptic[T] = 2;
+  for (let d=T-10; d<T-1; d++) DATA.judy.strands[d] = DATA.judy.strands[d] ?? 1;      // a 9-day tenure…
+  Object.values(DATA.judy).forEach(a=>{ a[T-1] = null; a[T] = null; a[T-11] = null; }); // …that ended yesterday
+  Object.values(DATA.you).forEach(a=>{ a[T-23] = null; });                               // tenure: 23 days
+  /* tune the week so filing all of today's items is exactly a hostile takeover */
+  const wk = m => range(T-6,T).reduce((n,d)=>n+BOARDS.soup.games.filter(g=>DATA[m][g] && DATA[m][g][d]!=null).length, 0);
+  const top = () => Math.max(...SOUP.filter(m=>m!=='you').map(wk));
+  const r2 = rng(7);
+  for (let d=T-6; d<T && top()-wk('you')>2; d++) BOARDS.soup.games.forEach(g=>{ if (top()-wk('you')>2 && DATA.you[g][d]==null) DATA.you[g][d] = GAMES[g].gen(r2); });
+  SOUP.filter(m=>m!=='you').forEach(m=>{ for (let d=T-1; d>=T-6 && wk(m)-wk('you')>2; d--) BOARDS.soup.games.forEach(g=>{ if (wk(m)-wk('you')>2 && DATA[m][g]) DATA[m][g][d] = null; }); });
+  DATA.ivan.strands[T] = 0; DATA.priya.strands[T] = 2; DATA.dev.strands[T] = 1;
+  ['ivan','priya','dev','meera','tara','kabir','ananya'].forEach(m=>{ DATA[m].krillion[T] = null; });
+}
+build();
+
+/* ---------------- helpers ---------------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const B = id => BOARDS[id];
+const val = (m,g,d) => { const a = DATA[m] && DATA[m][g]; return a ? (a[d] ?? null) : null; };
+const num = v => typeof v === 'number';
+const nm = m => m==='you' ? 'you' : m;
+const hue = m => m==='you' ? 150 : (hash(m) * 7) % 360;
+const av = m => '<span class="av" style="--h:'+hue(m)+'">'+(m==='you'?'s':m[0])+'</span>';
+const MON = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+const DOW = ['sun','mon','tue','wed','thu','fri','sat'];
+function dt(d){ const x = new Date(2026, 9, 28); x.setDate(x.getDate() - (T - d)); return x; }
+const dlabel = d => MON[dt(d).getMonth()] + ' ' + dt(d).getDate();
+const dow = d => DOW[dt(d).getDay()];
+const sum = a => a.reduce((x,y)=>x+y, 0);
+function itemsOn(m,b,d){ return B(b).games.reduce((n,g)=>n+(val(m,g,d)!=null?1:0), 0); }
+function anyOn(m,d){ return Object.values(DATA[m]||{}).some(a=>a[d]!=null); }
+function tenure(m){ let d = anyOn(m,T) ? T : T-1, n = 0; while (d>=0 && anyOn(m,d)){ n++; d--; } return n; }
+function lostTenure(m){ if (anyOn(m,T) || anyOn(m,T-1)) return 0; let d = T-2, n = 0; while (d>=0 && anyOn(m,d)){ n++; d--; } return n; }
+function itemTenure(m,g){ let d = val(m,g,T)!=null ? T : T-1, n = 0; while (d>=0 && val(m,g,d)!=null){ n++; d--; } return n; }
+function perfect(m,b){ const k = B(b).games.length; let d = itemsOn(m,b,T)===k ? T : T-1, n = 0; while (d>=0 && itemsOn(m,b,d)===k){ n++; d--; } return n; }
+const boardsWith = g => Object.keys(BOARDS).filter(b=>B(b).games.includes(g));
+
+/* ---------------- state ---------------- */
+let S, Q, view = 'both';
+const REV0 = { ra:{ board:'soup', game:'all', period:'week', stat:'items', sel:null, cmp:[] }, rb:{ board:'soup', game:'connections', period:'all', stat:'average', sel:null, cmp:['you','ivan'] } };
+function reset(){
+  S = { board:'soup', aday:'today', show:'all', text:'', toast:null, ban:null, menu:null, ovl:null, back:null, mgame:'strands', mday:'today', libq:'', libcat:'all', nudge:false, just:{}, joined:false, mboard:'soup', seatb:'all' };
+  Q = JSON.parse(JSON.stringify(REV0));
+}
+reset();
+try { const v = localStorage.getItem('br-ux-view'); if (v) view = v; } catch(e) {}
+
+/* ---------------- parsers (demo only; the real spec is dev step 1) ---------------- */
+function rowsAfter(text, from, re){
+  const lines = text.slice(from).split('\n'); const rows = []; let started = false;
+  for (const raw of lines){ const l = raw.trim();
+    if (!l){ if (started) break; else continue; }
+    if (re.test(l)){ rows.push(l); started = true; } else if (started || rows.length===0 && l.length>12) break; }
+  return rows;
+}
+function parse(raw){
+  const t0 = performance.now(); const t = raw.replace(/\r/g,''); const res = [];
+  for (const m of t.matchAll(/Wordle\s+([\d.,]+)\s+([1-6X])\/6(\*?)/g)){
+    const rows = rowsAfter(t, m.index+m[0].length, /^[⬛⬜🟨🟩]{5}$/u); const v = m[2]==='X' ? 7 : +m[2];
+    res.push({ at:m.index, id:'wordle', key:'#'+m[1], v, stats:[GAMES.wordle.fmt(v)], badges:m[3]?['hard mode']:[], grid:rows.join('\n') });
+  }
+  for (const m of t.matchAll(/Connections\s*\n\s*Puzzle\s*#\s*([\d,]+)/g)){
+    const rows = rowsAfter(t, m.index+m[0].length, /^[🟨🟩🟦🟪]{4}$/u);
+    const uni = r => { const a=[...r]; return a.every(c=>c===a[0]); };
+    const solved = rows.filter(uni); const mis = rows.length - solved.length; const v = solved.length===4 ? mis : 4;
+    res.push({ at:m.index, id:'connections', key:'#'+m[1], v, stats:[GAMES.connections.fmt(v), solved.length+'/4 groups'], badges: solved.length && [...solved[0]][0]==='🟪' ? ['purple first'] : [], grid:rows.join('\n') });
+  }
+  for (const m of t.matchAll(/Strands\s*#\s*([\d,]+)\s*\n\s*[“"]([^”"\n]+)[”"]/g)){
+    const rows = rowsAfter(t, m.index+m[0].length, /^[🔵🟡💡]+$/u); const all = [...rows.join('')];
+    const v = all.filter(c=>c==='💡').length; const words = all.filter(c=>c!=='💡');
+    res.push({ at:m.index, id:'strands', key:'#'+m[1], v, stats:[GAMES.strands.fmt(v), words.length+' words'], badges: words[0]==='🟡' ? ['spangram first'] : [], grid:rows.join('\n'), theme:true });
+  }
+  for (const m of t.matchAll(/maptap\.gg\s+([A-Za-z]+)\s+(\d{1,2})\s*\n([^\n]*)\n\s*Final score:\s*(\d+)/gi)){
+    const r = (m[3].match(/\d+/g)||[]).map(Number);
+    res.push({ at:m.index, id:'maptap', key:m[1].slice(0,3).toLowerCase()+' '+(+m[2]), v:+m[4], stats:[m[4], 'best round '+Math.max(...r)], badges: r.includes(100)?['bullseye']:[], grid:'' });
+  }
+  res.sort((a,b)=>a.at-b.at);
+  return { res, ms: Math.max(1, Math.round(performance.now()-t0)) };
+}
+const isDup = r => val('you', r.id, T) != null;
+const SAMPLES = {
+  strands: 'Strands #612\n“Feeling blue”\n🔵🔵💡🔵\n🟡🔵🔵',
+  wordle: 'Wordle 1,592 4/6*\n\n⬛🟨⬛⬛⬛\n🟩⬛🟨⬛⬛\n🟩🟩⬛🟩⬛\n🟩🟩🟩🟩🟩',
+  connections: 'Connections\nPuzzle #870\n🟨🟨🟨🟨\n🟩🟦🟩🟩\n🟩🟩🟩🟩\n🟦🟦🟦🟦\n🟪🟪🟪🟪',
+  two: '[28/10, 9:12 am] judy: Strands #612\n“Feeling blue”\n🔵🔵💡🔵\n🟡🔵🔵\n\nwww.maptap.gg October 28\n100🎯 90🎉 97🔥 85🌟 63🤨\nFinal score: 828',
+  junk: 'lol today\'s krillion was brutal'
+};
+
+/* ---------------- shared chrome ---------------- */
+const CLIP = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3.5" y="2.75" width="9" height="11.5" rx="1.5"/><path d="M6 2.75h4v1.5H6z"/></svg>';
+const SRCH = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>';
+const TOKS = {};
+function tile(g){ const G = GAMES[g] || { l:'?', gc:7 }; return '<span class="ic" style="--gc:var(--g'+G.gc+')">'+esc(G.l)+'</span>'; }
+function head(pid, title, meta, board){
+  const t = board ? '<button class="ttl" data-bopen="'+pid+'" aria-label="switch board">'+esc(title)+'<span class="car">▾</span></button>' : esc(title);
+  return '<div class="hd"><span class="t">'+t+'</span><span class="m">'+esc(meta)+'</span></div>';
+}
+/* each token: [key, label, display, options [[value,label]] or null (read-only), current value] */
+function fx(pid, fn, toks){
+  TOKS[pid] = toks;
+  const open = S.menu && S.menu.pid===pid ? S.menu.k : null;
+  let h = '<div class="fxw"><div class="fx"><i>fx</i><span class="fn">='+fn+'(</span>'
+    + toks.map((t,i)=>(t[3] ? '<button class="tk'+(open===t[0]?' open':'')+'" data-tk="'+t[0]+'" data-pid="'+pid+'">'+t[1]+':<b>"'+esc(t[2])+'"</b></button>' : '<span class="fn">'+t[1]+':"'+esc(t[2])+'"</span>')+(i<toks.length-1?'<span class="cm">,</span>':'')).join('')
+    + '<span class="fn">)</span></div>';
+  if (open){ const t = toks.find(x=>x[0]===open); if (t) h += '<div class="menu"><input data-in="menuq" placeholder="type to filter '+esc(t[1])+'" value="'+esc(S.menu.q||'')+'" aria-label="filter"><div class="opts" data-region="menuopts">'+menuOpts(t)+'</div></div>'; }
+  return h + '</div>';
+}
+function menuOpts(t){ const q = (S.menu && S.menu.q || '').toLowerCase(); const o = t[3].filter(x=>x[1].includes(q)); return o.length ? o.map(x=>'<button data-opt="'+esc(x[0])+'" class="'+(x[0]===t[4]?'on':'')+'">'+esc(x[1])+'</button>').join('') : '<span class="none">no match</span>'; }
+function nav(on){ return '<div class="nav">'+['agenda','review','library','you'].map(k=>'<span class="'+(k===on?'on':'')+'">'+k+'</span>').join('')+'</div>'; }
+function shell(pid, copy, inner, on, over){ return '<div class="ph'+(copy==='d'?' dk':'')+'" data-pid="'+pid+'" data-copy="'+copy+'"><div class="sb"><span>9:41</span><span>●●●</span></div>'+inner+(on?nav(on):'')+(over||'')+'</div>'; }
+const boardOpts = () => Object.entries(BOARDS).map(([k,b])=>[k,b.n]);
+const gameOpts = b => B(b).games.map(g=>[g,GAMES[g].n]);
+
+function boardsOverlay(pid, cur){
+  const rows = Object.entries(BOARDS).map(([k,b])=>{
+    const k2 = b.games.length, mine = itemsOn('you',k,T), pres = b.members.filter(m=>m!=='you' && itemsOn(m,k,T)>0).length;
+    return '<button class="bopt'+(k===cur?' on':'')+'" data-bpick="'+k+'" data-pid="'+pid+'"><span class="ic" style="--gc:var(--g'+(k==='soup'?1:k==='family'?4:2)+')">'+b.n[0]+'</span><span class="g"><span class="nm" style="display:block">'+esc(b.n)+'</span><span class="sub">you '+mine+' of '+k2+' · '+pres+'/'+(b.members.length-1)+' present</span></span>'+(b.seat==='guest'?'<span class="chip seat">guest seat</span>':'<span class="chip">signed in</span>')+'</button>';
+  }).join('');
+  return '<div class="ovl"><div class="panel"><div class="ph-h"><span>your boards</span><span>'+Object.keys(BOARDS).length+'</span></div>'+rows
+    + '<div class="foot"><span>results you file go to every board with that item, including the guest seat on this phone.</span><button class="btn ghost">sign in to merge 1 guest seat</button><button class="lnk" style="align-self:flex-start">create a boredroom</button></div></div><button class="close" data-oclose aria-label="close"></button></div>';
+}
+
+/* ---------------- 1 agenda ---------------- */
+function presence(b, g, d){
+  const ms = B(b).members.filter(m=>m!=='you'), pres = ms.filter(m=>val(m,g,d)!=null), G = GAMES[g];
+  if (!pres.length) return '<span>no one yet · be first</span>';
+  let h = '<span class="stack">'+pres.slice(0,3).map(av).join('')+'</span><span>'+pres.length+'/'+ms.length+' present</span>';
+  if (val('you',g,d)!=null){
+    const sc = pres.concat(['you']).filter(m=>num(val(m,g,d)));
+    if (sc.length){ const best = sc.sort((x,y)=>G.lower ? val(x,g,d)-val(y,g,d) : val(y,g,d)-val(x,g,d))[0]; h += '<span class="best">· best '+esc(nm(best))+' '+esc(G.fmt(val(best,g,d)))+'</span>'; }
+  }
+  return h;
+}
+function agItem(b, g, d, live){
+  const G = GAMES[g], mine = val('you',g,d);
+  const pill = mine!=null ? '<span class="pill done">'+esc(num(mine)?G.fmt(mine):'played')+'</span>'
+    : d===T ? (live ? '<button class="pill todo" data-play="'+g+'">play</button>' : '<span class="pill todo">play</span>')
+    : (live ? '<button class="pill todo" data-late="'+g+'">file late</button>' : '<span class="pill todo">file late</span>');
+  return '<div class="it'+(S.just[g]&&d===T?' just':'')+'" style="--gc:var(--g'+G.gc+')">'+tile(g)+'<div class="g"><div class="nm">'+esc(G.n)+' '+(G.key[0]==='#'&&d===T?esc(G.key):'')+'</div>'
+    + (live ? '<button class="sub" data-mg="'+g+'">'+presence(b,g,d)+'</button>' : '<div class="sub">'+presence(b,g,d)+'</div>')+'</div>'
+    + '<div class="pr">'+pill+(d===T&&mine==null?'<span class="rs">'+esc(G.reset)+'</span>':'')+'</div></div>';
+}
+function card(r){
+  const G = GAMES[r.id]; const to = boardsWith(r.id);
+  const chips = r.stats.map(s=>'<span class="chip">'+esc(s)+'</span>').join('') + r.badges.map(x=>'<span class="chip badge">'+esc(x)+'</span>').join('');
+  return '<div class="pc"><div class="pc-h">'+tile(r.id)+'<div><b>'+esc(G.n)+' '+esc(r.key)+'</b><small>'+(r.theme?'theme stays hidden from the board':'score is visible to the board')+'</small></div></div><div class="chipr">'+chips+'</div>'
+    + (r.grid?'<div class="gridp">'+esc(r.grid)+'</div>':'')
+    + '<div class="to">files to '+to.map(b=>'<b>'+esc(B(b).n)+'</b>'+(B(b).seat==='guest'?' (guest seat)':'')).join(', ')+(B(S.board).games.includes(r.id)?'':' · not on '+esc(B(S.board).n)+'\'s agenda')+'</div></div>';
+}
+function output(text, live){
+  if (!text.trim()) return '';
+  const { res, ms } = parse(text);
+  if (!res.length){
+    const open = B(S.board).games.filter(g=>val('you',g,T)==null);
+    return '<div class="pc"><div class="pc-h">'+tile('?')+'<div><b>couldn\'t read that one</b><small>file it as played for</small></div></div><div class="chipr">'+(open.length ? open.map(g=>'<button class="chip" data-played="'+g+'">'+esc(GAMES[g].n)+'</button>').join('') : '<span class="chip">everything is filed</span>')+'</div></div>';
+  }
+  const fresh = res.filter(r=>!isDup(r)), dups = res.filter(isDup);
+  let h = fresh.map(card).join('') + dups.map(r=>'<div class="dup">already filed · '+esc(GAMES[r.id].n)+' '+esc(r.key)+'</div>').join('');
+  if (fresh.length) h += '<div class="pc-a"><button class="btn"'+(live?' data-file':'')+'>'+(fresh.length>1?'file all '+fresh.length:'file')+'</button><span class="hint" style="margin-left:auto">read on your phone in '+ms+' ms</span></div>';
+  return h;
+}
+function scrAgenda(pid, copy, live){
+  const b = live ? S.board : 'soup', d = live && S.aday==='yesterday' ? T-1 : T, show = live ? S.show : 'all';
+  let games = B(b).games;
+  if (show==='open') games = games.filter(g=>val('you',g,d)==null);
+  if (show==='filed') games = games.filter(g=>val('you',g,d)!=null);
+  const done = B(b).games.filter(g=>val('you',g,d)!=null).length, k = B(b).games.length;
+  const pres = B(b).members.filter(m=>m!=='you' && itemsOn(m,b,d)>0).length, filedAll = sum(B(b).members.map(m=>itemsOn(m,b,d)));
+  const q = fx(pid, 'agenda', [['board','board',B(b).n,live?boardOpts():null,b],['day','day',live?S.aday:'today',live?[['today','today'],['yesterday','yesterday']]:null,live?S.aday:'today'],['show','show',show,live?[['all','all'],['open','open'],['filed','filed']]:null,show]]);
+  let back = '';
+  if (live && S.back && !S.text && val('you',S.back,T)==null){ const g = S.back; back = SAMPLES[g] ? '<div class="sug">back from '+esc(GAMES[g].n)+' · clipboard: <b>'+esc(GAMES[g].n+' '+GAMES[g].key)+'</b><button class="go" data-back>file →</button></div>' : '<div class="sug">back from '+esc(GAMES[g].n)+' · nothing readable copied<button class="go" data-played="'+g+'">file as played →</button></div>'; }
+  const pb = live && d===T ? '<div class="pbw"><label class="pb">'+CLIP+'<textarea rows="1" data-in="pbx" placeholder="paste a result" aria-label="paste a result" spellcheck="false">'+esc(S.text)+'</textarea><span class="kbd">⌘v</span></label></div>'+back+'<div class="out" data-region="pbout">'+output(S.text,true)+'</div>'
+    : d===T ? '<div class="pbw"><div class="pb">'+CLIP+'<span style="flex:1">paste a result</span><span class="kbd">⌘v</span></div></div><div class="sug">clipboard · <b>strands #612</b><span class="go">file →</span></div>'
+    : '<div class="sub wrap">yesterday · filing late is allowed until the next reset (set by the chair)</div>';
+  const all = done===k && d===T;
+  let over = '';
+  if (live && S.ban) over += '<button class="ban" data-ban><small>'+esc(S.ban.k)+'</small><b>'+esc(S.ban.t)+'</b>'+esc(S.ban.s)+'</button>';
+  if (live && S.toast) over += '<div class="toast"><span>'+esc(S.toast.msg)+'</span>'+(S.toast.snap?'<button data-undo>undo</button>':'')+'</div>';
+  if ((live && S.ovl===pid) || pid==='boards') over += boardsOverlay(pid, b);
+  return shell(pid, copy, head(pid, B(b).n+'.xlsx', d===T?'tue 28 oct':'mon 27 oct', true) + q + '<div class="bd">'+pb
+    + '<div class="prog"><div class="pn">'+done+' of '+k+' items done<span>board: '+filedAll+' filed · '+pres+'/'+(B(b).members.length-1)+' present</span></div><div class="prg"><i style="width:'+Math.round(done/k*100)+'%"></i></div></div>'
+    + (all?'<div class="cmd">perfect attendance · the board thanks you</div>':'')
+    + games.map(g=>agItem(b,g,d,live)).join('') + (games.length?'':'<div class="sub">nothing '+esc(show)+' on this agenda</div>') + '</div>', 'agenda', over);
+}
+
+/* ---------------- 2 filed from the share sheet ---------------- */
+function scrShare(pid, copy){
+  return shell(pid, copy, '<div class="game"><span class="gt">connections</span><span class="sub">puzzle #870 · solved</span><span class="gg">🟨🟨🟨🟨\n🟩🟦🟩🟩\n🟩🟩🟩🟩\n🟦🟦🟦🟦\n🟪🟪🟪🟪</span></div><div class="shade"></div>'
+    + '<div class="sheet"><div class="grab"></div><div class="pc-h">'+tile('connections')+'<div><b>filed connections #870</b><small>boredroom · just now</small></div></div>'
+    + '<div class="chipr"><span class="chip">1 mistake</span><span class="chip">4/4 groups</span></div>'
+    + '<div class="to">filed to <b>soup daily</b>, <b>office wordle</b> (guest seat)</div><div class="to">soup daily: 8/12 present · you\'re 3rd so far</div>'
+    + '<div class="pc-a"><button class="btn">done</button><button class="lnk">undo</button><span class="hint" style="margin-left:auto">closes in 4s</span></div></div>', null);
+}
+
+/* ---------------- 4/5 review ---------------- */
+const PERIODS = [['today','today'],['week','week'],['month','month'],['all','all time']];
+const PER = { today:'today', week:'this week', month:'this month', all:'all time' };
+const statOpts = q => q.game==='all' ? [['items','items done'],['present','days present']] : [['average','average '+GAMES[q.game].unit],['best','best'],['played','played']];
+const statLabel = q => (statOpts(q).find(s=>s[0]===q.stat) || statOpts(q)[0])[1];
+const isCount = q => q.game==='all' || q.stat==='played';
+const lowerBetter = q => !isCount(q) && GAMES[q.game].lower;
+function dayCols(p){
+  if (p==='today') return [[T]];
+  if (p==='week') return range(T-6,T).map(d=>[d]);
+  if (p==='month') return range(T-29,T).map(d=>[d]);
+  const c = []; for (let e=T; e>=0; e-=7) c.unshift(range(Math.max(0,e-6), e)); return c;
+}
+function cell(m, q, days){
+  if (q.game==='all'){ if (q.stat==='present') return days.filter(d=>itemsOn(m,q.board,d)>0).length; return sum(days.map(d=>itemsOn(m,q.board,d))); }
+  const vs = days.map(d=>val(m,q.game,d)).filter(v=>v!=null);
+  if (q.stat==='played') return vs.length;
+  const ns = vs.filter(num); if (!ns.length) return null;
+  if (q.stat==='best') return GAMES[q.game].lower ? Math.min(...ns) : Math.max(...ns);
+  return sum(ns)/ns.length;
+}
+function fmtV(q, v){
+  if (v==null) return '—'; if (isCount(q)) return String(v);
+  const G = GAMES[q.game];
+  if (q.stat==='average') return G.unit==='points' || G.unit==='m deep' ? String(Math.round(v)) : v.toFixed(1);
+  return G.short(v);
+}
+function rank(q, days){
+  const rows = B(q.board).members.map(m=>({ m, v:cell(m,q,days) }));
+  const has = r => r.v!=null && !(isCount(q) && r.v===0);
+  const lb = lowerBetter(q);
+  return { ranked: rows.filter(has).sort((x,y)=>lb ? x.v-y.v : y.v-x.v), absent: rows.filter(r=>!has(r)).map(r=>r.m) };
+}
+function heatCols(q){
+  if (q.period==='today' && q.game==='all') return B(q.board).games.map(g=>({ label:GAMES[g].l, title:GAMES[g].n+' today', game:g, get:m=>{ const v = val(m,g,T); return v==null ? null : num(v) ? v : 0; }, lower:GAMES[g].lower }));
+  return dayCols(q.period).map((days,i)=>({ label: q.period==='all' ? (i%4===0 ? dlabel(days[0]).split(' ')[0] : '') : q.period==='month' ? (i%7===0 ? String(dt(days[0]).getDate()) : '') : dow(days[0])[0], title: q.period==='all' ? 'week of '+dlabel(days[0]) : dow(days[0])+' '+dlabel(days[0]), days, get:m=>cell(m,q,days), lower:lowerBetter(q) }));
+}
+function memosFor(q){
+  const out = [], days = dayCols(q.period).flat(), { ranked } = rank(q, days), per = PER[q.period], gn = q.game==='all' ? '' : GAMES[q.game].n+' ';
+  const qs = x => Object.assign({}, q, { sel:null, cmp:[] }, x);
+  const ms = B(q.board).members;
+  if (ranked.length){
+    const a = ranked[0];
+    out.push({ k:'standing', s:3, t:(a.m==='you'?'you lead ':a.m+' leads ')+gn+per+' with '+fmtV(q,a.v)+(q.game==='all'&&q.stat==='items'?' items':q.game==='all'?' days':''), q:qs({}) });
+    if (ranked.length>1){ const b2 = ranked[1], gap = Math.abs(a.v-b2.v), close = isCount(q) ? gap<=1 : q.stat==='average' ? gap <= (GAMES[q.game].unit==='points'||GAMES[q.game].unit==='m deep'?8:.15) : gap===0;
+      if (close && q.stat!=='present') out.push({ k:'photo finish', s:8, t:'photo finish: '+nm(a.m)+' and '+nm(b2.m)+' '+(gap===0?'are level':'separated by '+fmtV(q,gap)), q:qs({ cmp:[a.m,b2.m] }) }); }
+    if (ranked.length>=4 && q.period!=='today'){ const z = ranked[ranked.length-1]; out.push({ k:'on a pip', s:4, t:nm(z.m)+(z.m==='you'?' are':' is')+' on a pip '+gn+per, q:qs({ cmp:[z.m] }) }); }
+  }
+  if (q.game==='all' && q.stat==='items' && q.period==='week' && ranked.length){
+    const top = ranked[0], me = ranked.find(r=>r.m==='you');
+    if (me && top.m!=='you'){ const gap = top.v-me.v, left = B(q.board).games.filter(g=>val('you',g,T)==null).length;
+      out.push(left>gap ? { k:'memo to you', s:9, t:'file '+(gap+1)+' more today to take #1 from '+top.m, q:qs({}) } : { k:'memo to you', s:2, t:'you trail '+top.m+' by '+plural(gap,'item'), q:qs({ cmp:['you',top.m] }) }); }
+    if (top.m==='you' && !(ranked[1] && ranked[1].v===top.v)) out.push({ k:'hostile takeover', s:10, t:'hostile takeover: you are #1 this week', q:qs({}) });
+  }
+  const lost = ms.map(m=>[m,lostTenure(m)]).filter(x=>x[1]>=5).sort((a,b)=>b[1]-a[1])[0];
+  if (lost) out.push({ k:'broken tenure', s:7, t:lost[0]+'\'s '+lost[1]+'-day tenure ended yesterday', q:qs({ game:'all', stat:'present', period:'month', cmp:[lost[0]] }) });
+  const ten = ms.map(m=>[m,tenure(m)]).sort((a,b)=>b[1]-a[1])[0];
+  if (ten && ten[1]>=10) out.push({ k:'tenure', s:3, t:nm(ten[0])+': tenure '+ten[1]+' days, the longest on the board', q:qs({ game:'all', stat:'present', period:'month', cmp:[ten[0]] }) });
+  const mg = q.game==='all' ? B(q.board).games.find(g=>g==='connections'||g==='wordle') : (q.game==='connections'||q.game==='wordle' ? q.game : null);
+  if (mg && q.period!=='today'){ const lim = mg==='wordle' ? 7 : 4; const n = sum(ms.map(m=>days.filter(d=>{ const v = val(m,mg,d); return num(v) && v>=lim; }).length));
+    if (n>=2) out.push({ k:'missed targets', s:5, t:n+' missed targets in '+GAMES[mg].n+' '+per+'. the board is concerned.', q:qs({ game:mg, stat:'average' }) }); }
+  if (q.game==='all' && q.period==='week'){ const pa = ms.filter(m=>range(T-6,T-1).every(d=>itemsOn(m,q.board,d)===B(q.board).games.length));
+    if (pa.length) out.push({ k:'perfect attendance', s:5, t:'perfect attendance all week: '+pa.map(nm).join(', '), q:qs({ cmp:pa.slice(0,3) }) }); }
+  if (q.game!=='all' && q.period!=='all' && ranked.length){ const G = GAMES[q.game];
+    for (const r of ranked){ const mine = DATA[r.m] && DATA[r.m][q.game] ? DATA[r.m][q.game].filter(num) : []; if (mine.length<10) continue;
+      const pb = G.lower ? Math.min(...mine) : Math.max(...mine); const pv = cell(r.m, Object.assign({}, q, { stat:'best' }), days);
+      if (pv===pb && !(G.lower && pb===0)){ out.push({ k:'personal best', s:6, t:nm(r.m)+' matched a personal best: '+G.fmt(pb), q:qs({ stat:'best', cmp:[r.m] }) }); break; } } }
+  return out.sort((a,b)=>b.s-a.s);
+}
+function qText(q){ return '=review(board:"'+B(q.board).n+'", game:"'+(q.game==='all'?'all':GAMES[q.game].n)+'", period:"'+PER[q.period]+'", stat:"'+statLabel(q)+'")'; }
+function scrReview(pid, copy){
+  const q = Q[pid];
+  if (!statOpts(q).some(s=>s[0]===q.stat)) q.stat = statOpts(q)[0][0];
+  const cols = heatCols(q), G = q.game==='all' ? null : GAMES[q.game], ms = B(q.board).members;
+  const toks = [['board','board',B(q.board).n,boardOpts(),q.board],['game','game',G?G.n:'all',[['all','all']].concat(gameOpts(q.board)),q.game],['period','period',PER[q.period],PERIODS,q.period],['stat','stat',statLabel(q),statOpts(q),q.stat]];
+  const sel = q.sel!=null && cols[q.sel] ? cols[q.sel] : null;
+  const days = sel ? (sel.days || [T]) : dayCols(q.period).flat();
+  const rq = sel && sel.game ? Object.assign({}, q, { game:sel.game, stat:'average', period:'today' }) : q;
+  const { ranked, absent } = rank(rq, days);
+  /* chart */
+  let chart = '';
+  if (!(q.period==='today' && q.game!=='all')){
+    const cmp = q.cmp.filter(m=>ms.includes(m));
+    const colsV = cols.map(c=>{ const vs = ms.map(m=>c.get(m)); return { c, vs, tot: sum(vs.map(v=>v==null?0:c.game?1:v)), you: c.get('you') }; });
+    const btn = (i, x, inner) => '<button class="'+(q.sel===i?'sel':'')+'" data-col="'+i+'" data-pid="'+pid+'" title="'+esc(x.c.title)+'">'+inner+'</button>';
+    let bars;
+    if (cmp.length){
+      const mx = Math.max(1, ...colsV.flatMap(x=>cmp.map(m=>x.c.get(m)||0)));
+      bars = colsV.map((x,i)=>btn(i, x, '<span class="grp">'+cmp.map(m=>{ const v = x.c.get(m); return v==null||(isCount(q)&&v===0&&!x.c.game) ? '<i class="none" style="--h:'+hue(m)+';height:8%"></i>' : '<i style="--h:'+hue(m)+';height:'+Math.max(4,(lowerBetter(q)?(mx*1.15-v)/(mx*1.15):v/mx)*100)+'%"></i>'; }).join('')+'</span>')).join('');
+    } else if (isCount(q)){
+      const mx = Math.max(1, ...colsV.map(x=>x.tot));
+      bars = colsV.map((x,i)=>{ const yv = x.you==null ? 0 : x.c.game ? 1 : x.you; return btn(i, x, '<span class="o" style="height:'+((x.tot-yv)/mx*100)+'%"></span><span class="y" style="height:'+(yv/mx*100)+'%"></span>'); }).join('');
+    } else {
+      const avgs = colsV.map(x=>{ const ns = x.vs.filter(v=>v!=null); return ns.length ? sum(ns)/ns.length : null; });
+      const mx = Math.max(1, ...avgs.filter(v=>v!=null), ...colsV.map(x=>x.you||0));
+      bars = colsV.map((x,i)=>btn(i, x, '<span class="o" style="height:'+((avgs[i]||0)/mx*100)+'%"></span>'+(x.you!=null?'<span class="mk" style="bottom:'+(x.you/mx*100)+'%"></span>':''))).join('');
+    }
+    const key = cmp.length ? cmp.map(m=>'<span><i style="background:hsl('+hue(m)+' var(--av-s) var(--av-l))"></i>'+nm(m)+'</span>').join('')+'<button class="lnk" data-cmpclear="'+pid+'">clear</button>'
+      : isCount(q) ? '<span><i style="background:var(--bar-o)"></i>board</span><span><i style="background:var(--accent)"></i>you</span><span style="margin-left:auto">'+(q.period==='today'?'present per item':'total per '+(q.period==='all'?'week':'day'))+'</span>'
+      : '<span><i style="background:var(--bar-o)"></i>board avg</span><span><i style="background:var(--accent);height:2px"></i>you</span><span style="margin-left:auto">'+(lowerBetter(q)?'lower is better':'higher is better')+'</span>';
+    chart = '<div class="chart"><div class="key">'+key+'</div><div class="cols">'+bars+'</div><div class="lbls">'+cols.map((c,i)=>'<span class="'+(q.sel===i?'on':'')+'">'+esc(c.label)+'</span>').join('')+'</div></div>';
+  }
+  /* detail line */
+  let det;
+  if (sel){ const pr = ms.filter(m=>{ const v = sel.get(m); return v!=null && !(isCount(q)&&v===0&&!sel.game); }).length;
+    det = '<div class="det"><b>'+esc(sel.title)+'</b> · '+pr+'/'+ms.length+' present'+(ranked[0]?' · top <b>'+esc(nm(ranked[0].m))+'</b> '+fmtV(rq,ranked[0].v):'')+'<button class="lnk" data-col="'+q.sel+'" data-pid="'+pid+'">back to '+esc(PER[q.period])+'</button></div>'; }
+  else det = '<div class="det">'+ms.length+' members · '+ranked.length+' ranked '+PER[q.period]+' · tap a '+(q.period==='today'&&q.game==='all'?'column for that item':q.period==='all'?'week':'day')+', or names to compare</div>';
+  /* member × column grid */
+  let hm = '';
+  if (cols.length>1){
+    const allv = cols.flatMap(c=>ms.map(m=>c.get(m))).filter(v=>v!=null);
+    const order = ranked.map(r=>r.m).concat(absent);
+    const norm = (c, v) => {
+      if (v==null || (isCount(q) && v===0 && !c.game)) return null;
+      const pool = c.game ? ms.map(m=>c.get(m)).filter(x=>x!=null) : allv; const mn = Math.min(...pool), mx = Math.max(...pool);
+      const f = mx===mn ? 1 : (v-mn)/(mx-mn); return .25 + .75 * (c.lower ? 1-f : f);
+    };
+    hm = '<div class="hm"><span class="sec">member</span><div class="cl hdr">'+cols.map((c,i)=>'<i class="'+(q.sel===i?'sel':'')+'">'+esc(c.label)+'</i>').join('')+'</div>'
+      + order.map(m=>{ const dim = q.cmp.length && !q.cmp.includes(m) ? ' dim' : '';
+        return '<button class="n'+(m==='you'?' me':'')+dim+(q.cmp.includes(m)?' on-c':'')+'" style="--h:'+hue(m)+'" data-cmp="'+m+'" data-pid="'+pid+'">'+esc(nm(m))+'</button><div class="cl'+dim+'">'+cols.map((c,i)=>{ const f = norm(c, c.get(m)); return '<i class="'+(q.sel===i?'sel':'')+'">'+(f==null?'':'<b style="opacity:'+f.toFixed(2)+'"></b>')+'</i>'; }).join('')+'</div>'; }).join('')
+      + '</div>';
+  }
+  /* standings */
+  const isPip = q.period!=='today' && !sel && ranked.length>=4;
+  const st = ranked.map((r,i)=>'<div class="rk'+(r.m==='you'?' me':'')+(q.cmp.includes(r.m)?' cmp':'')+'"><span class="n">'+(i+1)+'</span>'+av(r.m)+'<button class="who" data-cmp="'+r.m+'" data-pid="'+pid+'">'+esc(nm(r.m))+'</button><span class="v">'+fmtV(rq,r.v)+'</span><span class="t2'+(isPip&&i===ranked.length-1?' pip':'')+'">'+(isPip&&i===ranked.length-1?'on a pip':'tenure '+tenure(r.m)+'d')+'</span></div>').join('');
+  const memos = memosFor(q).slice(0,2);
+  return shell(pid, copy, head(pid, B(q.board).n+'.xlsx', 'performance review', true) + fx(pid, 'review', toks) + '<div class="bd">'
+    + '<div class="seg">'+PERIODS.map(p=>'<button class="'+(p[0]===q.period?'on':'')+'" data-period="'+p[0]+'" data-pid="'+pid+'">'+p[1]+'</button>').join('')+'</div>'
+    + '<div class="gch"><button class="'+(q.game==='all'?'on':'')+'" data-game="all" data-pid="'+pid+'">all games</button>'+B(q.board).games.map(g=>'<button class="'+(q.game===g?'on':'')+'" data-game="'+g+'" data-pid="'+pid+'">'+esc(GAMES[g].n)+'</button>').join('')+'</div>'
+    + '<div class="seg">'+statOpts(q).map(s=>'<button class="'+(s[0]===q.stat?'on':'')+'" data-stat="'+s[0]+'" data-pid="'+pid+'">'+esc(s[1].replace('average ','avg '))+'</button>').join('')+'</div>'
+    + (memos.length?'<div class="memos">'+memos.map((m,i)=>'<button class="memo" data-memo="'+i+'" data-pid="'+pid+'"><small><span>memo · '+esc(m.k)+'</span><span>open →</span></small>'+esc(m.t)+'</button>').join('')+'</div>':'')
+    + chart + det + hm
+    + '<div class="sec">standings · '+esc(sel?sel.title:PER[q.period])+(rq!==q?' · '+esc(GAMES[rq.game].unit):'')+'</div>' + (st || '<div class="absent">no one has filed yet</div>')
+    + (absent.length?'<div class="absent">absent ('+absent.length+'): '+absent.map(nm).join(', ')+'</div>':'')
+    + '</div>', 'review', S.ovl===pid ? boardsOverlay(pid, q.board) : '');
+}
+
+/* ---------------- 6 the daily bored meeting (memo feed) ---------------- */
+function feed(b){
+  const base = { board:b, sel:null, cmp:[] };
+  const qs = [{ game:'all', period:'week', stat:'items' }, { game:'all', period:'month', stat:'present' }].concat(B(b).games.map(g=>({ game:g, period:'week', stat:'average' })));
+  const seen = new Set(), out = [];
+  qs.forEach(x=>memosFor(Object.assign({}, base, x)).forEach(m=>{ if (seen.has(m.t) || (m.k==='standing' && x.game==='all' && x.stat==='present')) return; seen.add(m.t); out.push(m); }));
+  return out.sort((a,c)=>c.s-a.s).slice(0,8);
+}
+function scrMemos(pid, copy){
+  const b = S.mboard, list = feed(b);
+  return shell(pid, copy, head(pid, B(b).n+'.xlsx', 'the daily bored meeting', false) + fx(pid, 'memos', [['board','board',B(b).n,boardOpts(),b],['day','day','today',null,'today']]) + '<div class="bd">'
+    + '<div class="sub wrap">the daily bored meeting is in · '+list.length+' memos, most interesting first. tap one to open its review (screen 4).</div>'
+    + list.map((m,i)=>'<button class="memo" data-feed="'+i+'"><small><span>memo · '+esc(m.k)+'</span><span>open →</span></small>'+esc(m.t)+'<span class="q">'+esc(qText(m.q))+'</span></button>').join('')
+    + '</div>', 'review');
+}
+
+/* ---------------- 7 minutes ---------------- */
+function gridFor(m, g, v){
+  if (!num(v)) return 'played';
+  const r = rng(hash(m+g));
+  if (g==='connections'){ const C = ['🟨','🟩','🟦','🟪']; const rows = [];
+    for (let i=0; i<Math.min(v,4); i++){ const a = C.slice(); a[Math.floor(r()*4)] = C[Math.floor(r()*4)]; if (a.every(c=>c===a[0])) a[0] = C[(C.indexOf(a[0])+1)%4]; rows.push(a.join('')); }
+    if (v<4) C.forEach(c=>rows.push(c.repeat(4))); return rows.join('\n'); }
+  if (g==='strands'){ const a = Array(7).fill('🔵'); a[1+Math.floor(r()*5)] = '🟡'; for (let i=0;i<v;i++) a.splice(Math.floor(r()*a.length),0,'💡'); return a.join(''); }
+  if (g==='wordle'){ const rows = []; for (let i=1; i<Math.min(v,7); i++) rows.push(Array.from({ length:5 }, ()=>pick(r,['⬛','⬛','🟨','🟩'])).join('')); if (v<7) rows.push('🟩🟩🟩🟩🟩'); return rows.join('\n'); }
+  return GAMES[g].fmt(v);
+}
+function bucket(G, v){ return G.unit==='points' ? Math.floor(v/100)*100+'s' : G.unit==='m deep' ? Math.floor(v/200)*200+'+' : G.short(v); }
+function scrMinutes(pid, copy){
+  const b = S.board, g = B(b).games.includes(S.mgame) ? S.mgame : B(b).games[0], G = GAMES[g], d = S.mday==='yesterday' ? T-1 : T;
+  const open = val('you',g,d)!=null;
+  const ms = B(b).members, pres = ms.filter(m=>val(m,g,d)!=null), abs = ms.filter(m=>val(m,g,d)==null);
+  pres.sort((x,y)=>{ const a = val(x,g,d), c = val(y,g,d); if (!num(a)) return 1; if (!num(c)) return -1; return G.lower ? a-c : c-a; });
+  const isGrid = ['connections','strands','wordle'].includes(g);
+  const cellv = m => { const v = val(m,g,d); const txt = isGrid ? gridFor(m,g,v) : (num(v)?G.fmt(v):'played'); return '<span class="'+(isGrid&&num(v)?'gridp mini':'mv')+(open?'':' blur')+'"'+(open?'':' data-nudge')+'>'+esc(txt)+'</span>'; };
+  const hist = {}; pres.forEach(m=>{ const v = val(m,g,d); if (num(v)){ const k = bucket(G,v); hist[k] = (hist[k]||0)+1; } });
+  const hk = Object.keys(hist).sort((a,c)=>(parseFloat(a)||99)-(parseFloat(c)||99)); const hmax = Math.max(1, ...Object.values(hist)); const mine = val('you',g,d);
+  const myk = num(mine) ? bucket(G, mine) : null;
+  const lock = open ? 'minutes unsealed · you filed '+G.n : S.nudge ? 'file '+G.n+' first. no peeking.' : 'confidential until you file '+G.n+(d===T?' today':' for yesterday');
+  const h = shell(pid, copy, head(pid, B(b).n+'.xlsx', 'minutes', true) + fx(pid, 'minutes', [['game','game',G.n,gameOpts(b),g],['puzzle','puzzle',S.mday==='yesterday'?'yesterday':G.key,[['today',G.key+' · today'],['yesterday','yesterday']],S.mday]]) + '<div class="bd">'
+    + '<div class="lock'+(S.nudge?' nudge':'')+'">'+lock+'</div>'
+    + pres.map(m=>'<div class="mrow"><span class="who2">'+av(m)+esc(nm(m))+'</span>'+cellv(m)+'</div>').join('')
+    + (abs.length ? '<div class="absent">absent ('+abs.length+'): '+abs.map(nm).join(', ')+'</div>' : '')
+    + (hk.length ? '<div class="sec">board '+(d===T?'today':'yesterday')+' · '+esc(G.unit)+'</div><div class="dist">'+hk.map(k=>'<div>'+esc(k)+'<span class="'+(open&&k===myk?'hl':'')+'" style="width:'+Math.round(hist[k]/hmax*100)+'%">'+hist[k]+'</span></div>').join('')+'</div>' : '')
+    + '</div>', 'review', S.ovl===pid ? boardsOverlay(pid, b) : '');
+  S.nudge = false; return h;
+}
+
+/* ---------------- 8 library ---------------- */
+const LIB = [['wordle','words','local midnight'],['travle','geography',''],['metazooa','trivia',''],['anno','trivia',''],['fermi','trivia',''],['daily red','puzzles',''],['the wiki game daily','trivia',''],['pindrop','geography',''],['daily orbs','puzzles',''],['system design daily','trivia','']];
+function libRows(){
+  const q = S.libq.toLowerCase(), b = S.board;
+  const rows = LIB.filter(r=>(S.libcat==='all'||r[1]===S.libcat) && (!q || r[0].includes(q) || r[1].includes(q)));
+  return rows.slice(0,7).map((r,i)=>{ const onB = boardsWith(r[0]).length;
+    return '<div class="it" style="--gc:var(--g'+(i%7+1)+')"><span class="ic">'+esc(r[0][0])+'</span><div class="g"><div class="nm">'+esc(r[0])+'</div><div class="sub">'+esc(r[1])+(r[2]?' · '+esc(r[2]):'')+(onB?' · on '+plural(onB,'agenda'):'')+'</div></div>'+(B(b).games.includes(r[0])?'<button class="add" disabled>on agenda</button>':'<button class="add" data-add="'+esc(r[0])+'">add</button>')+'</div>'; }).join('')
+    + (rows.length ? '' : '<div class="sub">no game called "'+esc(S.libq)+'" yet · try any other business</div>');
+}
+function scrLibrary(pid, copy){
+  const cats = [['all','all'],['words','words'],['geography','geography'],['trivia','trivia'],['puzzles','puzzles']];
+  return shell(pid, copy, head(pid, 'library.xlsx', '140 games', false) + fx(pid, 'library', [['category','category',S.libcat,cats,S.libcat],['add_to','add to',B(S.board).n,boardOpts(),S.board]]) + '<div class="bd">'
+    + '<div class="pbw"><label class="srch">'+SRCH+'<input data-in="libq" placeholder="search games" aria-label="search games" value="'+esc(S.libq)+'"></label></div>'
+    + '<div class="rows" data-region="lib">'+libRows()+'</div>'
+    + '<div class="memo" style="cursor:default"><small><span>any other business?</span></small>add any daily game with a link and its reset time</div></div>', 'library');
+}
+
+/* ---------------- 9 any other business ---------------- */
+function scrAob(pid, copy){
+  return shell(pid, copy, head(pid, 'any other business', 'soup daily', false) + fx(pid, 'add_game', [['board','board','soup daily',null,''],['visible','visible','this board only',null,'']]) + '<div class="bd">'
+    + '<div class="field"><label>name</label><div class="input">pokédoku</div></div>'
+    + '<div class="field"><label>link</label><div class="input">pokedoku.com</div></div>'
+    + '<div class="field"><label>new puzzle every day at</label><div class="opt"><span class="on">00:00 my time</span><span>00:00 utc</span><span>custom</span></div></div>'
+    + '<div class="field"><label>paste one result (optional)</label><div class="input gridp" style="font-size:9.5px">pokédoku 7/9 · 2 rare</div></div>'
+    + '<div class="sub wrap">we can\'t read that format yet, so this item counts as "played" until it gets a parser. scores fill in later.</div>'
+    + '<div class="pc-a"><button class="btn">add to the agenda</button><span class="hint" style="margin-left:auto">board-private</span></div></div>', 'library');
+}
+
+/* ---------------- 10 your seat ---------------- */
+function scrYou(pid, copy){
+  const b = S.seatb==='all' ? 'soup' : S.seatb;
+  const wk = range(T-13,T).map(d=>anyOn('you',d));
+  return shell(pid, copy, head(pid, 'you.xlsx', 'walter', false) + fx(pid, 'seat', [['board','board',S.seatb==='all'?'all boards':B(S.seatb).n,[['all','all boards']].concat(boardOpts()),S.seatb]]) + '<div class="bd">'
+    + '<div class="stat"><div><b>'+tenure('you')+'d</b><small>tenure · anything, every day</small></div><div><b>'+perfect('you',b)+'d</b><small>perfect attendance · '+esc(B(b).n)+'</small></div><div><b>'+Math.max(...B(b).games.map(g=>itemTenure('you',g)))+'d</b><small>longest item tenure</small></div></div>'
+    + '<div><div class="sec">last 14 days</div><div class="wk">'+wk.map(x=>'<i class="'+(x?'on':'')+'"></i>').join('')+'</div></div>'
+    + '<div class="sec">tenure by item · '+esc(B(b).n)+'</div>'
+    + B(b).games.map(g=>{ const n = itemTenure('you',g), filed = val('you',g,T)!=null; return '<div class="mrow"><span>'+esc(GAMES[g].n)+'</span><span class="mv">'+n+'d'+(!filed && n ? ' · <span class="risk">ends at reset</span>' : '')+'</span></div>'; }).join('')
+    + '<div class="sec">seats on this phone</div>'
+    + Object.values(BOARDS).map(x=>'<div class="mrow"><span>'+esc(x.n)+'</span><span class="chip'+(x.seat==='guest'?' seat':'')+'">'+(x.seat==='guest'?'guest seat':'signed in')+'</span></div>').join('')
+    + '<div class="sub wrap">the guest seat on office wordle still gets everything you file. sign in on it to merge its history into your account.</div>'
+    + '<div class="chipr"><span class="chip">first to file ×6</span><span class="chip">purple first ×2</span><span class="chip badge">most present · october</span></div>'
+    + '<div><button class="lnk">resign from a board</button></div></div>', 'you');
+}
+
+/* ---------------- 11 invitation ---------------- */
+function scrInvite(pid, copy){
+  if (S.joined) return shell(pid, copy, '<div class="bd" style="justify-content:center"><div class="plain big">welcome aboard, walter.</div><div class="plain sub wrap">you now sit on 4 boards. connections and maptap were already filed today, so they\'re in puzzle pals\' minutes too.</div><div class="plain"><button class="btn wide" data-unjoin>back to the invitation</button></div></div>', null);
+  return shell(pid, copy, '<div class="bd" style="justify-content:center">'
+    + '<div class="plain big">ivan invited you to the puzzle pals board</div>'
+    + '<div class="plain sub wrap">9 board members · connections, maptap, travle on the agenda</div>'
+    + '<div class="plain" style="display:flex;flex-direction:column;gap:6px"><button class="btn wide" data-join>join as walter</button><button class="btn wide ghost">join as someone else (guest seat)</button></div>'
+    + '<div class="plain sub wrap">you\'re signed in on this phone, so today\'s connections and maptap file to puzzle pals as soon as you join.</div></div>', null);
+}
+
+/* ---------------- 12 chair ---------------- */
+function scrChair(pid, copy){
+  const t = (l, on, s) => '<div class="tg"><span><span class="nm" style="display:block">'+l+'</span><span class="sub">'+s+'</span></span><span class="sw'+(on?' on':'')+'"></span></div>';
+  return shell(pid, copy, head(pid, 'soup daily.xlsx', 'board settings', false) + fx(pid, 'settings', [['board','board','soup daily',null,''],['role','role','chair',null,'']]) + '<div class="bd">'
+    + '<div class="sub wrap">13 members · chairs: ivan, you · 6 items</div>'
+    + t('filing late', true, 'allowed until the next reset')
+    + t('chair approves new members', false, 'anyone with the invitation joins')
+    + t('confidential minutes', true, 'grids hidden until you file')
+    + t('evening reminder default', true, 'only if nothing filed that day')
+    + '<div class="sec">seat claims (1)</div>'
+    + '<div class="pc"><div class="pc-h">'+av('kunal')+'<div><b>kunal wants his seat back</b><small>new phone, old one lost · tenure 6d</small></div></div><div class="pc-a"><button class="btn">approve</button><button class="lnk">deny</button></div></div>'
+    + '<div class="mrow"><button class="lnk">remove an item</button><button class="lnk">remove a member</button></div></div>', 'you');
+}
+
+/* ---------------- 13 notifications ---------------- */
+function scrNotif(pid, copy){
+  const n = (h, w, b, t) => '<div class="nt"><div class="h"><span>boredroom · '+h+'</span><span>'+w+'</span></div><div class="b"><b>'+b+'</b>'+t+'</div></div>';
+  return shell(pid, copy, '<div class="lk"><div class="lk-t">21:30</div><div class="lk-d">tuesday 28 october</div>'
+    + n('soup daily','now','the meeting started without you.','3 items left on today\'s agenda: strands, krillion, globle.')
+    + n('soup daily','2h','memo · hostile takeover','ivan passed you for #1 this week.')
+    + n('soup daily','8h','the daily bored meeting is in','a photo finish in maptap, and judy\'s 9-day tenure ended.')
+    + n('family puzzles','1d','memo · perfect attendance','didi filed every item all week.')
+    + '</div>', null);
+}
+
+/* ---------------- screen list ---------------- */
+const SCREENS = [
+  ['agenda', 'agenda + pasteboard', 'Home. Paste, or tap "play" and come back. Filing goes to every board with that game. Try day:"yesterday" in the formula bar to file late. Tap a presence line to open those minutes; tap the title to switch boards.', '2 · 3 · 6', (p,c)=>scrAgenda(p,c,true)],
+  ['share', 'filed from the share sheet', 'Android: share from the game, pick boredroom, done. The sheet says where it went, including the guest seat.', '3', (p,c)=>scrShare(p,c)],
+  ['boards', 'switch boards', 'Tap the sheet title on any screen. Each board shows your progress and today\'s attendance; guest seats are marked.', '3', (p,c)=>scrAgenda(p,c,false)],
+  ['ra', 'performance review · default', 'This week · all games · items done. Board bars with you in green, a member × day grid that reads at 13 rows, standings and the top two memos. Tap a day, tap names to compare (up to 3), or edit any part of the formula.', '1 · 2 · 4 · 5', (p,c)=>scrReview(p,c)],
+  ['rb', 'performance review · another question', 'Same screen, different query: connections · all time · average mistakes, comparing you and ivan week by week.', '1 · 2 · 4', (p,c)=>scrReview(p,c)],
+  ['memos', 'the daily bored meeting', 'Every memo the board earned, most interesting first. Each opens the review that backs it in screen 4.', '5', (p,c)=>scrMemos(p,c)],
+  ['minutes', 'minutes', 'One game, one puzzle. Confidential until you file; absent members collapse to one line. Switch game or puzzle in the formula bar.', '2', (p,c)=>scrMinutes(p,c)],
+  ['library', 'library', 'Search and category, mirrored in the formula bar. "add" puts the game on that board\'s agenda.', '2', (p,c)=>scrLibrary(p,c)],
+  ['aob', 'any other business', 'A custom game: name, link, reset time. Unreadable results still count as played until a parser exists.', '', (p,c)=>scrAob(p,c)],
+  ['you', 'your seat', 'Three kinds of tenure, item tenure at risk, and every seat on this phone, including the guest seat that sign-in would merge.', '2 · 3', (p,c)=>scrYou(p,c)],
+  ['invite', 'board invitation', 'Already signed in? One tap, and today\'s results are on the new board straight away.', '3', (p,c)=>scrInvite(p,c)],
+  ['chair', 'chair · board settings', 'The chair\'s controls: late filing, join approval, confidential minutes, the reminder default, and seat claims.', '', (p,c)=>scrChair(p,c)],
+  ['notif', 'notifications', 'The evening reminder (only if nothing is filed), memos and the daily bored meeting.', '5', (p,c)=>scrNotif(p,c)]
+];
+
+/* ---------------- render ---------------- */
+const $ = s => document.querySelector(s);
+const RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function renderView(){ $('#view').innerHTML = [['both','light + dark'],['light','light'],['dark','dark']].map(([k,v])=>'<button class="'+(k===view?'on':'')+'" data-view="'+k+'" aria-pressed="'+(k===view)+'">'+v+'</button>').join(''); }
+function render(){
+  const scroll = {}; document.querySelectorAll('.ph').forEach(p=>{ const b = p.querySelector('.bd'); if (b) scroll[p.dataset.pid+p.dataset.copy] = b.scrollTop; });
+  const a = document.activeElement, ph = a && a.closest && a.closest('.ph');
+  const keep = ph && a.dataset.in ? { in:a.dataset.in, pid:ph.dataset.pid, copy:ph.dataset.copy, caret:a.selectionStart } : null;
+  const copies = view==='both' ? ['l','d'] : view==='light' ? ['l'] : ['d'];
+  const box = $('#scrs'); box.className = 'scrs'+(view==='both'?'':' single');
+  box.innerHTML = SCREENS.map((s,i)=>'<div class="scr" id="scr-'+s[0]+'"><div class="scr-cap"><b><span class="n">'+(i+1)+'</span>'+esc(s[1])+'</b><span>'+esc(s[2])+'</span>'+(s[3]?'<em>covers notes '+s[3]+'</em>':'')+'</div><div class="pair">'
+    + copies.map(c=>'<div>'+(view==='both'?'<span class="md">'+(c==='l'?'light':'dark')+'</span>':'')+s[4](s[0],c)+'</div>').join('')+'</div></div>').join('');
+  document.querySelectorAll('.ph').forEach(p=>{ const b = p.querySelector('.bd'), k = p.dataset.pid+p.dataset.copy; if (b && scroll[k]) b.scrollTop = scroll[k]; });
+  if (keep){ const el = document.querySelector('.ph[data-pid="'+keep.pid+'"][data-copy="'+keep.copy+'"] [data-in="'+keep.in+'"]'); if (el){ el.focus({ preventScroll:true }); try { el.setSelectionRange(keep.caret, keep.caret); } catch(e){} } }
+  S.just = {};
+}
+function region(name, html){ document.querySelectorAll('[data-region="'+name+'"]').forEach(r=>{ r.innerHTML = html; }); }
+function syncInputs(name, value, except){ document.querySelectorAll('[data-in="'+name+'"]').forEach(el=>{ if (el!==except) el.value = value; }); }
+function goto(id){ const el = document.getElementById('scr-'+id); if (el) el.scrollIntoView({ behavior: RM() ? 'auto' : 'smooth', block: 'start' }); }
+
+/* ---------------- actions ---------------- */
+let toastT, banT;
+function toast(msg, snap){ S.toast = { msg, snap }; clearTimeout(toastT); toastT = setTimeout(()=>{ S.toast = null; render(); }, 5000); }
+function banner(k, t, s){ S.ban = { k, t, s }; clearTimeout(banT); banT = setTimeout(()=>{ S.ban = null; render(); }, 5000); }
+const weekLeader = () => { const r = rank({ board:'soup', game:'all', stat:'items' }, range(T-6,T)).ranked; return r[1] && r[0].v===r[1].v ? 'tie' : r[0].m; };
+function fileValues(list, msg){
+  const before = weekLeader();
+  const snap = list.map(([g,d])=>[g, d, val('you',g,d)]);
+  list.forEach(([g,d,v])=>{ if (!DATA.you[g]) DATA.you[g] = Array(N).fill(null); DATA.you[g][d] = v; if (d===T) S.just[g] = true; });
+  toast(msg, snap);
+  const after = weekLeader();
+  if (after==='you' && before!=='you') banner('soup daily · just now', 'hostile takeover', 'you passed '+(before==='tie'?'ivan':before)+' for #1 this week. the board is shaken.');
+  render();
+}
+function fileNow(){
+  const { res } = parse(S.text); const fresh = res.filter(r=>!isDup(r)); if (!fresh.length) return;
+  S.text = ''; S.back = null;
+  const to = [...new Set(fresh.flatMap(r=>boardsWith(r.id)))];
+  fileValues(fresh.map(r=>[r.id, T, r.v]), 'filed '+fresh.map(r=>GAMES[r.id].n+' '+r.key).join(' + ')+' → '+to.map(b=>B(b).n+(B(b).seat==='guest'?' (guest)':'')).join(', '));
+}
+function undo(){ if (!S.toast || !S.toast.snap) return; S.toast.snap.forEach(([g,d,v])=>{ DATA.you[g][d] = v; }); S.toast = null; clearTimeout(toastT); render(); }
+
+function setTok(pid, k, v){
+  if (Q[pid]){ const q = Q[pid]; q.sel = null;
+    if (k==='board'){ q.board = v; q.cmp = q.cmp.filter(m=>B(v).members.includes(m)); if (q.game!=='all' && !B(v).games.includes(q.game)){ q.game = 'all'; q.stat = 'items'; } }
+    else if (k==='game'){ q.game = v; q.stat = v==='all' ? 'items' : 'average'; }
+    else q[k] = v;
+    return; }
+  if (pid==='agenda' || pid==='minutes'){ if (k==='board') S.board = v; if (k==='day') S.aday = v; if (k==='show') S.show = v; if (k==='game') S.mgame = v; if (k==='puzzle') S.mday = v; return; }
+  if (pid==='library'){ if (k==='category') S.libcat = v; if (k==='add_to') S.board = v; return; }
+  if (pid==='memos'){ if (k==='board') S.mboard = v; return; }
+  if (pid==='you'){ if (k==='board') S.seatb = v; return; }
+}
+
+document.addEventListener('input', e=>{
+  const k = e.target.dataset && e.target.dataset.in; if (!k) return;
+  if (k==='pbx'){ S.text = e.target.value; if (S.text) S.back = null; syncInputs('pbx', S.text, e.target); region('pbout', output(S.text, true)); }
+  if (k==='libq'){ S.libq = e.target.value; syncInputs('libq', S.libq, e.target); region('lib', libRows()); }
+  if (k==='menuq' && S.menu){ S.menu.q = e.target.value; syncInputs('menuq', S.menu.q, e.target); const t = (TOKS[S.menu.pid]||[]).find(x=>x[0]===S.menu.k); if (t) region('menuopts', menuOpts(t)); }
+});
+document.addEventListener('keydown', e=>{
+  const k = e.target.dataset && e.target.dataset.in;
+  if (k==='pbx' && e.key==='Enter' && !e.shiftKey){ e.preventDefault(); fileNow(); }
+  if (k==='menuq' && e.key==='Enter'){ e.preventDefault(); const first = e.target.closest('.menu').querySelector('.opts button'); if (first) first.click(); }
+  if (e.key==='Escape' && (S.menu || S.ovl)){ S.menu = null; S.ovl = null; render(); }
+});
+document.addEventListener('click', e=>{
+  const nd = e.target.closest('[data-nudge]'); if (nd){ S.nudge = true; render(); return; }
+  const b = e.target.closest('button');
+  if (S.menu && !e.target.closest('.menu') && !(b && b.dataset.tk)){ S.menu = null; if (!b){ render(); return; } }
+  if (!b) return;
+  const D = b.dataset, phEl = b.closest('.ph'), pid = D.pid || (phEl && phEl.dataset.pid);
+  if (D.view){ view = D.view; try { localStorage.setItem('br-ux-view', view); } catch(err) {} renderView(); render(); return; }
+  if (D.s){ S.text = SAMPLES[D.s]; S.back = null; S.board = 'soup'; S.aday = 'today'; render(); goto('agenda'); return; }
+  if (D.sim==='reset'){ clearTimeout(toastT); clearTimeout(banT); build(); reset(); render(); return; }
+  if (D.sim==='judy'){ if (DATA.judy.krillion[T]==null){ DATA.judy.krillion[T] = 641; banner('soup daily · just now', 'judy filed krillion', '641 m deep, the first krillion today. a comeback after yesterday\'s absence.'); } render(); goto('agenda'); return; }
+  if (D.tk){ S.menu = S.menu && S.menu.pid===pid && S.menu.k===D.tk ? null : { pid, k:D.tk, q:'' }; const copy = phEl.dataset.copy; render();
+    if (S.menu && matchMedia('(pointer: fine)').matches){ const el = document.querySelector('.ph[data-pid="'+pid+'"][data-copy="'+copy+'"] [data-in="menuq"]'); if (el) el.focus({ preventScroll:true }); } return; }
+  if (D.opt!=null && S.menu){ setTok(S.menu.pid, S.menu.k, D.opt); S.menu = null; render(); return; }
+  if (D.bopen){ if (D.bopen==='boards') return; S.ovl = S.ovl===D.bopen ? null : D.bopen; render(); return; }
+  if (b.hasAttribute('data-oclose')){ S.ovl = null; render(); return; }
+  if (D.bpick){ if (pid==='boards') return; setTok(Q[pid] ? pid : 'agenda', 'board', D.bpick); S.ovl = null; render(); return; }
+  if (D.period && Q[pid]){ Q[pid].period = D.period; Q[pid].sel = null; render(); return; }
+  if (D.game && Q[pid]){ setTok(pid, 'game', D.game); render(); return; }
+  if (D.stat && Q[pid]){ Q[pid].stat = D.stat; Q[pid].sel = null; render(); return; }
+  if (D.col!=null && Q[pid]){ const i = +D.col; Q[pid].sel = Q[pid].sel===i ? null : i; render(); return; }
+  if (D.cmp && Q[pid]){ const c = Q[pid].cmp, i = c.indexOf(D.cmp); if (i>=0) c.splice(i,1); else { c.push(D.cmp); if (c.length>3) c.shift(); } render(); return; }
+  if (D.cmpclear){ Q[D.cmpclear].cmp = []; render(); return; }
+  if (D.memo!=null && Q[pid]){ const m = memosFor(Q[pid])[+D.memo]; if (m){ Q[pid] = JSON.parse(JSON.stringify(m.q)); render(); } return; }
+  if (D.feed!=null){ const m = feed(S.mboard)[+D.feed]; if (m){ Q.ra = JSON.parse(JSON.stringify(m.q)); render(); goto('ra'); } return; }
+  if (b.hasAttribute('data-file')){ fileNow(); return; }
+  if (b.hasAttribute('data-undo')){ undo(); return; }
+  if (b.hasAttribute('data-ban')){ S.ban = null; clearTimeout(banT); render(); return; }
+  if (b.hasAttribute('data-back')){ S.text = SAMPLES[S.back] || ''; fileNow(); return; }
+  if (D.play){ S.back = D.play; S.text = ''; toast('opening '+GAMES[D.play].n+'… come back after you play', null); render(); return; }
+  if (D.played){ const g = D.played; S.text = ''; S.back = null; fileValues([[g, T, 'p']], 'filed '+GAMES[g].n+' as played → '+boardsWith(g).map(x=>B(x).n).join(', ')); return; }
+  if (D.late){ const g = D.late; fileValues([[g, T-1, 'p']], 'filed '+GAMES[g].n+' late for mon 27 oct'); return; }
+  if (D.mg){ S.mgame = D.mg; S.mday = S.aday; render(); goto('minutes'); return; }
+  if (D.add){ const name = D.add; if (!GAMES[name]) GAMES[name] = { custom:true, n:name, l:name[0], gc:7, key:'oct 28', unit:'played', lower:false, reset:'resets 00:00', gen:()=>0, fmt:()=>'played', short:()=>'✓' };
+    if (!B(S.board).games.includes(name)){ B(S.board).games.push(name); toast('added '+name+' to '+B(S.board).n+'\'s agenda', null); } render(); return; }
+  if (b.hasAttribute('data-join')){ S.joined = true; render(); return; }
+  if (b.hasAttribute('data-unjoin')){ S.joined = false; render(); return; }
+});
+document.addEventListener('pointermove', e=>{
+  if (e.pointerType==='mouse' || !e.buttons) return;
+  const el = document.elementFromPoint(e.clientX, e.clientY); const c = el && el.closest('.cols button'); if (!c) return;
+  const pid = c.dataset.pid, i = +c.dataset.col; if (Q[pid] && Q[pid].sel!==i){ Q[pid].sel = i; render(); }
+});
+
+renderView(); render();
+})();
+</script>
