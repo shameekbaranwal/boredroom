@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { api, setToken, type Invite } from '../api'
-import { ThemeToggle, Wordmark } from '../brand'
+import { TableMark, ThemeToggle, Wordmark } from '../brand'
+import { hue } from '../format'
 
 declare global {
   interface Window {
@@ -85,13 +86,72 @@ const SEATS: [string, number, number][] = [
   ['ellie', 89.1, 60.7], ['felix', 70, 81.3], ['grace', 50, 84], ['hal', 30, 81.3], ['you?', 10.3, 50],
 ]
 
+// a morning in somebody's group chat; the welcome page shows one at random
+type Line = [who: string, said: string]
+const CHATS: Line[][] = [
+  [['grace', 'connections: purple first try'], ['hal', 'purple first is a cry for help'], ['grace', "it's called confidence, hal"]],
+  [['felix', "today's mini was rigged"], ['charlie', 'it took me 41 seconds'], ['felix', 'yes. rigged.']],
+  [['charlie', 'wordle 1,960 x/6'], ['dave', 'a moment of silence 🕯️']],
+  [['alice', 'spelling bee: genius. stopped there, i have a life'], ['bob', "it's 6:40am"], ['alice', 'and my life starts at 6:41']],
+  [['hal', "wait who's actually winning this week"], ['felix', 'me'], ['ellie', "felix has said 'me' every week since march"]],
+  [['ellie', 'strands: no hints, spangram second word'], ['charlie', 'who asked'], ['ellie', "you will, at 11pm, when you're stuck"]],
+  [['grace', 'mini in 0:52. take your time everyone'], ['bob', "i was about to start and now i simply won't"]],
+  [['alice', "we need new blood. dave's been last on the mini for three weeks"], ['dave', "i prefer 'holding the group together'"], ['ellie', 'from the bottom, yes']],
+  [['bob', 'wordle in 2 🫡'], ['charlie', "screenshot or it didn't happen"]],
+]
+
+export function Chat() {
+  const [lines] = useState(() => CHATS[Math.floor(Math.random() * CHATS.length)])
+  return (
+    <div className="mc-chat" aria-label="from a group chat">
+      <small>this morning</small>
+      {lines.map(([who, said], i) => (
+        <div key={i} className="mc-bub" style={{ ['--h' as string]: hue(who) }}>
+          <i aria-hidden="true">{who[0]}</i><span><b>{who}</b>{said}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** The welcome pages are an email from the board: a green band with the logo, then the letter. */
+export function MailCard({ children }: { children: ReactNode }) {
+  return (
+    <div className="mailpage">
+      <article className="mailcard">
+        <header className="mc-band">
+          <TableMark size={34} tile />
+          <Wordmark onBand />
+          <span className="mc-tag">the minutes, the scores, and the receipts</span>
+          <ThemeToggle />
+        </header>
+        <div className="mc-body">{children}</div>
+      </article>
+      <div className="fine"><a href="/privacy">privacy</a><span>·</span><a href="/terms">terms</a></div>
+    </div>
+  )
+}
+
+/** One reply on the ballot: a checkbox row that can hold its own action. */
+export function Choice({ on, faint, title, sub, onPick, children }: {
+  on: boolean; faint?: boolean; title: string; sub?: string; onPick: () => void; children?: ReactNode
+}) {
+  return (
+    <div className={`mc-opt${on ? ' on' : ''}${faint ? ' faint' : ''}`}>
+      <button className="mc-pick" role="radio" aria-checked={on} onClick={onPick}>
+        <span className="mc-ck" aria-hidden="true" />
+        <span className="mc-lbl">{title}{sub && <small>{sub}</small>}</span>
+      </button>
+      {children && <div className="mc-act">{children}</div>}
+    </div>
+  )
+}
+
 export default function SignIn({ invite, onSignedIn }: { invite?: Invite | null; onSignedIn: () => void }) {
   const [name, setName] = useState('')
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
-  const [guestOpen, setGuestOpen] = useState(false)
-  const [games, setGames] = useState<number | null>(null)
-  useEffect(() => { api.games().then(g => setGames(g.length)).catch(() => {}) }, [])
+  const [pick, setPick] = useState<'seat' | 'guest' | 'lurk'>('seat')
 
   const done = (t: string) => { setToken(t); onSignedIn() }
   const guest = async () => {
@@ -100,33 +160,40 @@ export default function SignIn({ invite, onSignedIn }: { invite?: Invite | null;
   }
 
   return (
-    <div className="signin">
-      <Room top={invite ? "the agenda" : "today's agenda"} big={invite ? invite.name : games ? `${games} puzzles` : 'the puzzles'} bottom={invite ? `${invite.members} members` : 'the board is in session'} />
-      <section className="pitch">
-        {invite
-          ? <><h1>{invite.chair ?? 'someone'} saved you a seat on {invite.name}.</h1>
-              <p>{invite.members} members{invite.library.length ? `, playing ${invite.library.slice(0, 3).join(', ')}${invite.library.length > 3 ? ` and ${invite.library.length - 3} more` : ''}` : ''}. sign in to take your seat.</p></>
-          : <><h1>there's an empty chair at your friends' table.</h1>
-              <p>paste your daily puzzles like you always do.<br />boredroom keeps the minutes, the scores, and the receipts.</p></>}
-        <div className="acts">
+    <MailCard>
+      {invite
+        ? <>
+            <p className="mc-kick"><b>{invite.inviter ?? invite.chair ?? 'someone'}</b> saved you a seat on <b>{invite.name}</b> · {invite.members} {invite.members === 1 ? 'member' : 'members'}</p>
+            <h1>there's an empty chair at {invite.name}'s table.</h1>
+          </>
+        : <h1>there's an empty chair at your friends' table.</h1>}
+      <Chat />
+      <p className="mc-pitch">
+        paste your daily puzzles like you always do. boredroom keeps the minutes, the scores, and the receipts.
+        {invite && invite.library.length > 0 && <> {invite.name} plays {invite.library.slice(0, 3).join(', ')}{invite.library.length > 3 ? ` and ${invite.library.length - 3} more` : ''}.</>}
+      </p>
+      <div className="mc-reply" role="radiogroup" aria-label="reply with one">
+        <small>reply with one</small>
+        <Choice on={pick === 'seat'} title="take the seat" sub="your scores follow you to every device" onPick={() => setPick('seat')}>
           <GoogleButton onToken={done} onError={setErr} />
-          {!guestOpen
-            ? <button className="alt" onClick={() => setGuestOpen(true)}>or take a guest seat →</button>
-            : <>
-                <div className="guest">
-                  <label htmlFor="g" className="sr">username</label>
-                  <input id="g" className="input" placeholder="pick a username" value={name} autoFocus
-                    onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && guest()}
-                    autoCapitalize="none" autoComplete="off" spellCheck={false} />
-                  <button className="btn" onClick={guest} disabled={busy}>join</button>
-                </div>
-                <span className="muted" style={{ fontSize: 13 }}>a guest seat lives on this device. sign in with google later to keep it.</span>
-              </>}
-          {err && <div className="err">{err}</div>}
-          <div className="fine"><a href="/privacy">privacy</a><span>·</span><a href="/terms">terms</a></div>
-        </div>
-      </section>
-    </div>
+        </Choice>
+        <Choice on={pick === 'guest'} title="sit in for now" sub="a guest seat on this device. sign in whenever" onPick={() => setPick('guest')}>
+          {pick === 'guest'
+            ? <div className="guest">
+                <label htmlFor="g" className="sr">username</label>
+                <input id="g" className="input" placeholder="pick a username" value={name} autoFocus
+                  onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && guest()}
+                  autoCapitalize="none" autoComplete="off" spellCheck={false} />
+                <button className="btn" onClick={guest} disabled={busy}>sit</button>
+              </div>
+            : <button className="alt" onClick={() => setPick('guest')}>guest seat →</button>}
+        </Choice>
+        <Choice on={pick === 'lurk'} faint title="keep lurking in the group chat" onPick={() => setPick('lurk')}>
+          {pick === 'lurk' && <span className="muted">fair. the chair will be here.</span>}
+        </Choice>
+      </div>
+      {err && <div className="err">{err}</div>}
+    </MailCard>
   )
 }
 

@@ -20,9 +20,9 @@ export function TableMark({ size = 28, mono = false, tile = false }: { size?: nu
 }
 
 /** The name, with the double o as two filled cells (brand canvas: wordmark a). */
-export function Wordmark({ size, onRoom = false }: { size?: number; onRoom?: boolean }) {
+export function Wordmark({ size, onRoom = false, onBand = false }: { size?: number; onRoom?: boolean; onBand?: boolean }) {
   return (
-    <span className={`wm${onRoom ? ' on-room' : ''}`} role="img" aria-label="boredroom" style={size ? { fontSize: size } : undefined}>
+    <span className={`wm${onRoom ? ' on-room' : ''}${onBand ? ' on-band' : ''}`} role="img" aria-label="boredroom" style={size ? { fontSize: size } : undefined}>
       boredr<i className="c1">o</i><i className="c2">o</i>m
     </span>
   )

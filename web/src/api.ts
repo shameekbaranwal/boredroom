@@ -32,7 +32,7 @@ export type Board = {
   members: Member[]
   library: { game: string; name: string; rules: Record<string, unknown>; players: number }[]
 }
-export type Invite = { code: string; name: string; slug: string; chair: string | null; members: number; library: string[] }
+export type Invite = { code: string; name: string; slug: string; chair: string | null; inviter: string | null; members: number; library: string[] }
 export type Event = {
   kind: 'filed' | 'merged' | 'duplicate' | 'conflict' | 'not_out_yet'
   game: string; puzzle: string; result_id: number | null; added: string[]; confidence: string; late: boolean

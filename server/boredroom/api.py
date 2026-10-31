@@ -140,7 +140,10 @@ def invite(code):
     board = inv.board
     live = [m for m in board.memberships if m.left_at is None]
     chair = next((m.nickname for m in live if m.role == "chair"), None)
-    return jsonify({"code": inv.code, "name": board.name, "slug": board.slug, "chair": chair, "members": len(live),
+    # who handed it out, by their name on this board; invites made by the system read as the chair's
+    inviter = next((m.nickname for m in live if m.person_id == inv.created_by), None) or chair
+    return jsonify({"code": inv.code, "name": board.name, "slug": board.slug, "chair": chair, "inviter": inviter,
+                    "members": len(live),
                     "library": [REGISTRY[bg.game_id].name for bg in sorted(board.library, key=lambda b: b.game_id)]})
 
 
