@@ -14,3 +14,24 @@ def test_web_app_is_served_with_a_fallback(tmp_path, engine):
     assert c.get("/api/v1/nope").status_code == 404 and c.get("/api/v1/nope").is_json
     assert c.get("/../pyproject.toml").data == b"<div id=root></div>"
     assert c.get("/privacy").status_code == 200  # blueprints win over the fallback
+
+
+HEAD = ('<title>boredroom</title><meta name="description" content="generic" />'
+        '<meta property="og:title" content="boredroom · your group chat has a board" /><meta property="og:description" content="generic" />'
+        '<meta property="og:image" content="https://boredroom.shmk.dev/og.png" />'
+        '<meta property="og:url" content="https://boredroom.shmk.dev/" />')
+
+
+def test_an_invite_link_previews_who_saved_the_seat(tmp_path, engine, seat):
+    (tmp_path / "index.html").write_text(HEAD)
+    (tmp_path / "og.png").write_bytes(b"generic png")
+    code = seat("alice").post("/boards", {"name": "soup"}).json["invite"]["code"]
+    c = create_app(Config(web_dist=str(tmp_path)), engine=engine).test_client()
+    page = c.get(f"/join/{code}", headers={"Host": "stage.example"}).text
+    assert 'og:title" content="alice saved you a seat"' in page
+    assert f'og:image" content="https://stage.example/og/invite/{code}.png"' in page
+    assert "boredroom.shmk.dev" not in page
+    png = c.get(f"/og/invite/{code}.png")
+    assert png.mimetype == "image/png" and png.data[:4] == b"\x89PNG"
+    assert c.get("/og/invite/smug-walrus-nopes.png").data == b"generic png"
+    assert 'og:title" content="boredroom · your group chat has a board"' in c.get("/join/smug-walrus-nopes").text  # a dead invite previews as boredroom

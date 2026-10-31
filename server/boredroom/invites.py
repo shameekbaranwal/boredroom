@@ -139,6 +139,15 @@ def renew(s: Session, board: Board, by: Person) -> Invite:
     return create(s, board, by)
 
 
+def peek(s: Session, typed: str) -> Invite | None:
+    """The live invite for a code, for link previews: no throttle, since a chat app's
+    crawler fetching a link it was given isn't guessing."""
+    inv = s.scalar(select(Invite).where(Invite.code == normalise(typed)))
+    if inv is None or inv.legacy or inv.revoked_at is not None or (inv.expires_at and inv.expires_at <= utcnow()):
+        return None
+    return inv
+
+
 # wrong codes are cheap to try, so a caller who keeps missing is slowed down
 _misses: dict[str, deque[float]] = defaultdict(deque)
 MISS_LIMIT, MISS_WINDOW = 20, 600

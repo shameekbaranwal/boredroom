@@ -4,6 +4,7 @@ import { headline, left } from '../format'
 import { go } from '../router'
 import { Av, Clip, Fx, Header, Loading, Nav, Tile, sendOn, useApp, useNow } from '../ui'
 import Boards from './Boards'
+import { InstallMemo } from '../install'
 
 const TODO = 8  // open games shown before "n more"
 const playUrl = (i: Item) => (i.links[0] ? `https://${i.links[0]}` : null)
@@ -38,6 +39,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
       <Fx fn="agenda" args={[['board', board.name], ['puzzles', 'current']]} />
       <div className="bd">
         <Pasteboard board={board} shared={shared} onFiled={load} />
+        <InstallMemo onDone={ok => ok && toast('installed. see you on the home screen.')} />
         {placeholders.length > 0 && (
           <button className="more" onClick={() => go(`/b/${slug}/you#seats`)}>
             {placeholders.length} imported seats unclaimed · is one of them yours? →

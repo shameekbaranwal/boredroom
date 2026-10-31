@@ -465,3 +465,12 @@ a { color: var(--accent); }
   .mc-lbl { font-size: 17px; }
   .mc-act { width: 320px; }
 }
+
+/* a memo from the chair: the install prompt */
+.bd > .memo { display: flex; flex-direction: column; gap: 8px; background: var(--note); }
+.memo-h { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 11px "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); letter-spacing: .06em;
+  padding-bottom: 6px; border-bottom: 1px dashed var(--note-b); }
+.memo-h span:first-child { color: var(--ink); font-weight: 600; }
+.memo b { font-size: 16px; }
+.memo small { color: var(--muted); font-size: 13.5px; line-height: 1.4; }
+.memo-steps { margin: 2px 0; padding-left: 22px; display: grid; gap: 4px; font-size: 14.5px; }

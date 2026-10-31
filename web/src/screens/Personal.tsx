@@ -3,6 +3,7 @@ import { api, setToken } from '../api'
 import { Fx, Header, Nav, useApp } from '../ui'
 import { setPref, useTheme, type Pref } from '../theme'
 import { GoogleButton } from './SignIn'
+import { InstallMemo, standalone } from '../install'
 
 /** Settings that belong to the person rather than a board: timezone, appearance,
  *  the account, and signing out. On every board's "you" screen, and on /me. */
@@ -54,6 +55,7 @@ export function Personal({ guestOnly = false }: { guestOnly?: boolean }) {
     {me.kind === 'account'
       ? <div className="mrow"><span>signed in as {me.username}{me.email && <span className="muted keep"> · {me.email}</span>}</span><span className="chip">google</span></div>
       : guestCard}
+    {standalone() ? <div className="mrow"><span>boredroom is on this device's home screen</span><span className="chip">installed</span></div> : <InstallMemo always />}
     <div><button className="lnk" onClick={signOut}>sign out</button></div>
   </>
 }

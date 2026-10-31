@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flask import Flask, g, send_from_directory
+from flask import Flask, Response, g, request, send_from_directory
 from sqlalchemy.engine import Engine
 
-from . import errors
+from . import errors, invites, preview
 from .api import api
 from .config import Config
 from .db import make_engine, make_sessionmaker
@@ -52,6 +52,17 @@ def _serve_web(app: Flask, dist: Path) -> None:
     if not (dist / "index.html").is_file():
         return
 
+    page = (dist / "index.html").read_text(encoding="utf-8")
+
+    @app.get("/og/invite/<code>.png")
+    def invite_card(code: str):
+        inv = invites.peek(g.db, code)
+        if inv is None:
+            return send_from_directory(dist, "og.png")
+        resp = Response(preview.invite_png(inv), mimetype="image/png")
+        resp.cache_control.max_age = 3600
+        return resp
+
     @app.get("/", defaults={"path": ""})
     @app.get("/<path:path>")
     def web(path: str):
@@ -63,6 +74,8 @@ def _serve_web(app: Flask, dist: Path) -> None:
             if path.startswith("assets/"):  # hashed names: cache for good
                 resp.cache_control.max_age, resp.cache_control.immutable = 31536000, True
             return resp
-        resp = send_from_directory(dist, "index.html")
+        # the app routes itself; the page only differs in its link-preview tags
+        inv = invites.peek(g.db, path.removeprefix("join/")) if path.startswith("join/") else None
+        resp = Response(preview.tags(page, f"https://{request.host}", inv), mimetype="text/html")
         resp.cache_control.no_cache = True
         return resp
