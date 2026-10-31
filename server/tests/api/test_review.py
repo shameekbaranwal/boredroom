@@ -23,8 +23,7 @@ def test_daily_wins_need_company_and_records_keep_the_best(db, seat):
     db.expire_all()
 
     today = reads.review(db, board, viewer, "today", now=NOW)
-    print(today)
-    assert [(x["nickname"], x["wins"], x["place"]) for x in today["standings"]][:2] == [("ivan", 1, 1), ("judy", 0, 2)]
+    assert [(x["nickname"], x["wins"], x["place"]) for x in today["standings"]][:2] == [("ivan", 1, 1), ("judy", 0, None)]
     (k,) = today["games"]
     assert (k["present"], k["players"], k["place"], k["leader"]["nickname"]) == (2, 3, "1", "ivan")
     week = reads.review(db, board, viewer, "week", now=NOW)
@@ -32,3 +31,32 @@ def test_daily_wins_need_company_and_records_keep_the_best(db, seat):
     (rec,) = week["records"]
     assert (rec["nickname"], rec["day"]) == ("ivan", day.isoformat())
     assert a.get("/boards/soup/review?period=year").status_code == 400
+
+
+def test_the_formula_bar_picks_a_game_a_stat_and_a_rival(db, seat):
+    a, b = seat("ivan"), seat("judy")
+    code = a.post("/boards", {"name": "soup"}).json["invite"]["code"]
+    b.post("/boards/join", {"code": code})
+    for x in (a, b):
+        x.put("/boards/soup/agenda/krillion")
+    board = db.query(Board).one()
+    viewer = db.query(Person).filter_by(username="ivan").one()
+    n = reads.REGISTRY["krillion"].current(NOW, viewer.tz)
+    for back, (mine, theirs) in enumerate([(300, 280), (250, 290), (270, 270)]):
+        a.post("/pastes", {"text": KRILLION.format(n=n - back, score=mine)})
+        b.post("/pastes", {"text": KRILLION.format(n=n - back, score=theirs)})
+    db.expire_all()
+
+    g = reads.review(db, board, viewer, "week", game="krillion", now=NOW)
+    assert (g["stat"], g["metric"], g["min_plays"]) == ("average", "score", 3)
+    assert [(x["nickname"], x["average"], x["place"]) for x in g["standings"]] == [("judy", 280.0, 1), ("ivan", 273.33, 2)]
+    assert g["record"]["metrics"] == {"score": 300}
+    best = reads.review(db, board, viewer, "week", game="krillion", stat="best", now=NOW)
+    assert [x["nickname"] for x in best["standings"]] == ["ivan", "judy"]
+    v = reads.review(db, board, viewer, "all", vs="judy", now=NOW)
+    assert v["h2h"] == {"you": 1, "them": 1, "level": 1}
+    assert v["strip"][-3:] == ["lv", "ls", "on"]
+    r = a.get("/boards/soup/review?period=all&stat=rate")
+    assert [(x["nickname"], x["rate"]) for x in r.json["standings"]] == [("ivan", 0.667), ("judy", 0.667)]
+    assert a.get("/boards/soup/review?game=wiki").status_code == 400
+    assert a.get("/boards/soup/review?stat=average").status_code == 400

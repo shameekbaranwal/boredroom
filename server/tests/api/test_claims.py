@@ -46,7 +46,7 @@ def test_import_then_claim(tmp_path, db, seat):
     you = r.json["board"]["you"]
     assert (you["role"], you["agenda"]) == ("chair", ["krillion"])
     assert [x["game"] for x in a.get("/results").json] == ["krillion"]
-    assert a.post("/boards/soup/claim", {"username": "mallory"}).status_code == 404  # once only
+    assert a.post("/boards/soup/claim", {"username": "mallory"}).status_code == 409  # one seat each
     db.expire_all()
     assert db.get(Board, board.id).chair_id != placeholder_id
     assert db.get(Person, placeholder_id) is None

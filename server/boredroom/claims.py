@@ -41,6 +41,8 @@ def claim(s: Session, board: Board, claimer: Person, username: str) -> int:
     puzzle, the claimer's own result stays. Returns how many results moved."""
     if claimer.kind == "placeholder":
         fail(400, "placeholders can't claim")
+    if claimer.id in board.settings.get("claimed", {}).values():
+        fail(409, "you've already claimed a seat on this board. one each.")
     seat = s.scalar(select(Person).where(Person.username == username, Person.kind == "placeholder"))
     seat_m = seat and s.get(Membership, (board.id, seat.id))
     if not seat_m:

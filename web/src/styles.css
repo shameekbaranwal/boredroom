@@ -525,3 +525,32 @@ a { color: var(--accent); }
 .rec { font: 700 14px var(--f-num); white-space: nowrap; }
 .who-s { display: inline-flex; align-items: center; gap: 5px; }
 .who-s .av { width: 16px; height: 16px; font-size: 9px; }
+
+/* the formula bar as controls: each value is a picker */
+.fxq { flex-wrap: wrap; row-gap: 2px; }
+.fxq .tok { display: inline-flex; align-items: baseline; gap: 2px; white-space: nowrap; }
+.fxq .tv { position: relative; display: inline-block; color: var(--accent); font-weight: 600; border-bottom: 1px dashed var(--accent); }
+.fxq select { position: absolute; inset: 0; opacity: 0; font: inherit; border: 0; padding: 0; width: 100%; cursor: pointer; appearance: none; -webkit-appearance: none; }
+.fxq select option { color: var(--ink); background: var(--bg); }
+.fxq .tv:focus-within { outline: 2px solid var(--ring); }
+.bd > .wr { width: 100%; border: 0; border-bottom: 1px solid var(--line); background: var(--bg); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.bd > .wr:hover { background: var(--surface); }
+.bd > .wr.me { background: var(--seg); }
+.bd > .wr.cmp { box-shadow: inset 3px 0 0 var(--accent); background: var(--surface); }
+.wr.dim .who, .wr.dim .v { color: var(--muted); font-weight: 400; }
+.bd > .stat-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.stat-row > div { display: flex; flex-direction: column; min-width: 0; }
+.stat-row b { font: 700 18px var(--f-num); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stat-row small { color: var(--muted); font-size: 12px; }
+.bd > .h2h { display: flex; align-items: baseline; gap: 12px; }
+.h2h .score { font: 700 28px var(--f-num); color: var(--accent); }
+.h2h span { color: var(--muted); }
+.bd > .strip-row { display: flex; flex-direction: column; gap: 6px; }
+.strip { display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 2px; }
+.strip i { height: 18px; background: var(--surface); outline: 1px solid var(--line); outline-offset: -1px; }
+.strip i.on, .key i.on { background: var(--accent); outline: 0; }
+.strip i.ls, .key i.ls { background: var(--bad); opacity: .55; outline: 0; }
+.strip.solo i.ls, .key.solo i.ls { background: var(--muted); opacity: .45; }
+.strip i.lv, .key i.lv { background: var(--muted); opacity: .5; outline: 0; }
+.key { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.key i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: -1px; }

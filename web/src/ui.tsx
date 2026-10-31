@@ -37,6 +37,31 @@ export function Fx({ fn, args }: { fn: string; args: [string, string][] }) {
   )
 }
 
+/** One argument of an editable formula bar: tap it for its options (typing narrows them). */
+export type Token = { key: string; value: string; options: [string, string][]; onPick: (v: string) => void }
+
+/** The formula bar as the screen's controls (UX-NOTES §2): =fn(key:"value", …), each value
+ *  a picker. Changing the screen rewrites the bar; picking in the bar changes the screen. */
+export function FxQuery({ fn, tokens }: { fn: string; tokens: Token[] }) {
+  return (
+    <div className="fx fxq keep" role="group" aria-label="query">
+      <i>fx</i><span>={fn}(</span>
+      {tokens.map((t, i) => (
+        <label key={t.key} className="tok">
+          <span>{t.key}:</span>
+          <span className="tv">
+            <span aria-hidden="true">"{t.options.find(([v]) => v === t.value)?.[1] ?? t.value}"</span>
+            <select value={t.value} aria-label={t.key} onChange={e => t.onPick(e.target.value)}>
+              {t.options.map(([v, l]) => <option key={v} value={v}>"{l}"</option>)}
+            </select>
+          </span>{i < tokens.length - 1 ? ',' : ''}
+        </label>
+      ))}
+      <span>)</span>
+    </div>
+  )
+}
+
 export function Nav({ slug, on, temp }: { slug?: string; on: 'agenda' | 'review' | 'you' | null; temp?: string }) {
   const { me } = useApp()
   return (

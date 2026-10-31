@@ -85,3 +85,12 @@ def test_the_board_says_what_leaving_would_do(tmp_path, db, seat):
     assert r.json["leaving"] == {"slug": "soup", "name": "soup", "chair": True,
                                  "claimed": {"nickname": "mallory", "results": 1}, "heir": "walter", "alone": False}
     assert a.get("/me/leaving").json == [r.json["leaving"]]
+
+
+def test_one_claimed_seat_each(tmp_path, db, seat):
+    board = _soup(tmp_path, db)
+    a = seat("mallory.k")
+    a.post("/boards/join", {"code": invites.current(db, board).code, "claim": "mallory"})
+    r = a.post("/boards/soup/claim", {"username": "walter"})
+    assert r.status_code == 409 and "one each" in r.json["error"]
+    assert ("walter", "placeholder") in _seats(a.get("/boards/soup"))

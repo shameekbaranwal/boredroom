@@ -233,12 +233,12 @@ function BoardSheet({ b, setB, welcome, now, onDelete, games, refreshMe, toast }
         </>}
 
       {placeholders.length > 0 && <>
-        <div className="sec" id="seats">unclaimed seats <b className="num">{placeholders.length}</b> <span className="sec-n">· from the chat history</span></div>
+        <div className="sec" id="seats">unclaimed seats <b className="num">{placeholders.length}</b> <span className="sec-n">· {b.leaving.claimed ? `you claimed ${b.leaving.claimed.nickname}; these are still waiting` : 'from the chat history'}</span></div>
         {(seatsAll || location.hash === '#seats' ? placeholders : placeholders.slice(0, SEATS)).map(p => (
           <div key={p.username} className="it" style={{ cursor: 'default' }}>
             <Av name={p.nickname} />
             <div className="g"><div className="nm">{p.nickname}</div><div className="sub">{p.games} {p.games === 1 ? 'game' : 'games'} · waiting for its owner</div></div>
-            {asking === p.username
+            {b.leaving.claimed ? null : asking === p.username
               ? <span className="row-a ask"><span className="muted">their history becomes yours.</span><button className="btn" onClick={() => claim(p.username)}>claim</button><button className="lnk" onClick={() => setAsking('')}>no</button></span>
               : <button className="add" onClick={() => setAsking(p.username)}>that's me</button>}
           </div>

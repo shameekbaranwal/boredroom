@@ -141,63 +141,162 @@ def minutes(s: Session, board: Board, viewer: Person, game_id: str, day: date | 
 
 
 PERIODS = {"today": 1, "week": 7, "month": 30, "all": None}  # game days, counting back from today's
+STRIP = 30  # days in the "last 30" strip
+# what the standings can be sorted by: across all games, or within one
+STATS = {None: ("wins", "rate", "days", "filed"), "game": ("average", "best", "wins", "played")}
+MIN_PLAYS = {"today": 1, "week": 3, "month": 5, "all": 10}  # to qualify for a ranking by average
 
 
-def review(s: Session, board: Board, viewer: Person, period: str = "today",
-           now: datetime | None = None) -> dict[str, Any]:
-    """The board's review (UX-NOTES §4): daily wins over the period, then today's game by
-    game, or each game's best for a longer one. A daily win is a #1 place, ties included,
-    in a puzzle at least two people filed."""
+def _key(game_id: str) -> str | None:
+    """The metric a game's average is taken over: the first in its ranking order."""
+    g = REGISTRY[game_id]
+    return g.ranker[0] if g.ranker else None
+
+
+def review(s: Session, board: Board, viewer: Person, period: str = "today", game: str | None = None,
+           stat: str | None = None, vs: str | None = None, now: datetime | None = None) -> dict[str, Any]:
+    """The board's review (UX-NOTES §2 and §4): one query, written in the formula bar as
+    =review(board, period, game, stat, vs). Across all games the standings are daily wins
+    (a #1 place, ties included, in a puzzle at least two people filed), win rate, days
+    present or puzzles filed; for one game, average, best, wins or plays. `vs` adds a
+    head-to-head over the puzzles you both filed, and the 30-day strip follows it."""
     if period not in PERIODS:
         fail(400, f"period is one of {', '.join(PERIODS)}")
+    lib = {bg.game_id for bg in board.library}
+    if game is not None and (game not in lib or not REGISTRY[game].ranked()):
+        fail(400, f"{game} isn't a ranked game on this board")
+    stats = STATS["game" if game else None]
+    stat = stat or stats[0]
+    if stat not in stats:
+        fail(400, f"stat is one of {', '.join(stats)}")
     now, span = now or utcnow(), PERIODS[period]
     members = [m for m in board.memberships if m.left_at is None]
     nick = {m.person_id: m.nickname for m in members}
+    rival = next((m.person_id for m in members if m.nickname == vs and m.person_id != viewer.id), None) if vs else None
+    if vs and rival is None:
+        fail(400, f"no one called {vs} on this board")
     agendas: dict[str, set[int]] = {}
     for a in s.scalars(select(Agenda).where(Agenda.board_id == board.id)):
         if a.person_id in nick:
             agendas.setdefault(a.game_id, set()).add(a.person_id)
-    games = sorted((bg.game_id for bg in board.library), key=lambda g: REGISTRY[g].name)
+    games = [game] if game else sorted(lib, key=lambda g: REGISTRY[g].name)
     current = {g: game_day(g, viewer, now) for g in games}
-    first = {g: current[g] - timedelta(days=span - 1) for g in games} if span else {}
-
-    rows: dict[tuple[str, date], list[Result]] = {}
+    back = max(span or 0, STRIP)
+    rows: dict[tuple[str, date], list[Result]] = {}  # the period and the strip's 30 days
     for g in games:
         q = select(Result).where(Result.game_id == g, Result.person_id.in_(agendas.get(g, set())),
                                  Result.withdrawn_at.is_(None), Result.puzzle_day <= current[g])
         if span:
-            q = q.where(Result.puzzle_day >= first[g])
+            q = q.where(Result.puzzle_day > current[g] - timedelta(days=back))
         for r in s.scalars(q):
             rows.setdefault((g, r.puzzle_day), []).append(r)
+    in_period = (lambda g, d: d > current[g] - timedelta(days=span)) if span else (lambda g, d: True)
+    ago = lambda g, d: (current[g] - d).days  # noqa: E731
 
-    wins: dict[int, int] = {}
-    days: dict[int, set[date]] = {}
+    who: dict[int, dict[str, Any]] = {}
+    def me_(p: int) -> dict[str, Any]:  # noqa: E306
+        return who.setdefault(p, {"wins": 0, "days": set(), "filed": 0, "ranked": 0, "vals": [], "best": None})
     best: dict[str, tuple[Result, date]] = {}
+    h2h = {"you": 0, "them": 0, "level": 0}
+    strip: dict[int, list[int]] = {}  # days ago -> [you ahead, them ahead] (or [won, played])
     for (g, day), rs in rows.items():
-        for r in rs:
-            days.setdefault(r.person_id, set()).add(day)
-        if not REGISTRY[g].ranked():
+        g_ranked = REGISTRY[g].ranked()
+        placed = _placed(rs) if g_ranked else [(0, r) for r in rs]
+        place_of = {r.person_id: p for p, r in placed}
+        mine = next((r for r in rs if r.person_id == viewer.id), None)
+        theirs = next((r for r in rs if r.person_id == rival), None) if rival else None
+        if ago(g, day) < STRIP:
+            cell = strip.setdefault(ago(g, day), [0, 0, 0])
+            if rival:
+                if mine and theirs and g_ranked:
+                    c = compare(to_parsed(mine), to_parsed(theirs))
+                    cell[0 if c < 0 else 1 if c > 0 else 2] += 1
+            elif mine and g_ranked:
+                cell[0 if place_of[viewer.id] == 1 and len(rs) > 1 else 1] += 1
+        if not in_period(g, day):
             continue
-        placed = _placed(rs)
-        if len(rs) > 1:
-            for p, r in placed:
-                if p == 1:
-                    wins[r.person_id] = wins.get(r.person_id, 0) + 1
-        top = placed[0][1]
-        if g not in best or compare(to_parsed(top), to_parsed(best[g][0])) < 0 \
-                or compare(to_parsed(top), to_parsed(best[g][0])) == 0 and day < best[g][1]:
-            best[g] = (top, day)  # the first to set it keeps a tied record
+        for p, r in placed:
+            x = me_(r.person_id)
+            x["days"].add(day)
+            x["filed"] += 1
+            if not g_ranked:
+                continue
+            x["ranked"] += 1
+            if p == 1 and len(rs) > 1:
+                x["wins"] += 1
+            if game and (v := r.metrics.get(_key(g))) is not None:
+                x["vals"].append(v)
+            if game and (x["best"] is None or compare(to_parsed(r), to_parsed(x["best"][0])) < 0):
+                x["best"] = (r, day)
+        if rival and mine and theirs and g_ranked:
+            c = compare(to_parsed(mine), to_parsed(theirs))
+            h2h["you" if c < 0 else "them" if c > 0 else "level"] += 1
+        if g_ranked:
+            top = placed[0][1]
+            if g not in best or compare(to_parsed(top), to_parsed(best[g][0])) < 0 \
+                    or compare(to_parsed(top), to_parsed(best[g][0])) == 0 and day < best[g][1]:
+                best[g] = (top, day)  # the first to set it keeps a tied record
 
-    standings = sorted(({"nickname": nick[p], "me": p == viewer.id, "wins": wins.get(p, 0),
-                         "days": len(days.get(p, ()))} for p in nick if p in days or p == viewer.id),
-                       key=lambda x: (-x["wins"], -x["days"], x["nickname"]))
+    high = game and REGISTRY[game].metric_def(_key(game)).better == "high"
+    least = MIN_PLAYS[period]
+    standings = []
+    for p in nick:
+        if p not in who and p != viewer.id:
+            continue
+        x = who.get(p) or me_(p)
+        avg = sum(x["vals"]) / len(x["vals"]) if x["vals"] else None
+        row = {"nickname": nick[p], "me": p == viewer.id, "wins": x["wins"], "days": len(x["days"]),
+               "filed": x["filed"], "rate": round(x["wins"] / x["ranked"], 3) if x["ranked"] else 0.0}
+        if game:
+            row |= {"played": x["ranked"], "average": round(avg, 2) if avg is not None else None,
+                    "best": x["best"][0].metrics if x["best"] else None,
+                    "qualified": x["ranked"] >= least and avg is not None}
+        row["_best"] = x["best"][0] if game and x["best"] else None
+        standings.append(row)
+
+    def order(r: dict[str, Any]) -> tuple:
+        if stat == "average":
+            a = r["average"]
+            return (not r["qualified"], a is None, -(a or 0) if high else (a or 0), r["nickname"])
+        if stat == "best":
+            return (r["_best"] is None, r["nickname"])  # refined by compare below
+        return (-r[stat], -r["days"], r["nickname"])
+    standings.sort(key=order)
+    if stat == "best":
+        from functools import cmp_to_key
+        have = [r for r in standings if r["_best"]]
+        have.sort(key=cmp_to_key(lambda a, b: compare(to_parsed(a["_best"]), to_parsed(b["_best"])) or (a["nickname"] > b["nickname"]) - (a["nickname"] < b["nickname"])))
+        standings = have + [r for r in standings if not r["_best"]]
+    value = (lambda r: r["average"] if r["qualified"] else None) if stat == "average" else \
+        (lambda r: to_parsed(r["_best"]) if r["_best"] else None) if stat == "best" else (lambda r: r[stat])
     place = 0
-    for i, x in enumerate(standings):
-        if not i or x["wins"] != standings[i - 1]["wins"]:
+    for i, r in enumerate(standings):
+        v, prev = value(r), value(standings[i - 1]) if i else None
+        same = i and v is not None and prev is not None and (compare(v, prev) == 0 if stat == "best" else v == prev)
+        if not same:
             place = i + 1
-        x["place"] = place
-    out: dict[str, Any] = {"period": period, "now": now.isoformat(), "standings": standings}
-    if period == "today":
+        r["place"] = place if v not in (None, 0) else None
+    for r in standings:
+        del r["_best"]
+
+    out: dict[str, Any] = {"period": period, "game": game, "stat": stat, "stats": list(stats), "vs": vs,
+                           "now": now.isoformat(), "standings": standings,
+                           "members": sorted(n for p, n in nick.items() if p != viewer.id),
+                           "ranked_games": sorted((g for g in lib if REGISTRY[g].ranked()), key=lambda g: REGISTRY[g].name)}
+    # the strip, oldest first: "on" you won it, "ls" you lost it, "lv" level, "" no contest
+    cells = []
+    for d in range(STRIP - 1, -1, -1):
+        a, b, lv = strip.get(d, [0, 0, 0])
+        cells.append("" if not (a or b or lv) else "on" if a > b else "ls" if b > a else "lv")
+    out["strip"] = cells
+    if rival:
+        out["h2h"] = h2h
+    if game:
+        out["min_plays"], out["metric"] = least, _key(game)
+        rec = best.get(game)
+        out["record"] = {"nickname": nick[rec[0].person_id], "me": rec[0].person_id == viewer.id,
+                         "metrics": rec[0].metrics, "day": rec[1].isoformat()} if rec else None
+    elif period == "today":
         out["games"] = []
         for g in games:
             rs = rows.get((g, current[g]), [])

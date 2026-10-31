@@ -38,13 +38,18 @@ export type Leaving = { slug: string; name: string; chair: boolean; claimed: { n
 export type Invite = { code: string; name: string; slug: string; chair: string | null; inviter: string | null; members: number; library: string[]
   seats: { username: string; nickname: string; results: number }[] }
 export type Period = 'today' | 'week' | 'month' | 'all'
-export type Standing = { nickname: string; me: boolean; wins: number; days: number; place: number }
+export type Standing = { nickname: string; me: boolean; wins: number; days: number; filed: number; rate: number; place: number | null
+  played?: number; average?: number | null; best?: Record<string, number> | null; qualified?: boolean }
 export type Review = {
-  period: Period; now: string; standings: Standing[]
+  period: Period; game: string | null; stat: string; stats: string[]; vs: string | null; now: string
+  standings: Standing[]; members: string[]; ranked_games: string[]; strip: ('' | 'on' | 'ls' | 'lv')[]
+  h2h?: { you: number; them: number; level: number }
+  min_plays?: number; metric?: string; record?: { nickname: string; me: boolean; metrics: Record<string, number>; day: string } | null
   games?: { game: string; name: string; ranked: boolean; day: string; present: number; players: number; plays: boolean
     place: string | null; filed: boolean; leader: { nickname: string | null; tied: number; metrics: Record<string, number> } | null }[]
   records?: { game: string; name: string; nickname: string; me: boolean; metrics: Record<string, number>; day: string }[]
 }
+export type ReviewQuery = { period: Period; game?: string | null; stat?: string | null; vs?: string | null }
 export type Event = {
   kind: 'filed' | 'merged' | 'duplicate' | 'conflict' | 'not_out_yet'
   game: string; puzzle: string; result_id: number | null; added: string[]; confidence: string; late: boolean
@@ -106,7 +111,8 @@ export const api = {
   nickname: (slug: string, nickname: string) => call<Board>('PATCH', `/boards/${slug}/me`, { nickname }),
   agenda: (slug: string, game: string, on: boolean) => call<Board>(on ? 'PUT' : 'DELETE', `/boards/${slug}/agenda/${game}`),
   claim: (slug: string, username: string) => call<{ moved: number; board: Board }>('POST', `/boards/${slug}/claim`, { username }),
-  review: (slug: string, period: Period) => call<Review>('GET', `/boards/${slug}/review?period=${period}`),
+  review: (slug: string, q: ReviewQuery) => call<Review>('GET', `/boards/${slug}/review?${new URLSearchParams(
+    Object.entries(q).filter(([, v]) => v) as [string, string][])}`),
   today: (slug: string) => call<Today>('GET', `/boards/${slug}/today`),
   minutes: (slug: string, game: string, day?: string) =>
     call<Minutes>('GET', `/boards/${slug}/minutes/${game}${day ? `?day=${day}` : ''}`),
