@@ -63,7 +63,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
           <div className="tabs" role="tablist" aria-label="today">
             <button role="tab" aria-selected={tab === 'open'} className={tab === 'open' ? 'on' : ''} onClick={() => setTab('open')}>to do <b>{open.length}</b></button>
             <button role="tab" aria-selected={tab === 'filed'} className={tab === 'filed' ? 'on' : ''} onClick={() => setTab('filed')}>filed <b>{filed.length}</b></button>
-            <button className="tab-lib" onClick={() => go(`/b/${slug}/you#games`)}>{extra ? `library · ${extra} more →` : 'your games →'}</button>
+            <button className="tab-lib" onClick={() => go(`/b/${slug}/you#games`)}>{extra ? `${extra} more on ${board.name} →` : 'your agenda →'}</button>
           </div>
         )}
         {tab === 'open' && <>
@@ -94,7 +94,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
           ))}
         </>}
         {today.items.length === 0 && <div className="sub wrap">nothing on your agenda yet. pick your games, or just paste a result: its game joins your agenda.</div>}
-        {today.items.length === 0 && <button className="more" onClick={() => go(`/b/${slug}/you#games`)}>{extra ? `${extra} games in ${board.name}'s library →` : 'your games →'}</button>}
+        {today.items.length === 0 && <button className="more" onClick={() => go(`/b/${slug}/you#games`)}>{extra ? `${extra} of ${board.name}'s games aren't on your agenda →` : 'your agenda →'}</button>}
       </div>
       <Nav slug={slug} on="agenda" />
       {picker && <Boards current={slug} onClose={() => setPicker(false)} />}

@@ -6,8 +6,10 @@ import { Av, Fx, FxEdit, Ghost, Header, Nav, Tile, goBack, sendOn, useApp, useFr
 import Boards from './Boards'
 import { CloseAccount, Motion, YourFile, useUsernameEdit } from './Personal'
 
-// The "you" page keeps a board's books: your seat, your standing items, the register of
-// members, the bylaws. Every row is one of three kinds, and nothing folds:
+// The "you" page keeps a board's books: your seat, your agenda, the register of members,
+// the bylaws. Two things about games, kept apart in the words too:
+//   the board's games (its library): shared; anyone adds, the chair (or whoever added it) takes off
+//   your agenda: which of those you play; a switch per game, yours alone Every row is one of three kinds, and nothing folds:
 //   a value cell changes in place (undo by toast); text is edited in the formula bar
 //   a document row (›) opens its own page, with the bottom tabs still there
 //   a motion (red, always last) opens a page that says what will happen, then yes or no
@@ -16,7 +18,7 @@ import { CloseAccount, Motion, YourFile, useUsernameEdit } from './Personal'
 export function Switch({ on, label, onFlip }: { on: boolean; label: string; onFlip: () => void }) {
   return (
     <button className={`sw${on ? ' on' : ''}`} role="switch" aria-checked={on} aria-label={label} onClick={onFlip}>
-      <span className="sw-w">{on ? 'playing' : 'set aside'}</span><i aria-hidden="true" />
+      <span className="sw-w">{on ? 'playing' : 'not playing'}</span><i aria-hidden="true" />
     </button>
   )
 }
@@ -59,7 +61,7 @@ function useAgenda(slug: string, b: Board | null, setB: (b: Board) => void) {
   const flip = (g: string, name: string) => {
     const v = !on(g)
     set(g, name, v)
-    if (!v) toast(`${name} is set aside. results stay in the minutes.`, { label: 'undo', run: () => set(g, name, true) })
+    if (!v) toast(`${name} is off your agenda. results stay in the minutes.`, { label: 'undo', run: () => set(g, name, true) })
     return v
   }
   // the "n of m play" count, with the tap already counted
@@ -67,7 +69,7 @@ function useAgenda(slug: string, b: Board | null, setB: (b: Board) => void) {
   return { on, flip, players, count: (ids: string[]) => ids.filter(on).length }
 }
 
-/** A row marked for a moment: lit green when a game goes on, struck through when it's set aside. */
+/** A row marked for a moment: lit green when a game goes on your agenda, struck through when it comes off. */
 function useMark(ms = 750): [(g: string) => boolean, (g: string) => void] {
   const [marked, setMarked] = useState<Set<string>>(new Set())
   const mark = (g: string) => {
@@ -84,8 +86,8 @@ const bySeniority = (ms: Member[]) => [...ms].sort((x, y) => x.joined_at.localeC
 
 type Page = 'add' | 'register' | 'bylaws' | 'claim' | 'strike' | 'retire' | 'resign' | 'close'
 const TITLES: Record<Page, string> = {
-  add: 'any other business', register: 'the register', bylaws: 'the bylaws', claim: 'a claim',
-  strike: 'a strike', retire: 'invitations', resign: 'resignation', close: 'wind up',
+  add: 'add a game', register: 'the register', bylaws: 'the bylaws', claim: 'a claim',
+  strike: 'a game off', retire: 'invitations', resign: 'resignation', close: 'wind up',
 }
 
 export default function You({ slug, page, arg }: { slug: string; page?: string; arg?: string }) {
@@ -189,7 +191,7 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
       ? <FxEdit fn="seat" field="as" value={nick} onChange={setNick} onSave={saveNick} onCancel={() => setNick(null)} ok={!!nick.trim()}
           note={{ text: `your name on ${b.name}. others see it in the minutes.`, tone: 'idle' }} />
       : recalc !== null
-        ? <div className="fx keep recalc"><i>fx</i>=COUNTIF(standing,"playing")<b>&nbsp;→ {recalc}</b></div>
+        ? <div className="fx keep recalc"><i>fx</i>=COUNTIF(agenda,"playing")<b>&nbsp;→ {recalc}</b></div>
         : <Fx fn="seat" args={[['board', b.name], ['as', b.you.nickname]]} />
 
   return (
@@ -217,7 +219,7 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
           </div>
           {small && <Invitation b={b} setB={setB} now={now} />}
 
-          <div className="sec" id="games">standing items <b className={`num${recalc !== null ? ' lit' : ''}`}>{agenda.count(ids)}</b> of {b.library.length}</div>
+          <div className="sec" id="games">your agenda <b className={`num${recalc !== null ? ' lit' : ''}`}>{agenda.count(ids)}</b> <span className="sec-n">of {b.name}'s {b.library.length} {b.library.length === 1 ? 'game' : 'games'} · switch on the ones you play</span></div>
           {ids.map(g => {
             const lg = lib.get(g)!, on = agenda.on(g)
             return (
@@ -231,9 +233,9 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
               </div>
             )
           })}
-          {ids.length === 0 && <div className="sub wrap">no standing items. any other business?</div>}
+          {ids.length === 0 && <div className="sub wrap">{b.name} has no games yet. add one: it goes on the board for everyone, and on your agenda.</div>}
           <button className="go" onClick={() => go(`/b/${slug}/you/add`)}>
-            <span className="k">+ any other business</span><span className="v">{catalogue ? `add a game · ${catalogue} new` : 'every game is standing'}</span>
+            <span className="k">+ add a game to {b.name}</span><span className="v">{catalogue ? `${catalogue} more on file` : 'it has them all'}</span>
           </button>
 
           <div className="sec">the board</div>
@@ -378,44 +380,44 @@ function Bylaws({ b, setB }: P) {
       : <Fx fn="bylaws" args={[['board', b.name]]} />}
     <div className="bd page">
       <div className="art">
-        <span className="art-n">art. 1</span>
+        <span className="art-n">article 1</span>
         <p>the board shall be known as <b>{b.name}</b>.</p>
         {chairing && <button className="lnk amend" onClick={() => setName(b.name)}>amend ✎</button>}
       </div>
       <div className="art">
-        <span className="art-n">art. 2</span>
-        <p>its standing games number <b>{b.library.length}</b>. any member may add one; whoever adds a game may strike it until someone else plays it. the chair may strike any.</p>
+        <span className="art-n">article 2</span>
+        <p>the board keeps <b>{b.library.length}</b> {b.library.length === 1 ? 'game' : 'games'}; each member puts the ones they play on their own agenda. any member may add a game to the board. whoever added one may take it off again until someone else plays it; the chair may take off any.</p>
       </div>
-      {b.library.map(g => (
+      {[...b.library].sort((x, y) => gname(x.game, x.name).localeCompare(gname(y.game, y.name))).map(g => (
         <div key={g.game} className="it game sub-art compact">
           <Tile game={g.game} name={gname(g.game, g.name)} />
           <div className="g"><div className="nm">{gname(g.game, g.name)} <small className="muted">{g.players} play{games[g.game]?.ranked === false ? ' · for fun' : ''}</small></div></div>
-          {g.removable && <button className="add strike" onClick={() => go(`/b/${b.slug}/you/strike/${encodeURIComponent(g.game)}`)}>strike ›</button>}
+          {g.removable && <button className="add strike" onClick={() => go(`/b/${b.slug}/you/strike/${encodeURIComponent(g.game)}`)}>take off ›</button>}
         </div>
       ))}
       <div className="art">
-        <span className="art-n">art. 3</span>
+        <span className="art-n">article 3</span>
         <p>each member holds one invitation, good for a day. new words void the old.</p>
         {chairing && <button className="lnk amend bad" onClick={() => go(`/b/${b.slug}/you/retire`)}>retire every invitation ›</button>}
       </div>
       <div className="art">
-        <span className="art-n">art. 4</span>
+        <span className="art-n">article 4</span>
         <p>the chair is held by <b>{chair?.username === me.username ? 'you' : chair?.nickname ?? 'no one'}</b>{chair?.kind === 'placeholder' ? ', an unissued seat' : ''}.{heir && <> should the chair resign, it passes to the longest-serving member: <b>{heir.username === me.username ? 'you' : heir.nickname}</b>.</>}</p>
       </div>
       {open.length > 0 && (
         <div className="art">
-          <span className="art-n">art. 5</span>
+          <span className="art-n">article 5</span>
           <p>seats imported from the chat wait for their owners: <b>{open.length}</b>. each member may claim one.</p>
           <button className="lnk amend" onClick={() => go(`/b/${b.slug}/you/register#seats`)}>see the seats ›</button>
         </div>
       )}
-      <div className="sub wrap">{chairing ? 'you hold the chair: amend or strike above.' : 'only the chair amends the bylaws.'}</div>
+      <div className="sub wrap">{chairing ? 'you hold the chair: amend, or take games off, above.' : 'only the chair amends the bylaws.'}</div>
     </div>
   </>
 }
 
-/** Any other business: the whole catalogue, searched in the formula bar. Adding a game puts
- *  it on the board for everyone and on your agenda; whoever adds it can take it back. */
+/** Adding a game to the board: the whole catalogue, searched in the formula bar. Adding one
+ *  puts it on the board for everyone and on your agenda; whoever adds it can take it back. */
 function AddGame({ b, setB }: P) {
   const { games, toast } = useApp()
   const [q, setQ] = useState('')
@@ -439,7 +441,7 @@ function AddGame({ b, setB }: P) {
         <Tile game={g} name={name(g)} />
         <div className="g">
           <div className="nm">{name(g)}</div>
-          <div className="sub">{lg ? `standing · ${agenda.players(g, lg.players)} play` : games[g]?.ranked === false ? 'for fun' : 'ranked'}</div>
+          <div className="sub">{lg ? `${agenda.players(g, lg.players)} play it here` : games[g]?.ranked === false ? 'for fun' : 'ranked'}</div>
         </div>
         {lg ? <Switch on={agenda.on(g)} label={`${name(g)} on my agenda`} onFlip={() => { buzz(); agenda.flip(g, name(g)) }} />
           : <button className="btn sm" disabled={busy === g} onClick={() => add(g)}>add</button>}
@@ -464,10 +466,10 @@ function AddGame({ b, setB }: P) {
       {q && <button className="fxe-b" onClick={() => { setQ(''); el.current?.focus() }} aria-label="clear">✕</button>}
     </div>
     <div className="bd page">
-      {fresh.length > 0 && <div className="sec">new to {b.name} <b>{fresh.length}</b> <span className="sec-n">· adding one puts it on the board for everyone, and on your agenda</span></div>}
-      {!term && fresh.length === 0 && <div className="sub wrap">every game on file is already standing on {b.name}. know one we don't read? paste a result on the agenda and the clerk will ask for it.</div>}
+      {fresh.length > 0 && <div className="sec">not on {b.name} yet <b>{fresh.length}</b> <span className="sec-n">· add puts it on the board for everyone, and on your agenda</span></div>}
+      {!term && fresh.length === 0 && <div className="sub wrap">{b.name} already has every game on file. know one we don't read? paste a result on the agenda and the clerk will ask for it.</div>}
       {fresh.map(row)}
-      {standing.length > 0 && <div className="sec">already standing <b>{standing.length}</b></div>}
+      {standing.length > 0 && <div className="sec">already on {b.name} <b>{standing.length}</b> <span className="sec-n">· the switch is your agenda</span></div>}
       {standing.map(row)}
       {found.length === 0 && <div className="sub wrap">nothing called "{term}" on file. paste one of its results on the agenda and the clerk will ask for it.</div>}
     </div>
@@ -501,7 +503,7 @@ function Claim({ b, setB, back, arg }: P) {
   )
 }
 
-/** Striking a game from the board. */
+/** Taking a game off the board. */
 function Strike({ b, setB, back, arg }: P) {
   const { games, toast } = useApp()
   const [busy, setBusy] = useState(false)
@@ -510,14 +512,14 @@ function Strike({ b, setB, back, arg }: P) {
   const nm = games[arg]?.name ?? g?.name ?? arg
   const yes = async () => {
     setBusy(true); setErr('')
-    try { setB(await api.dropGame(b.slug, arg)); toast(`${nm} is struck from ${b.name}.`); go(back, true) }
+    try { setB(await api.dropGame(b.slug, arg)); toast(`${nm} is off ${b.name}.`); go(back, true) }
     catch (e) { setErr((e as Error).message); setBusy(false) }
   }
-  if (!g) return <div className="bd page"><div className="sub wrap">{nm} isn't a standing game on {b.name}.</div></div>
+  if (!g) return <div className="bd page"><div className="sub wrap">{nm} isn't on {b.name}.</div></div>
   return (
     <div className="bd page">
-      <Motion heading={`motion to strike ${nm}`} yes={busy ? 'striking…' : 'yes, strike it'} no="no" busy={busy} err={err} onYes={yes} onNo={() => goBack(back)}>
-        <p>{nm} leaves {b.name}{g.players ? `, and the agenda of the ${g.players} ${g.players === 1 ? 'member who plays' : 'members who play'} it` : ''}.</p>
+      <Motion heading={`motion to take ${nm} off ${b.name}`} yes={busy ? 'taking it off…' : 'yes, take it off'} no="no" busy={busy} err={err} onYes={yes} onNo={() => goBack(back)}>
+        <p>{nm} comes off the board{g.players ? `, and off the agenda of the ${g.players} ${g.players === 1 ? 'member who plays' : 'members who play'} it` : ''}.</p>
         <p>results already filed stay in the minutes. anyone can add it back.</p>
       </Motion>
     </div>
@@ -564,7 +566,7 @@ function Resign({ b, back }: P) {
     <div className="bd page">
       <Motion heading={`motion to resign from ${b.name}`} sign yes={`resign as ${b.you.nickname}`} no="no, stay" busy={busy} err={err} onYes={leave} onNo={() => goBack(back)}
         foot={<button className="lnk" onClick={() => go(`/b/${b.slug}/you/close`, true)}>leaving everything? wind up your account instead ›</button>}>
-        <p>your seat and your standing items here go. what you filed stays yours, on your other boards, and stops showing on {b.name}.</p>
+        <p>your seat and your agenda here go. what you filed stays yours, on your other boards, and stops showing on {b.name}.</p>
         {l.claimed && <p>the {l.claimed.results} {l.claimed.results === 1 ? 'result' : 'results'} imported from the chat go back to an unissued seat called <b>{l.claimed.nickname}</b>, so it can be claimed again.</p>}
         {l.alone
           ? <p>you're the only member. resigning dissolves {b.name} and its minutes, for good.</p>

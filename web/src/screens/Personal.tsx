@@ -89,7 +89,10 @@ export function YourFile({ onEditName, closeTo }: { onEditName: () => void; clos
         : how === 'prompt' ? <button className="btn sm" onClick={async () => { if (await install()) toast('installed. see you on the home screen.') }}>install</button>
           : <span className="chip">{how === 'ios' ? 'two taps' : 'in the browser'}</span>}
     </div>
-    <button className="cell go" onClick={signOut}><span className="k">sign out</span><span className="v muted">{me.kind === 'guest' ? 'loses this seat' : ''}</span></button>
+    <div className="cell">
+      <span className="k">sign out<small className="muted">{me.kind === 'guest' ? 'a guest seat is lost for good' : 'sign in again with google any time'}</small></span>
+      <HoldToSign label="sign out" hint="hold to sign out" tone="ghost" busy={false} ready onDone={signOut} />
+    </div>
     <button className="go bad" onClick={() => go(closeTo)}><span className="k">wind up your account</span></button>
   </>
 }
@@ -135,7 +138,9 @@ const still = () => window.matchMedia('(prefers-reduced-motion: reduce)').matche
 
 /** Hold to sign: a signature draws while you hold, and letting go early rubs it out.
  *  Space and Enter hold too. With reduced motion it's a plain button. */
-function HoldToSign({ label, busy, ready, onDone }: { label: string; busy: boolean; ready: boolean; onDone: () => void }) {
+function HoldToSign({ label, busy, ready, onDone, hint = `hold to sign · ${label}`, tone = 'danger' }: {
+  label: string; busy: boolean; ready: boolean; onDone: () => void; hint?: string; tone?: 'danger' | 'ghost'
+}) {
   const [p, setP] = useState(0)
   const raf = useRef(0)
   const t0 = useRef(0)
@@ -154,9 +159,9 @@ function HoldToSign({ label, busy, ready, onDone }: { label: string; busy: boole
   }
   useEffect(() => () => cancelAnimationFrame(raf.current), [])
   useEffect(() => { if (!busy) done.current = false }, [busy])
-  if (still()) return <button className="btn danger" disabled={busy || !ready} onClick={onDone}>{label}</button>
+  if (still()) return <button className={`btn ${tone}`} disabled={busy || !ready} onClick={onDone}>{label}</button>
   return (
-    <button className={`btn danger sign${p > 0 ? ' holding' : ''}`} disabled={busy || !ready} aria-label={`${label} (press and hold)`}
+    <button className={`btn ${tone} sign${p > 0 ? ' holding' : ''}`} disabled={busy || !ready} aria-label={`${label} (press and hold)`}
       onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); start() }} onPointerUp={stop} onPointerCancel={stop} onContextMenu={e => e.preventDefault()}
       onKeyDown={e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); start() } }} onKeyUp={stop}>
       <svg viewBox="0 0 120 28" aria-hidden="true">
@@ -164,7 +169,7 @@ function HoldToSign({ label, busy, ready, onDone }: { label: string; busy: boole
         <path pathLength={1} style={{ strokeDashoffset: 1 - p, opacity: p > 0 ? 1 : 0 }}
           d="M4 20c6-10 10-14 13-12s-5 14-2 14 7-14 10-14-2 12 1 12 6-9 9-9-1 8 2 8 5-6 8-6 0 5 3 5 6-8 9-8-2 9 2 9 8-4 12-4 10 2 14-1 10-3 16-2" />
       </svg>
-      <span>{busy ? 'signing…' : p > 0 ? 'keep holding' : `hold to sign · ${label}`}</span>
+      <span>{busy ? 'signing…' : p > 0 ? 'keep holding' : hint}</span>
     </button>
   )
 }

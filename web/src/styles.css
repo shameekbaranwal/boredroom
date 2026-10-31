@@ -731,3 +731,7 @@ html { overscroll-behavior-y: contain; }
 .sub-art.compact .ic { width: 20px; height: 20px; font-size: 10px; }
 .sub-art.compact .nm { font-size: 14px; font-weight: 600; }
 .sub-art.compact .nm small { font: 12px var(--f-num); margin-left: 4px; }
+.cell .btn.sign { min-width: 0; padding: 4px 12px 6px; }
+.cell .btn.sign svg { width: 92px; height: 20px; }
+.cell .btn.sign span { font-size: 12px; }
+.btn.ghost.sign.holding { background: var(--surface); }
