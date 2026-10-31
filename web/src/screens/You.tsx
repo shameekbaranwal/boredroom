@@ -86,7 +86,7 @@ const bySeniority = (ms: Member[]) => [...ms].sort((x, y) => x.joined_at.localeC
 
 type Page = 'add' | 'register' | 'bylaws' | 'claim' | 'strike' | 'retire' | 'resign' | 'close'
 const TITLES: Record<Page, string> = {
-  add: 'add a game', register: 'the register', bylaws: 'the bylaws', claim: 'a claim',
+  add: "the board's games", register: 'the register', bylaws: 'the bylaws', claim: 'a claim',
   strike: 'a game off', retire: 'invitations', resign: 'resignation', close: 'wind up',
 }
 
@@ -111,7 +111,7 @@ export default function You({ slug, page, arg }: { slug: string; page?: string; 
   )
   if (!pg) return <Main b={b} setB={setB} />
 
-  const parent = pg === 'claim' ? `${home}/register` : pg === 'strike' || pg === 'retire' ? `${home}/bylaws` : home
+  const parent = pg === 'claim' ? `${home}/register` : pg === 'strike' ? `${home}/add` : pg === 'retire' ? `${home}/bylaws` : home
   const props = { b, setB, back: parent, arg: arg ?? '' }
   return (
     <div className="app">
@@ -179,7 +179,6 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
   }
   const ps = people(b)
   const small = ps.length < 3  // a young board's first job is recruiting
-  const catalogue = Object.values(games).filter(g => !lib.has(g.id)).length
   const seat = bySeniority(ps).findIndex(m => m.username === me.username) + 1
   const mine = b.members.find(m => m.username === me.username)
   const since = mine ? new Date(mine.joined_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toLowerCase() : ''
@@ -235,7 +234,7 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
           })}
           {ids.length === 0 && <div className="sub wrap">{b.name} has no games yet. add one: it goes on the board for everyone, and on your agenda.</div>}
           <button className="go" onClick={() => go(`/b/${slug}/you/add`)}>
-            <span className="k">+ add a game to {b.name}</span><span className="v">{catalogue ? `${catalogue} more on file` : 'it has them all'}</span>
+            <span className="k">{b.name}'s games</span><span className="v">add{b.library.some(g => g.removable) ? ' or take off' : ''} · {b.library.length} on the board</span>
           </button>
 
           <div className="sec">the board</div>
@@ -360,7 +359,7 @@ function Register({ b }: P) {
 /** The bylaws: what the board is and how it runs, as numbered articles. Everyone can read
  *  them; the chair's copy has the pen. */
 function Bylaws({ b, setB }: P) {
-  const { me, games, refreshMe, toast } = useApp()
+  const { me, refreshMe, toast } = useApp()
   const [name, setName] = useState<string | null>(null)
   const chairing = b.you.role === 'chair'
   const ps = people(b)
@@ -372,7 +371,6 @@ function Bylaws({ b, setB }: P) {
     if (!v || v === b.name) { setName(null); return }
     try { setB(await api.rename(b.slug, v)); refreshMe(); setName(null); toast(`the board is ${v} now. links still work.`) } catch (e) { toast((e as Error).message) }
   }
-  const gname = (g: string, fallback: string) => games[g]?.name ?? fallback
   return <>
     {name !== null
       ? <FxEdit fn="bylaws" field="name" value={name} onChange={setName} onSave={rename} onCancel={() => setName(null)} ok={!!name.trim()} max={60}
@@ -387,14 +385,8 @@ function Bylaws({ b, setB }: P) {
       <div className="art">
         <span className="art-n">article 2</span>
         <p>the board keeps <b>{b.library.length}</b> {b.library.length === 1 ? 'game' : 'games'}; each member puts the ones they play on their own agenda. any member may add a game to the board. whoever added one may take it off again until someone else plays it; the chair may take off any.</p>
+        <button className="lnk amend" onClick={() => go(`/b/${b.slug}/you/add`)}>{b.name}'s games ›</button>
       </div>
-      {[...b.library].sort((x, y) => gname(x.game, x.name).localeCompare(gname(y.game, y.name))).map(g => (
-        <div key={g.game} className="it game sub-art compact">
-          <Tile game={g.game} name={gname(g.game, g.name)} />
-          <div className="g"><div className="nm">{gname(g.game, g.name)} <small className="muted">{g.players} play{games[g.game]?.ranked === false ? ' · for fun' : ''}</small></div></div>
-          {g.removable && <button className="add strike" onClick={() => go(`/b/${b.slug}/you/strike/${encodeURIComponent(g.game)}`)}>take off ›</button>}
-        </div>
-      ))}
       <div className="art">
         <span className="art-n">article 3</span>
         <p>each member holds one invitation, good for a day. new words void the old.</p>
@@ -411,7 +403,7 @@ function Bylaws({ b, setB }: P) {
           <button className="lnk amend" onClick={() => go(`/b/${b.slug}/you/register#seats`)}>see the seats ›</button>
         </div>
       )}
-      <div className="sub wrap">{chairing ? 'you hold the chair: amend, or take games off, above.' : 'only the chair amends the bylaws.'}</div>
+      <div className="sub wrap">{chairing ? 'you hold the chair: amend above, and take games off on the games page.' : 'only the chair amends the bylaws.'}</div>
     </div>
   </>
 }
@@ -441,7 +433,7 @@ function AddGame({ b, setB }: P) {
         <Tile game={g} name={name(g)} />
         <div className="g">
           <div className="nm">{name(g)}</div>
-          <div className="sub">{lg ? `${agenda.players(g, lg.players)} play it here` : games[g]?.ranked === false ? 'for fun' : 'ranked'}</div>
+          <div className="sub">{lg ? <>{agenda.players(g, lg.players)} play it here{lg.removable && <> · <button className="lnk off-board" onClick={() => go(`/b/${b.slug}/you/strike/${encodeURIComponent(g)}`)}>take off the board</button></>}</> : games[g]?.ranked === false ? 'for fun' : 'ranked'}</div>
         </div>
         {lg ? <Switch on={agenda.on(g)} label={`${name(g)} on my agenda`} onFlip={() => { buzz(); agenda.flip(g, name(g)) }} />
           : <button className="btn sm" disabled={busy === g} onClick={() => add(g)}>add</button>}
@@ -466,11 +458,12 @@ function AddGame({ b, setB }: P) {
       {q && <button className="fxe-b" onClick={() => { setQ(''); el.current?.focus() }} aria-label="clear">✕</button>}
     </div>
     <div className="bd page">
+      {standing.length > 0 && <div className="sec">on {b.name} <b>{standing.length}</b> <span className="sec-n">· the switch is your agenda{b.you.role === 'chair' ? '. as chair you can take any game off the board' : ''}</span></div>}
+      {standing.map(row)}
+      {standing.length > 0 && b.you.role !== 'chair' && !b.library.some(g => g.removable) && <div className="sub wrap">only the chair takes games off the board (or whoever added one, until someone else plays it).</div>}
       {fresh.length > 0 && <div className="sec">not on {b.name} yet <b>{fresh.length}</b> <span className="sec-n">· add puts it on the board for everyone, and on your agenda</span></div>}
       {!term && fresh.length === 0 && <div className="sub wrap">{b.name} already has every game on file. know one we don't read? paste a result on the agenda and the clerk will ask for it.</div>}
       {fresh.map(row)}
-      {standing.length > 0 && <div className="sec">already on {b.name} <b>{standing.length}</b> <span className="sec-n">· the switch is your agenda</span></div>}
-      {standing.map(row)}
       {found.length === 0 && <div className="sub wrap">nothing called "{term}" on file. paste one of its results on the agenda and the clerk will ask for it.</div>}
     </div>
   </>

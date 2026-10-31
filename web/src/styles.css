@@ -735,3 +735,4 @@ html { overscroll-behavior-y: contain; }
 .cell .btn.sign svg { width: 92px; height: 20px; }
 .cell .btn.sign span { font-size: 12px; }
 .btn.ghost.sign.holding { background: var(--surface); }
+.lnk.off-board { font-size: 12px; color: var(--bad); }
