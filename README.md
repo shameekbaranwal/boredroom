@@ -17,20 +17,19 @@ imported seat. Review, the game screen and memos come next.
 ```
 server/          Flask backend (a uv project)
   boredroom/     the package; parser/ turns pasted share texts into results
-  tests/         server tests, including a regression run over the chat export
+  tests/         server tests
   migrations/    alembic
-  scripts/       corpus.py (parser report over an export), import_chat.py (seed a board)
+  scripts/       forget.py (delete people and everything theirs)
 web/             the PWA (React + Vite + TS); its tests live inside it
 build/           Dockerfiles and build scripts (see build/README.md)
 tests/           end-to-end tests across server and web (none yet)
 docs/            decisions, specs, UX
-research/        private source material (gitignored)
+research/        private source material and the tools that read it (gitignored; never committed)
 ```
 
 ```
 cd server
 uv run pytest                          # tests
-uv run python scripts/corpus.py        # parser report over ../research/soup_export.txt
 ../build/dev-db.sh start                # dev postgres on 127.0.0.1:5433
 uv run alembic upgrade head
 uv run flask --app "boredroom.app:create_app()" run --debug -p 5078   # api on :5078
@@ -45,8 +44,9 @@ environment, and `http://localhost:5173` as an authorized JavaScript origin.
 `build/build-docker-image.sh`. It runs as the `boredroom` service in yams on port 5077
 (172.60.0.60), public at boredroom.shmk.dev through the Cloudflare tunnel, with its
 Postgres as `boredroom-db` (172.60.0.61). The image serves the API and the built web app,
-and migrates the database on boot. To seed a board from an export:
-`docker cp export.txt boredroom:/tmp/x.txt && docker exec boredroom python scripts/import_chat.py /tmp/x.txt --chair NAME`.
+and migrates the database on boot. A board's history can be seeded before
+its members join (`boredroom.seed`: placeholder seats people claim with "that's me"); the
+tools that turn a private chat into that history live in research/, outside git.
 
 - [`docs/ux/boredroom-ux.html`](docs/ux/boredroom-ux.html) — design philosophy, UX
   requirements, core flows and screen mockups (also published as an artifact)

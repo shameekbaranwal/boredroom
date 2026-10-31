@@ -17,7 +17,7 @@ def _contact() -> str:
     email = os.environ.get("BOREDROOM_CONTACT_EMAIL")
     if email:
         return f'email <a href="mailto:{escape(email)}">{escape(email)}</a>'
-    return "message walter (the person who runs it)"
+    return "message the person who runs it"
 
 
 def _page(title: str, body: str) -> Response:
