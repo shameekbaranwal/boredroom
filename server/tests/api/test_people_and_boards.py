@@ -46,7 +46,33 @@ def test_agenda_adds_to_library_and_only_chair_removes(seat):
     assert ivan.put("/boards/soup/agenda/notagame").status_code == 404
     assert ivan.put("/boards/soup/library/maptap").status_code == 200
 
+    chair.put("/boards/soup/agenda/krillion")  # someone else plays it now: ivan can't take it back
+    assert [g["removable"] for g in ivan.get("/boards/soup").json["library"]] == [False, True]
     assert ivan.delete("/boards/soup/library/krillion").status_code == 403
     after = chair.delete("/boards/soup/library/krillion").json
     assert [g["game"] for g in after["library"]] == ["maptap"]
     assert ivan.get("/boards/soup").json["you"]["agenda"] == []  # dropped with the game
+
+
+def test_whoever_added_a_game_can_undo_it_until_someone_else_plays_it(seat):
+    chair, ivan, ana = seat("shmk"), seat("ivan"), seat("ana")
+    code = chair.post("/boards", {"name": "soup"}).json["invite"]["code"]
+    ivan.post("/boards/join", {"code": code})
+    ana.post("/boards/join", {"code": code})
+
+    assert ivan.put("/boards/soup/agenda/krillion").json["library"][0]["removable"] is True
+    assert ana.get("/boards/soup").json["library"][0]["removable"] is False  # not ana's to undo
+    assert ana.delete("/boards/soup/library/krillion").status_code == 403
+    gone = ivan.delete("/boards/soup/library/krillion").json  # the undo
+    assert gone["library"] == [] and gone["you"]["agenda"] == []
+
+
+def test_members_carry_what_they_have_on_file(seat):
+    chair, ivan = seat("shmk"), seat("ivan")
+    code = chair.post("/boards", {"name": "soup"}).json["invite"]["code"]
+    ivan.post("/boards/join", {"code": code})
+    ivan.post("/pastes", {"text": "Krillion #106 🦐\n300\n\n🐟🐟🏮🦑🐟🦑🫧"})
+    ivan.put("/boards/soup/agenda/krillion")
+    ms = {m["nickname"]: m for m in chair.get("/boards/soup").json["members"]}
+    assert (ms["ivan"]["results"], ms["shmk"]["results"]) == (1, 0)
+    assert ms["shmk"]["joined_at"] <= ms["ivan"]["joined_at"]

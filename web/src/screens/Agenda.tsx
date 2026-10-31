@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, type Board, type Filing, type Item, type Today } from '../api'
 import { headline, left } from '../format'
 import { go } from '../router'
-import { Av, Clip, Fx, Header, Loading, Nav, Tile, sendOn, useApp, useNow } from '../ui'
+import { Av, Clip, Fx, Ghost, Header, Nav, Tile, sendOn, useApp, useFresh, useNow } from '../ui'
 import Boards from './Boards'
 import { InstallMemo } from '../install'
 
@@ -17,6 +17,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   const [picker, setPicker] = useState(false)
   const [pickTab, setTab] = useState<'open' | 'filed' | null>(null)
   const [all, setAll] = useState(false)
+  const [fresh, setFresh] = useState<Set<string>>(new Set())  // just filed: the rows flash once
   const now = useNow()
 
   const load = useCallback(() => {
@@ -24,9 +25,22 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
     api.board(slug).then(setBoard).catch(() => {})
   }, [slug])
   useEffect(load, [load])
+  useFresh(load)
+  const filedNow = (gs: string[]) => {
+    load()
+    setFresh(new Set(gs))
+    setTimeout(() => setFresh(new Set()), 1400)
+  }
 
   if (err) return <div className="app"><Header title="boredroom.xlsx" /><div className="center err">{err}</div></div>
-  if (!today || !board) return <div className="app"><Header title={`${slug}.xlsx`} meta="agenda" /><Loading what="the agenda" /></div>
+  if (!today || !board) return (
+    <div className="app">
+      <Header title={`${board?.name ?? slug}.xlsx`} meta="agenda" />
+      <Fx fn="agenda" args={[['board', board?.name ?? slug], ['puzzles', 'current']]} />
+      <Ghost what="the agenda" />
+      <Nav slug={slug} on="agenda" />
+    </div>
+  )
 
   const open = today.items.filter(i => !i.filed), filed = today.items.filter(i => i.filed)
   const tab = pickTab ?? (open.length || !filed.length ? 'open' : 'filed')
@@ -38,10 +52,10 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
       <Header title={`${board.name}.xlsx`} meta="agenda" onTitle={() => setPicker(true)} />
       <Fx fn="agenda" args={[['board', board.name], ['puzzles', 'current']]} />
       <div className="bd">
-        <Pasteboard board={board} shared={shared} onFiled={load} />
+        <Pasteboard board={board} shared={shared} onFiled={filedNow} />
         <InstallMemo onDone={ok => ok && toast('installed. see you on the home screen.')} />
         {placeholders.length > 0 && (
-          <button className="more" onClick={() => go(`/b/${slug}/you#seats`)}>
+          <button className="more" onClick={() => go(`/b/${slug}/you/register#seats`)}>
             {placeholders.length} imported seats unclaimed · is one of them yours? →
           </button>
         )}
@@ -54,13 +68,13 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
         )}
         {tab === 'open' && <>
           {open.length === 0 && today.items.length > 0 && <div className="sub wrap">all {filed.length} filed. the board thanks you.</div>}
-          {(all || open.length <= TODO + 1 ? open : open.slice(0, TODO)).map(i => <OpenRow key={i.game} i={i} slug={slug} now={now} />)}
+          {(all || open.length <= TODO + 1 ? open : open.slice(0, TODO)).map(i => <OpenRow key={i.game} i={i} slug={slug} now={now} lit={fresh.has(i.game)} />)}
           {!all && open.length > TODO + 1 && <button className="more" onClick={() => setAll(true)}>{open.length - TODO} more to do ↓</button>}
         </>}
         {tab === 'filed' && <>
           {filed.length === 0 && <div className="sub wrap">nothing filed yet today. paste a result above.</div>}
           {filed.map(i => (
-            <div key={i.game} className="it" onClick={() => go(`/b/${slug}/m/${i.game}`)}>
+            <div key={i.game} className={`it${fresh.has(i.game) ? ' lit' : ''}`} onClick={() => go(`/b/${slug}/m/${i.game}`)}>
               <Tile game={i.game} name={i.name} />
               <div className="g">
                 <div className="nm">{i.name} <span className="muted" style={{ fontWeight: 400, fontSize: 13 }}>{i.mine?.puzzle}</span></div>
@@ -88,12 +102,12 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   )
 }
 
-function OpenRow({ i, slug, now }: { i: Item; slug: string; now: number }) {
+function OpenRow({ i, slug, now, lit }: { i: Item; slug: string; now: number; lit: boolean }) {
   const { games } = useApp()
   const url = playUrl(i)
   const ms = new Date(i.resets_at).getTime() - now
   return (
-    <div className="it" onClick={() => go(`/b/${slug}/m/${i.game}`)}>
+    <div className={`it${lit ? ' lit' : ''}`} onClick={() => go(`/b/${slug}/m/${i.game}`)}>
       <Tile game={i.game} name={i.name} />
       <div className="g">
         <div className="nm">{i.name} {i.puzzle && <span className="muted" style={{ fontWeight: 400, fontSize: 13 }}>{i.puzzle}</span>}</div>
@@ -116,7 +130,7 @@ function OpenRow({ i, slug, now }: { i: Item; slug: string; now: number }) {
 
 /** The pasteboard: paste a share text, see what the clerk read, then save it or dismiss it.
  *  Saving files it everywhere; the cards then say what happened. */
-export function Pasteboard({ board, shared, onFiled }: { board?: Board; shared?: string; onFiled: () => void }) {
+export function Pasteboard({ board, shared, onFiled }: { board?: Board; shared?: string; onFiled: (games: string[]) => void }) {
   const { games, refreshMe } = useApp()
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -124,13 +138,18 @@ export function Pasteboard({ board, shared, onFiled }: { board?: Board; shared?:
   const [out, setOut] = useState<Filing | null>(null)
   const [err, setErr] = useState('')
   const [answered, setAnswered] = useState<Record<number, string>>({})
+  const [shake, setShake] = useState(false)  // nothing readable: the pasteboard shakes its head
   const ta = useRef<HTMLTextAreaElement>(null)
   const sharedDone = useRef(false)
 
   const read = useCallback(async (t: string, source: 'paste' | 'share' = 'paste') => {
     if (!t.trim()) return
     setBusy(true); setErr(''); setOut(null); setAnswered({})
-    try { setDraft({ text: t, source, read: await api.preview(t) }); setText('') }
+    try {
+      const r = await api.preview(t)
+      setDraft({ text: t, source, read: r }); setText('')
+      if (!r.events.length && !r.unknown.length) { setShake(true); navigator.vibrate?.([10, 40, 10]); setTimeout(() => setShake(false), 400) }
+    }
     catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
   }, [])
 
@@ -144,7 +163,7 @@ export function Pasteboard({ board, shared, onFiled }: { board?: Board; shared?:
       const add = board ? f.events.filter(e => e.kind !== 'not_out_yet' && !board.you.agenda.includes(e.game)).map(e => e.game) : []
       for (const g of new Set(add)) await api.agenda(board!.slug, g, true).catch(() => {})
       if (add.length) refreshMe()
-      onFiled()
+      onFiled(f.events.filter(e => e.kind === 'filed' || e.kind === 'merged').map(e => e.game))
     } catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
   }
 
@@ -154,14 +173,14 @@ export function Pasteboard({ board, shared, onFiled }: { board?: Board; shared?:
 
   const name = (g: string) => games[g]?.name ?? g
   const replace = async (rid: number, paste: number) => {
-    try { await api.replace(rid, paste); setAnswered(a => ({ ...a, [rid]: 'replaced. stamped "amended".' })); onFiled() }
+    try { await api.replace(rid, paste); setAnswered(a => ({ ...a, [rid]: 'replaced. stamped "amended".' })); onFiled([]) }
     catch (e) { setErr((e as Error).message) }
   }
   const minutes = (g: string) => board && <button className="lnk" style={{ fontSize: 12, alignSelf: 'flex-start' }} onClick={() => go(`/b/${board.slug}/m/${g}`)}>see how {board.name} did →</button>
   const worth = draft && (draft.read.unknown.length > 0 || draft.read.events.some(e => e.kind === 'filed' || e.kind === 'merged' || e.kind === 'conflict'))
 
   return (
-    <div className="pbw">
+    <div className={`pbw${shake ? ' shake' : ''}`}>
       {!draft && <>
         <label className="pb">
           <Clip />

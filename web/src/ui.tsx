@@ -17,13 +17,55 @@ export const useApp = () => useContext(AppCtx)
 export function Header({ title, meta, onTitle, back }: { title: string; meta?: string; onTitle?: () => void; back?: string }) {
   return (
     <div className="hd">
-      {back && <button className="back" onClick={() => go(back)} aria-label="back">‹</button>}
+      {back && <button className="back" onClick={() => goBack(back)} aria-label="back">‹</button>}
       <span className="t">
         {onTitle ? <button className="ttl" onClick={onTitle} aria-label="switch board">{title}<span className="car">▾</span></button> : title}
       </span>
       {meta && <span className="m">{meta}</span>}
     </div>
   )
+}
+
+/** Back to `to`: the browser's back when that's where we came from (so Android back and
+ *  this arrow agree), else straight there. */
+export function goBack(to: string) {
+  const from = (history.state?.from ?? '').split(/[?#]/)[0]
+  if (from === to.split(/[?#]/)[0]) history.back()
+  else go(to, true)
+}
+
+/** Loads again when you come back to the app (after playing the puzzle, say) or back online. */
+export function useFresh(load: () => void) {
+  const f = useRef(load)
+  f.current = load
+  useEffect(() => {
+    const on = () => { if (document.visibilityState === 'visible') f.current() }
+    document.addEventListener('visibilitychange', on)
+    window.addEventListener('online', on)
+    return () => { document.removeEventListener('visibilitychange', on); window.removeEventListener('online', on) }
+  }, [])
+}
+
+/** A cell edited in place, the way a spreadsheet does it: in the formula bar.
+ *  Enter or ✓ saves, Esc or ✕ puts it back. `note` speaks under the bar (a username check). */
+export function FxEdit({ fn, field, value, onChange, onSave, onCancel, ok = true, busy = false, note, max = 40 }: {
+  fn: string; field: string; value: string; onChange: (v: string) => void; onSave: () => void; onCancel: () => void
+  ok?: boolean; busy?: boolean; note?: { text: string; tone: string }; max?: number
+}) {
+  const el = useRef<HTMLInputElement>(null)
+  useEffect(() => { el.current?.focus(); el.current?.select() }, [])
+  return <>
+    <div className="fx fxe keep">
+      <i>fx</i><span>={fn}({field}:"</span>
+      <input ref={el} className="fxe-in" value={value} maxLength={max} aria-label={field} autoCapitalize="none" autoComplete="off" spellCheck={false}
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter' && ok && !busy) onSave(); if (e.key === 'Escape') onCancel() }} />
+      <span>")</span>
+      <button className="fxe-b ok" onClick={onSave} disabled={!ok || busy} aria-label="save">✓</button>
+      <button className="fxe-b" onClick={onCancel} aria-label="cancel">✕</button>
+    </div>
+    {note && <div className={`fx-note ${note.tone}`} aria-live="polite">{note.text}</div>}
+  </>
 }
 
 /** The formula bar: the screen's query, written out. Read-only for now. */
@@ -114,6 +156,17 @@ export function Loading({ what = 'the minutes' }: { what?: string }) {
   return <div className="center muted">fetching {what}…</div>
 }
 
+/** Rows that hold the sheet's shape while it loads, so nothing around them jumps. */
+export function Ghost({ what, rows = 5 }: { what: string; rows?: number }) {
+  return (
+    <div className="bd" aria-busy="true" aria-label={`fetching ${what}`}>
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="it ghost-row" aria-hidden="true"><span className="gh-ic" /><span className="g"><i style={{ width: `${70 - i * 9}%` }} /><i /></span></div>
+      ))}
+    </div>
+  )
+}
+
 export function Toast({ msg, action, onDone }: { msg: string; action?: { label: string; run: () => void }; onDone: () => void }) {
   const done = useRef(onDone)
   done.current = onDone
@@ -126,11 +179,21 @@ export function Toast({ msg, action, onDone }: { msg: string; action?: { label: 
   )
 }
 
+/** A panel over the screen. It takes a history entry, so Android back closes it. */
 export function Overlay({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
+  const close = useRef(onClose)
+  close.current = onClose
+  useEffect(() => {
+    if (!history.state?.overlay) history.pushState({ ...history.state, overlay: true }, '')
+    const pop = () => close.current()
+    window.addEventListener('popstate', pop)
+    return () => window.removeEventListener('popstate', pop)
+  }, [])
+  const dismiss = () => (history.state?.overlay ? history.back() : onClose())
   return (
-    <div className="ovl" role="dialog" aria-label={title}>
+    <div className="ovl" role="dialog" aria-label={title} onKeyDown={e => e.key === 'Escape' && dismiss()}>
       <div className="panel"><div className="ph-h">{title}</div>{children}</div>
-      <button className="close" onClick={onClose} aria-label="close" />
+      <button className="close" onClick={dismiss} aria-label="close" />
     </div>
   )
 }

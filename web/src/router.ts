@@ -2,8 +2,10 @@
 import { useEffect, useState } from 'react'
 
 export function go(path: string, replace = false) {
-  if (replace) history.replaceState(null, '', path)
-  else history.pushState(null, '', path)
+  // an open overlay holds a history entry of its own (so back closes it); leaving from
+  // one takes that entry's place rather than stacking on it
+  if (replace || history.state?.overlay) history.replaceState(null, '', path)
+  else history.pushState({ from: location.pathname + location.search }, '', path)
   window.dispatchEvent(new PopStateEvent('popstate'))
   window.scrollTo(0, 0)
 }

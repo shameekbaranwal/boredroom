@@ -74,6 +74,7 @@ function Route({ path, me }: { path: string; me: Me }) {
   if (match('/new', path)) return <NewBoard />
   if (match('/desk', path)) return <Desk />
   if (match('/me', path)) return <MeScreen />
+  if (match('/me/close', path)) return <MeScreen page="close" />
   if (match('/review', path)) {  // the review tab from a screen with no board: your last board's, else the empty one
     const slug = lastBoard() && onBoard(lastBoard()!) ? lastBoard()! : me.boards[0]?.slug
     return slug ? <Redirect to={`/b/${slug}/review`} /> : <NoBoardReview />
@@ -87,6 +88,8 @@ function Route({ path, me }: { path: string; me: Me }) {
   }
   if ((m = match('/b/:slug', path)) && onBoard(m.slug)) { remember(m.slug); return <Agenda key={m.slug} slug={m.slug} /> }
   if ((m = match('/b/:slug/you', path)) && onBoard(m.slug)) return <You key={m.slug} slug={m.slug} />
+  if ((m = match('/b/:slug/you/:page', path)) && onBoard(m.slug)) return <You key={`${m.slug}/${m.page}`} slug={m.slug} page={m.page} />
+  if ((m = match('/b/:slug/you/:page/:arg', path)) && onBoard(m.slug)) return <You key={`${m.slug}/${m.page}/${m.arg}`} slug={m.slug} page={m.page} arg={m.arg} />
   if ((m = match('/b/:slug/review', path)) && onBoard(m.slug)) return <Review key={m.slug} slug={m.slug} />
   if ((m = match('/b/:slug/m/:game', path)) && onBoard(m.slug)) return <Minutes slug={m.slug} game={m.game} />
   if ((m = match('/b/:slug/m/:game/:day', path)) && onBoard(m.slug)) return <Minutes slug={m.slug} game={m.game} day={m.day} />

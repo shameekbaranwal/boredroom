@@ -576,3 +576,158 @@ input, textarea, [contenteditable="true"],
 .wr.ghost { opacity: .45; cursor: default; }
 .wr.ghost .who { font-style: italic; font-weight: 400; }
 .ghost-av { display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: var(--line); }
+
+/* ---- feel: presses show, pulls don't reload, motion respects the setting ---- */
+html { overscroll-behavior-y: contain; }
+.it:active, .go:active, .cell.go:active, .bd > .wr:active, .ovl .bopt:active { background: var(--surface); }
+.btn:active:not(:disabled) { filter: brightness(.9); transform: translateY(1px); }
+.nav button:active, .sheets button:active, .seg button:active { background: var(--bg); }
+.lnk:active, .add:active, .more:active { opacity: .6; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+.it.lit { animation: cell .7s ease-out; }
+.pbw.shake { animation: shake .36s ease-in-out; }
+@keyframes shake { 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+
+/* rows that hold the sheet's shape while it loads */
+.ghost-row { cursor: default; }
+.ghost-row .gh-ic { width: 28px; height: 28px; flex: none; background: var(--surface); }
+.ghost-row .g { display: flex; flex-direction: column; gap: 6px; }
+.ghost-row i { display: block; height: 10px; width: 40%; background: var(--surface); animation: breathe 1.4s ease-in-out infinite; }
+.ghost-row i:first-child { height: 12px; }
+@keyframes breathe { 50% { opacity: .45; } }
+
+/* the formula bar, editing: =fn(field:"▌") ✓ ✕ */
+.fxe { gap: 2px; overflow: visible; }
+.fxe-in { flex: 1; min-width: 4ch; border: 0; border-bottom: 1px solid var(--accent); background: transparent; color: var(--accent);
+  font: 600 16px var(--f-num); padding: 1px 2px; outline: none; border-radius: 0; }
+.fxe-in::placeholder { color: var(--muted); font-weight: 400; }
+.fxe-b { flex: none; width: 30px; height: 26px; border: 1px solid var(--rule); background: var(--bg); color: var(--muted); font-size: 14px; cursor: pointer; margin-left: 4px; }
+.fxe-b.ok { color: var(--accent); font-weight: 700; }
+.fxe-b:disabled { opacity: .4; cursor: default; }
+.fx-note { padding: 4px 12px 5px 34px; font: 12.5px var(--f-num); color: var(--muted); background: var(--fx-bg); border-bottom: 1px solid var(--rule); }
+.fx-note.free { color: var(--ok-ink); font-weight: 700; }
+.fx-note.taken, .fx-note.bad { color: var(--bad); }
+.fx.recalc b { color: var(--accent); }
+.fx.recalc { animation: fadein .15s ease-out; }
+.sec .num.lit { animation: cell .9s ease-out; padding: 0 3px; }
+
+/* sub-pages slide in, like a sheet opening */
+.bd.page { animation: push .2s ease-out both; }
+@keyframes push { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+
+/* document rows: a label, a value, and › to open it */
+.bd > .go { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; border-bottom: 1px solid var(--line); background: var(--bg);
+  color: var(--ink); font: inherit; text-align: left; cursor: pointer; padding-right: 30px; }
+.bd > .go::after { content: "›"; position: absolute; right: 12px; top: 50%; translate: 0 -52%; font-size: 20px; color: var(--muted); }
+.go .k { flex: 1; min-width: 0; font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.go .v { flex: none; max-width: 55%; color: var(--muted); font: 13px var(--f-num); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bd > .go.bad .k { color: var(--bad); }
+.bd > .go.bad::after { color: var(--bad); }
+.bd > .go.note { background: var(--note); }
+.bd > .go.unissued .k { color: var(--muted); font-weight: 600; }
+.bd > .go.unissued { outline: 1px dashed var(--rule); outline-offset: -5px; }
+
+/* value cells: a label and its value on one row */
+.bd > .cell { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; width: 100%; border: 0;
+  border-bottom: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; text-align: left; }
+.cell .k { flex: 1; min-width: 0; font-weight: 700; font-size: 15px; }
+.cell .k small { display: block; font-weight: 400; font-size: 12px; }
+.cell .v { font: 14px var(--f-num); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%; }
+.bd > .cell.go { cursor: pointer; }
+.bd > .cell.go::after { display: none; }
+.cell .seg { flex: none; width: 210px; }
+.cell-sel { font: 14px var(--f-num); color: var(--accent); background: transparent; border: 0; border-bottom: 1px dashed var(--accent); padding: 2px 0;
+  max-width: 55%; text-align: right; cursor: pointer; }
+.cell-sel option { color: var(--ink); background: var(--bg); }
+.bd > .cell.bad .k { color: var(--bad); }
+.btn.sm { padding: 5px 14px; font-size: 14px; flex: none; }
+.pen { margin-left: 6px; font-size: 13px; color: var(--muted); font-weight: 400; }
+
+/* your seat on the board: the first row of the sheet */
+.bd > .seat-card { display: flex; align-items: center; gap: 12px; padding-top: 14px; padding-bottom: 14px; }
+.seat-card > .av, .file > .av { width: 40px; height: 40px; font-size: 18px; }
+.seat-card .g { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.seat-name, .file-name { align-self: flex-start; background: none; border: 0; padding: 0; color: var(--ink); font: 800 20px var(--f-ui); cursor: pointer;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.seat-card .sub { white-space: normal; }
+/* a rubber stamp: the chair's mark, and "claimed" the moment a seat is yours */
+.rstamp { flex: none; font: 800 11px "IBM Plex Mono", ui-monospace, monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--accent);
+  border: 2px solid currentColor; border-radius: 3px; padding: 3px 7px; rotate: -6deg; opacity: .85; }
+.rstamp.thunk { color: var(--bad); animation: thunk .22s cubic-bezier(.2,.9,.3,1.3) both; }
+@keyframes thunk { from { transform: scale(1.8); opacity: 0; } to { transform: none; opacity: .85; } }
+
+/* the invitation: a slip with a perforated edge */
+.bd > .slip { background: var(--note); gap: 4px; padding-top: 14px; }
+.slip::after { content: ""; position: absolute; left: 32px; right: 0; top: 4px; border-top: 2px dotted var(--note-b); opacity: .7; }
+.slip .inv-k { text-transform: none; }
+.slip .row-a { margin-top: 4px; }
+
+/* the cap table: member · seat · share of the minutes */
+.bd > .ct { display: grid; grid-template-columns: minmax(0, 1fr) 4ch minmax(96px, 38%); align-items: center; gap: 10px; }
+.bd > .ct-h { padding-top: 4px; padding-bottom: 4px; background: var(--gut); font: 700 11px var(--f-num); color: var(--muted); letter-spacing: .04em; }
+.ct-h button { background: none; border: 0; padding: 0; font: inherit; color: inherit; letter-spacing: inherit; text-align: left; cursor: pointer; }
+.ct-h button.on { color: var(--accent); }
+.ct-h > :nth-child(2) { text-align: right; }
+.ct .who { font-weight: 600; gap: 6px; }
+.ct .nmx { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct .chip { flex: none; }
+.ct .n { font: 13px var(--f-num); color: var(--muted); text-align: right; }
+.ct .share { display: flex; align-items: center; gap: 8px; }
+.ct .bar { flex: 1; height: 8px; background: var(--surface); outline: 1px solid var(--line); outline-offset: -1px; overflow: hidden; }
+.ct .bar i { display: block; height: 100%; background: var(--accent); transform-origin: left; }
+.ct .bar.grow i { animation: grow .7s cubic-bezier(.2,.7,.3,1) both; }
+@keyframes grow { from { transform: scaleX(0); } }
+.ct .share b { font: 700 13px var(--f-num); min-width: 4ch; text-align: right; }
+.bd > .ct.me { background: var(--seg); }
+.ct.me .who { color: var(--accent); }
+.it.unissued .nm { color: var(--muted); font-style: italic; font-weight: 600; }
+.it.unissued .av { background: transparent; color: var(--muted); border: 1.5px dashed var(--muted); }
+.it.unissued { cursor: default; }
+
+/* the bylaws: numbered articles */
+.bd > .art { display: flex; flex-direction: column; gap: 4px; }
+.art-n { font: 700 11px "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.art p { margin: 0; font-size: 15px; line-height: 1.4; max-width: 62ch; }
+.art .amend { align-self: flex-start; font-size: 13px; color: var(--accent); }
+.art .amend.bad { color: var(--bad); }
+.bd > .sub-art { padding-left: 62px; }
+.add.strike { color: var(--bad); font-weight: 700; }
+
+/* a motion, on its own page */
+.motion-h { font: 700 11px "IBM Plex Mono", ui-monospace, monospace; color: var(--bad); letter-spacing: .12em; text-transform: uppercase; }
+.bd.page > .motion { animation: none; gap: 10px; padding-top: 14px; padding-bottom: 16px; }
+.bd.page > .motion h3 { font-size: 18px; }
+.motion .field { margin-top: 4px; }
+/* hold to sign: a signature draws while you hold */
+.btn.sign { position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 16px 8px; min-width: 210px;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; }
+.btn.sign svg { width: 120px; height: 26px; }
+.btn.sign path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; opacity: .95; }
+.btn.sign span { font-size: 13px; }
+.btn.sign.holding { filter: brightness(.92); }
+
+/* setting a game aside: an ink line strikes through its name */
+.it.game .nm span { background: linear-gradient(currentColor, currentColor) no-repeat 0 58% / 0 1.5px; }
+.it.game.struck .nm span { animation: strike .45s ease-out both; }
+@keyframes strike { 0% { background-size: 0 1.5px; } 60% { background-size: 100% 1.5px; } 100% { background-size: 100% 1.5px; opacity: 1; } }
+
+/* your file: the everywhere sheet's first row */
+.bd > .file { display: flex; align-items: flex-start; gap: 12px; padding-top: 16px; padding-bottom: 14px; }
+.file .g { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.file-name { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 18px; font-weight: 600; }
+.file-tab { position: absolute; right: 12px; top: 8px; font: 700 10px "IBM Plex Mono", ui-monospace, monospace; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-bottom: 0; padding: 2px 8px; background: var(--gut); }
+.ct-solo { font-size: 14px; }
+@media (max-width: 380px) {
+  .cell .seg { width: 170px; }
+  .bd > .ct { grid-template-columns: minmax(0, 1fr) 3ch minmax(80px, 36%); gap: 8px; }
+}
+.ct.unissued-row .who { color: var(--muted); font-style: italic; font-weight: 500; }
+.ct.unissued-row .av { background: transparent; border: 1.5px dashed var(--muted); }
+.ct.unissued-row .bar i { background: var(--muted); opacity: .6; }
+.btn.sign .sign-line { stroke: currentColor; stroke-width: 1; stroke-dasharray: 3 3; opacity: .5; }
+.ct-h > * { white-space: nowrap; }
+.bd > .sub-art.compact { padding-top: 6px; padding-bottom: 6px; gap: 8px; }
+.sub-art.compact .ic { width: 20px; height: 20px; font-size: 10px; }
+.sub-art.compact .nm { font-size: 14px; font-weight: 600; }
+.sub-art.compact .nm small { font: 12px var(--f-num); margin-left: 4px; }

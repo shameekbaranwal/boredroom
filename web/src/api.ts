@@ -25,12 +25,12 @@ export type Minutes = {
   game: string; name: string; ranked: boolean; day: string; current: boolean; resets_at: string | null
   open: boolean; rows: Row[]; not_in: string[]
 }
-export type Member = { nickname: string; username: string; role: string; kind: Kind; games: number }
+export type Member = { nickname: string; username: string; role: string; kind: Kind; games: number; results: number; joined_at: string }
 export type Board = {
   slug: string; name: string; settings: Record<string, unknown>; invite: { code: string; expires_at: string | null }
   you: { nickname: string; role: string; agenda: string[] }
   members: Member[]
-  library: { game: string; name: string; rules: Record<string, unknown>; players: number }[]
+  library: { game: string; name: string; rules: Record<string, unknown>; players: number; removable: boolean }[]
   leaving: Leaving
 }
 /** What leaving a board would do. */

@@ -5,7 +5,7 @@ import re
 import secrets
 from typing import Any
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
 from . import claims, invites, names
@@ -120,12 +120,24 @@ def add_to_library(s: Session, board: Board, person: Person, game_id: str) -> Bo
     return bg
 
 
+def _others_playing(s: Session, board: Board, person_id: int, game_id: str) -> int:
+    return s.scalar(select(func.count()).select_from(Agenda).where(
+        Agenda.board_id == board.id, Agenda.game_id == game_id, Agenda.person_id != person_id)) or 0
+
+
+def removable(s: Session, board: Board, m: Membership, bg: BoardGame) -> bool:
+    """The chair can take any game off. Whoever added one can take it back off while
+    nobody else has it on their agenda, so a mis-tap doesn't need the chair."""
+    return m.role == "chair" or (bg.added_by == m.person_id and not _others_playing(s, board, m.person_id, bg.game_id))
+
+
 def remove_from_library(s: Session, board: Board, m: Membership, game_id: str) -> None:
-    if m.role != "chair":
-        fail(403, "only the chair can remove games from the library")
     bg = s.get(BoardGame, (board.id, game_id))
-    if bg:
-        s.delete(bg)  # agendas cascade
+    if bg is None:
+        return
+    if not removable(s, board, m, bg):
+        fail(403, "only the chair can take that game off now: others play it")
+    s.delete(bg)  # agendas cascade
 
 
 def set_agenda(s: Session, board: Board, person: Person, game_id: str, on: bool) -> None:
@@ -149,16 +161,23 @@ def board_json(s: Session, board: Board, m: Membership) -> dict[str, Any]:
     agendas: dict[int, list[str]] = {}
     for a in s.scalars(select(Agenda).where(Agenda.board_id == board.id)):
         agendas.setdefault(a.person_id, []).append(a.game_id)
+    # what each member has on file here: their results for the board's games
+    lib = [bg.game_id for bg in board.library]
+    filed = dict(s.execute(select(Result.person_id, func.count()).where(
+        Result.person_id.in_([x.person_id for x in members]), Result.game_id.in_(lib),
+        Result.withdrawn_at.is_(None)).group_by(Result.person_id)).all()) if lib and members else {}
     out = {
         "slug": board.slug, "name": board.name,
         "settings": {k: v for k, v in board.settings.items() if k != "claimed"},  # person ids stay here
         "you": {"nickname": m.nickname, "role": m.role, "agenda": sorted(agendas.get(m.person_id, []))},
         "members": [{"nickname": x.nickname, "username": x.person.username, "role": x.role,
-                     "kind": x.person.kind,
-                     "games": len(agendas.get(x.person_id, []))}
+                     "kind": x.person.kind, "joined_at": x.joined_at.isoformat(),
+                     "games": len(agendas.get(x.person_id, [])), "results": filed.get(x.person_id, 0)}
                     for x in sorted(members, key=lambda x: x.nickname)],
         "library": [{"game": bg.game_id, "name": REGISTRY[bg.game_id].name, "rules": bg.rules,
-                     "players": sum(bg.game_id in g for g in agendas.values())}
+                     "players": sum(bg.game_id in g for g in agendas.values()),
+                     "removable": m.role == "chair" or (bg.added_by == m.person_id and not any(
+                         bg.game_id in g for pid, g in agendas.items() if pid != m.person_id))}
                     for bg in sorted(board.library, key=lambda b: b.game_id)],
     }
     out["leaving"] = leaving_json(s, board, m.person)
