@@ -46,7 +46,7 @@ export function Nav({ slug, on, temp }: { slug?: string; on: 'agenda' | 'review'
         <Wordmark size={22} />
       </div>
       <button className={on === 'agenda' && !temp ? 'on' : ''} onClick={() => go(slug ? `/b/${slug}` : '/desk')}>agenda</button>
-      <button disabled title="coming in the next milestone">review</button>
+      <button className={on === 'review' && !temp ? 'on' : ''} disabled={!slug} onClick={() => slug && go(`/b/${slug}/review`)}>review</button>
       <button className={on === 'you' && !temp ? 'on' : ''} onClick={() => go(slug ? `/b/${slug}/you` : '/me')}>you</button>
       {temp && <span className="on tmp">{temp}</span>}
       <div className="nav-boards wide-only">

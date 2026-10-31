@@ -6,6 +6,7 @@ import Agenda from './screens/Agenda'
 import Desk from './screens/Desk'
 import Join from './screens/Join'
 import Minutes from './screens/Minutes'
+import Review from './screens/Review'
 import NewBoard from './screens/NewBoard'
 import MeScreen from './screens/Personal'
 import SignIn from './screens/SignIn'
@@ -81,6 +82,7 @@ function Route({ path, me }: { path: string; me: Me }) {
   }
   if ((m = match('/b/:slug', path)) && onBoard(m.slug)) { remember(m.slug); return <Agenda key={m.slug} slug={m.slug} /> }
   if ((m = match('/b/:slug/you', path)) && onBoard(m.slug)) return <You key={m.slug} slug={m.slug} />
+  if ((m = match('/b/:slug/review', path)) && onBoard(m.slug)) return <Review key={m.slug} slug={m.slug} />
   if ((m = match('/b/:slug/m/:game', path)) && onBoard(m.slug)) return <Minutes slug={m.slug} game={m.game} />
   if ((m = match('/b/:slug/m/:game/:day', path)) && onBoard(m.slug)) return <Minutes slug={m.slug} game={m.game} day={m.day} />
   // home: the last board you used, else your first, else your desk

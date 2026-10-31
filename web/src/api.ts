@@ -37,6 +37,14 @@ export type Board = {
 export type Leaving = { slug: string; name: string; chair: boolean; claimed: { nickname: string; results: number } | null; heir: string | null; alone: boolean }
 export type Invite = { code: string; name: string; slug: string; chair: string | null; inviter: string | null; members: number; library: string[]
   seats: { username: string; nickname: string; results: number }[] }
+export type Period = 'today' | 'week' | 'month' | 'all'
+export type Standing = { nickname: string; me: boolean; wins: number; days: number; place: number }
+export type Review = {
+  period: Period; now: string; standings: Standing[]
+  games?: { game: string; name: string; ranked: boolean; day: string; present: number; players: number; plays: boolean
+    place: string | null; filed: boolean; leader: { nickname: string | null; tied: number; metrics: Record<string, number> } | null }[]
+  records?: { game: string; name: string; nickname: string; me: boolean; metrics: Record<string, number>; day: string }[]
+}
 export type Event = {
   kind: 'filed' | 'merged' | 'duplicate' | 'conflict' | 'not_out_yet'
   game: string; puzzle: string; result_id: number | null; added: string[]; confidence: string; late: boolean
@@ -98,6 +106,7 @@ export const api = {
   nickname: (slug: string, nickname: string) => call<Board>('PATCH', `/boards/${slug}/me`, { nickname }),
   agenda: (slug: string, game: string, on: boolean) => call<Board>(on ? 'PUT' : 'DELETE', `/boards/${slug}/agenda/${game}`),
   claim: (slug: string, username: string) => call<{ moved: number; board: Board }>('POST', `/boards/${slug}/claim`, { username }),
+  review: (slug: string, period: Period) => call<Review>('GET', `/boards/${slug}/review?period=${period}`),
   today: (slug: string) => call<Today>('GET', `/boards/${slug}/today`),
   minutes: (slug: string, game: string, day?: string) =>
     call<Minutes>('GET', `/boards/${slug}/minutes/${game}${day ? `?day=${day}` : ''}`),
