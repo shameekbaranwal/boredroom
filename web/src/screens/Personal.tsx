@@ -11,6 +11,13 @@ export function Personal({ guestOnly = false }: { guestOnly?: boolean }) {
   const { me, refreshMe, toast, signOut } = useApp()
   const [theme] = useTheme()
   const [tz, setTz] = useState(me.tz)
+  const [user, setUser] = useState(me.username)
+  const saveUser = async () => {
+    const v = user.trim().toLowerCase()
+    if (!v || v === me.username) { setUser(me.username); return }
+    try { await api.updateMe({ username: v }); await refreshMe(); toast(`you're ${v} now. your names on boards stay as they are.`) }
+    catch (e) { toast((e as Error).message); setUser(me.username) }
+  }
 
   const deviceTz = Intl.DateTimeFormat().resolvedOptions().timeZone
   const browserTz = OLD_ZONES[deviceTz] ?? deviceTz
@@ -36,6 +43,11 @@ export function Personal({ guestOnly = false }: { guestOnly?: boolean }) {
   if (guestOnly) return guestCard || null
 
   return <>
+    <div className="field">
+      <label htmlFor="user">username <span className="muted">· yours alone across boredroom; boards can call you something else</span></label>
+      <input id="user" className="input keep" value={user} onChange={e => setUser(e.target.value)} onBlur={saveUser}
+        onKeyDown={e => e.key === 'Enter' && saveUser()} autoCapitalize="none" autoComplete="off" spellCheck={false} />
+    </div>
     <div className="field">
       <label htmlFor="tz">timezone {tz !== browserTz && <span className="muted">(this device says {browserTz})</span>}</label>
       {zones.length

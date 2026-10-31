@@ -51,6 +51,7 @@ export default function You({ slug }: { slug: string }) {
   const [seatsOpen, foldSeats] = useFold('seats', false)
   const [membersOpen, foldMembers] = useFold('members', false)
   const [youOpen, foldYou] = useFold('you', false)
+  const [boardOpen, foldBoard] = useFold('board', false)
   useEffect(() => { api.board(slug).then(x => { setB(x); setNick(x.you.nickname) }).catch(e => setErr(e.message)) }, [slug])
   useEffect(() => { if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView() }, [b])
 
@@ -170,6 +171,11 @@ export default function You({ slug }: { slug: string }) {
           </div>
         ))}
 
+        {b.you.role === 'chair' && <>
+          <Group id="board" title={<>{b.name}'s settings</>} note={!boardOpen && 'you hold the chair'} open={boardOpen} onFold={foldBoard} />
+          {boardOpen && <ChairSettings board={b} onBoard={x => { setB(x); refreshMe() }} />}
+        </>}
+
         <Group id="you" title="you, everywhere" note={!youOpen && <span className="keep">{me.tz} · {me.kind === 'account' ? 'signed in' : 'guest'}</span>} open={youOpen} onFold={foldYou} />
         {youOpen ? <Personal /> : me.kind === 'guest' && <Personal guestOnly />}
       </div>
@@ -177,4 +183,50 @@ export default function You({ slug }: { slug: string }) {
       {picker && <Boards current={slug} onClose={() => setPicker(false)} />}
     </div>
   )
+}
+
+/** What only the chair can change. Each change that can't be taken back asks once, in place. */
+function ChairSettings({ board, onBoard }: { board: Board; onBoard: (b: Board) => void }) {
+  const { games, toast } = useApp()
+  const [name, setName] = useState(board.name)
+  const [drop, setDrop] = useState('')
+  const [sure, setSure] = useState<'' | 'drop' | 'retire'>('')
+  const run = async (f: () => Promise<Board>, done: string) => {
+    setSure('')
+    try { onBoard(await f()); toast(done) } catch (e) { toast((e as Error).message) }
+  }
+  const rename = () => {
+    const v = name.trim().toLowerCase()
+    if (v && v !== board.name) run(() => api.rename(board.slug, v), `the board is ${v} now. links still work.`)
+  }
+  const dropping = board.library.find(g => g.game === drop)
+  return <>
+    <div className="field">
+      <label htmlFor="bname">the board's name</label>
+      <input id="bname" className="input" value={name} onChange={e => setName(e.target.value)} onBlur={rename} onKeyDown={e => e.key === 'Enter' && rename()} />
+    </div>
+    <div className="field">
+      <label htmlFor="drop">take a game off the board <span className="muted">· it leaves everyone's agenda; results stay in the minutes</span></label>
+      <div className="guest">
+        <select id="drop" className="input" value={drop} onChange={e => { setDrop(e.target.value); setSure('') }}>
+          <option value="">pick a game</option>
+          {board.library.map(g => <option key={g.game} value={g.game}>{games[g.game]?.name ?? g.name} · {g.players} play</option>)}
+        </select>
+        {sure === 'drop' && dropping
+          ? <button className="btn danger" onClick={() => run(() => api.dropGame(board.slug, drop).then(x => { setDrop(''); return x }), `${dropping.name} is off the board.`)}>yes, remove</button>
+          : <button className="btn ghost" disabled={!drop} onClick={() => setSure('drop')}>remove</button>}
+      </div>
+      {sure === 'drop' && dropping && <small className="muted">{dropping.players} {dropping.players === 1 ? 'person has' : 'people have'} it on their agenda. sure?</small>}
+    </div>
+    <div className="field">
+      <label>every invite that's out there</label>
+      <div className="row-a">
+        {sure === 'retire'
+          ? <><button className="btn danger" onClick={() => run(() => api.retireInvites(board.slug).then(r => r.board), 'every old invite stopped working. members have new words.')}>yes, retire them all</button>
+              <button className="lnk" onClick={() => setSure('')}>no</button></>
+          : <button className="btn ghost" onClick={() => setSure('retire')}>retire all invites</button>}
+      </div>
+      <small className="muted">for when a link ended up somewhere it shouldn't. everyone's words stop working; each member gets new ones.</small>
+    </div>
+  </>
 }

@@ -172,6 +172,33 @@ def renew_invite(slug):
     return jsonify(boards.board_json(g.db, b, m))
 
 
+@api.patch("/boards/<slug>")
+@auth_required
+def board_settings(slug):
+    """The chair's settings: {name}. The slug stays, so links keep working."""
+    b, m = boards.get_board(g.db, slug, g.person)
+    if m.role != "chair":
+        fail(403, "only the chair can change the board")
+    name = str(body().get("name", b.name)).strip().lower()
+    if not 1 <= len(name) <= 60:
+        fail(400, "board names are 1–60 characters")
+    b.name = name
+    g.db.commit()
+    return jsonify(boards.board_json(g.db, b, m))
+
+
+@api.delete("/boards/<slug>/invites")
+@auth_required
+def retire_invites(slug):
+    """The chair stops every invite to the board that's out there; members get new ones."""
+    b, m = boards.get_board(g.db, slug, g.person)
+    if m.role != "chair":
+        fail(403, "only the chair can retire everyone's invites")
+    retired = invites.retire_all(g.db, b)
+    g.db.commit()
+    return jsonify({"retired": retired, "board": boards.board_json(g.db, b, m)})
+
+
 @api.get("/boards/<slug>")
 @auth_required
 def board(slug):

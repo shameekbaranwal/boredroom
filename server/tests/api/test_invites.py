@@ -68,3 +68,17 @@ def test_a_new_link_retires_the_old_one(client, seat):
     assert new != old and a.get("/boards/soup").json["invite"]["code"] == new
     assert client.get(f"/api/v1/invites/{old}").status_code == 404
     assert client.get(f"/api/v1/invites/{new}").status_code == 200
+
+
+def test_the_chair_renames_the_board_and_retires_every_invite(client, seat):
+    a = seat("ivan")
+    old = a.post("/boards", {"name": "soup"}).json["invite"]["code"]
+    b = seat("bea")
+    b.post("/boards/join", {"code": old})
+    theirs = b.get("/boards/soup").json["invite"]["code"]
+    assert b.patch("/boards/soup", {"name": "broth"}).status_code == 403
+    assert b.delete("/boards/soup/invites").status_code == 403
+    assert a.patch("/boards/soup", {"name": "Broth"}).json["name"] == "broth"
+    r = a.delete("/boards/soup/invites").json
+    assert r["retired"] == 2 and r["board"]["invite"]["code"] not in (old, theirs)
+    assert client.get(f"/api/v1/invites/{theirs}").status_code == 404

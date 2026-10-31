@@ -139,6 +139,14 @@ def renew(s: Session, board: Board, by: Person) -> Invite:
     return create(s, board, by)
 
 
+def retire_all(s: Session, board: Board) -> int:
+    """Every live invite to the board stops working now. Returns how many there were."""
+    now, n = utcnow(), 0
+    for inv in s.scalars(select(Invite).where(Invite.board_id == board.id, Invite.revoked_at.is_(None))):
+        inv.revoked_at, n = now, n + 1
+    return n
+
+
 def peek(s: Session, typed: str) -> Invite | None:
     """The live invite for a code, for link previews: no throttle, since a chat app's
     crawler fetching a link it was given isn't guessing."""
