@@ -110,9 +110,3 @@ def seat(client):
 
 # 11:30 IST on 30 Oct 2026, the same moment the parser tests use
 NOW = datetime(2026, 10, 30, 6, 0, tzinfo=timezone.utc)
-
-
-@pytest.fixture(autouse=True)
-def _forget_invite_misses():
-    from boredroom import invites
-    invites._misses.clear()

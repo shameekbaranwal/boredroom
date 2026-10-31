@@ -7,7 +7,7 @@ from ..text import duration
 class WikiGame(Game):
     id = "wiki"
     name = "wiki game"
-    header = r"^.+? ➡️ .+? ⏰ \d+:\d+(?::\d+)? 🦶\s*\d+"
+    header = r"^[^\n]{1,200}? ➡️ [^\n]{1,200}? ⏰ \d+:\d+(?::\d+)? 🦶\s*\d+"
     links = ("thewikigamedaily.com",)
     key = "pair"
     metrics = (

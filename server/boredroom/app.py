@@ -14,11 +14,46 @@ from .errors import fail
 from .legal import legal
 
 
+# What the page may load: itself, Google sign-in, Google Fonts. No inline scripts, no
+# plugins, never framed. Inline styles stay allowed (React's style={} attributes).
+CSP = "; ".join([
+    "default-src 'self'",
+    "script-src 'self' https://accounts.google.com/gsi/client",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: https://*.googleusercontent.com",
+    "frame-src https://accounts.google.com/gsi/",
+    "connect-src 'self' https://accounts.google.com/gsi/",
+    "worker-src 'self'", "manifest-src 'self'",
+    "object-src 'none'", "base-uri 'none'", "form-action 'self'", "frame-ancestors 'none'",
+])
+HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    "Strict-Transport-Security": "max-age=31536000",
+    # google's sign-in popup needs to talk back to its opener
+    "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+}
+
+
+def _secure(resp: Response) -> Response:
+    for k, v in HEADERS.items():
+        resp.headers.setdefault(k, v)
+    if resp.mimetype == "text/html":
+        resp.headers.setdefault("Content-Security-Policy", CSP)
+    if request.path.startswith("/api/"):  # personal data: never kept by a browser or proxy
+        resp.headers.setdefault("Cache-Control", "no-store")
+    return resp
+
+
 def create_app(config: Config | None = None, engine: Engine | None = None) -> Flask:
     config = config or Config()
     app = Flask(__name__)
     app.config["MAX_CONTENT_LENGTH"] = config.max_paste_bytes
     app.config["BOREDROOM"] = config
+    app.after_request(_secure)
     engine = engine or make_engine(config.database_url)
     Session = make_sessionmaker(engine)
     app.extensions["boredroom.engine"] = engine

@@ -94,3 +94,13 @@ def test_one_claimed_seat_each(tmp_path, db, seat):
     r = a.post("/boards/soup/claim", {"username": "walter"})
     assert r.status_code == 409 and "one each" in r.json["error"]
     assert ("walter", "placeholder") in _seats(a.get("/boards/soup"))
+
+
+def test_claiming_the_chairs_seat_doesnt_hand_over_the_chair(tmp_path, db, seat):
+    board = _soup(tmp_path, db)  # mallory's seat holds the chair
+    code = invites.current(db, board).code
+    s, x = seat("walter.b"), seat("stranger")
+    s.post("/boards/join", {"code": code})
+    r = x.post("/boards/join", {"code": code, "claim": "mallory"})
+    assert r.json["you"]["role"] == "member"
+    assert s.get("/boards/soup").json["you"]["role"] == "chair"

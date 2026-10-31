@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import re
+import secrets
 from typing import Any
 
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
-from . import claims, invites
+from . import claims, invites, names
 from .errors import fail
 from .models import Agenda, Board, BoardGame, Invite, Membership, Paste, Person, Result, utcnow
 from .parser import REGISTRY
@@ -19,13 +20,12 @@ def slugify(name: str) -> str:
 
 
 def create_board(s: Session, chair: Person, name: str) -> Board:
-    name = name.strip().lower()
-    if not 1 <= len(name) <= 60:
-        fail(400, "board names are 1–60 characters")
+    name = names.clean(name, 60, "a board's name")
     base = slug = slugify(name)
-    n = 2
+    # taken (or a name with no letters to slug, which all become "board"): a random suffix,
+    # so finding a free slug is one or two lookups, never a count up through every board
     while s.scalar(select(Board.id).where(Board.slug == slug)):
-        slug, n = f"{base}-{n}", n + 1
+        slug = f"{base[:44]}-{secrets.token_hex(2)}"
     board = Board(name=name, slug=slug, chair_id=chair.id,
                   settings={"late_filing": True, "join": "link"})
     s.add(board)
@@ -52,7 +52,7 @@ def join(s: Session, person: Person, code: str, claim: str | None = None) -> Boa
     if claim and (m is None or m.left_at is not None):
         claims.claim(s, board, person, claim)
     elif m is None:
-        s.add(Membership(board_id=board.id, person_id=person.id, nickname=person.username))
+        s.add(Membership(board_id=board.id, person_id=person.id, nickname=names.free_nickname(s, board.id, person.username)))
     elif m.left_at is not None:
         m.left_at = None
     return board
@@ -150,7 +150,8 @@ def board_json(s: Session, board: Board, m: Membership) -> dict[str, Any]:
     for a in s.scalars(select(Agenda).where(Agenda.board_id == board.id)):
         agendas.setdefault(a.person_id, []).append(a.game_id)
     out = {
-        "slug": board.slug, "name": board.name, "settings": board.settings,
+        "slug": board.slug, "name": board.name,
+        "settings": {k: v for k, v in board.settings.items() if k != "claimed"},  # person ids stay here
         "you": {"nickname": m.nickname, "role": m.role, "agenda": sorted(agendas.get(m.person_id, []))},
         "members": [{"nickname": x.nickname, "username": x.person.username, "role": x.role,
                      "kind": x.person.kind,

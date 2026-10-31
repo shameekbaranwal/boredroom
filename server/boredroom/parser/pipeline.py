@@ -150,8 +150,9 @@ def _fallbacks(chunk: str, ctx: Context) -> tuple[list[Result], str]:
     return [], chunk
 
 
-_URL = re.compile(r"(?:https?://)?(?:www\.)?([a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,})(/\S*)?", re.I)
-_FRACTION = re.compile(r"\b(\d[\d,.]*)\s*/\s*(\d[\d,]*)\b")
+# starts only where a word does, with bounded labels, so long runs can't backtrack
+_URL = re.compile(r"(?<![\w.-])(?:https?://)?(?:www\.)?((?:[a-z0-9-]{1,63}\.){1,10}[a-z]{2,24})(/\S*)?", re.I)
+_FRACTION = re.compile(r"\b(\d[\d,.]{0,15})\s*/\s*(\d[\d,]{0,15})\b")  # bounded: "1,1,1,…" can't backtrack
 _SCORE = re.compile(r"(?:score|total|points?)\s*[:=]?\s*(\d[\d,.]*)", re.I)
 _PUZZLE = re.compile(r"(?:#|№|No\.\s*|Day\s*#?)\s*(\d[\d,]*)")
 _SQUARES = re.compile("[\U0001F7E5-\U0001F7EB⬛⬜]{3,}")
@@ -175,7 +176,7 @@ def _unknown(text: str) -> Unknown | None:
     )
     if not looks_like_share:
         return None
-    first = lines[0]
+    first = lines[0][:200]
     name = None
     if not _URL.match(first.strip()):
         name = re.split(r"\s+(?:#|№|No\.|Day\b|-|—|:|\d)|:", first, maxsplit=1)[0]

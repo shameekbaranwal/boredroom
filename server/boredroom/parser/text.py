@@ -7,11 +7,11 @@ from datetime import date, timedelta
 # zero-width and bidi marks people (and WhatsApp) put in pastes. U+200D (zero-width
 # joiner) is kept: it holds composite emoji like 🤷‍♂️ together.
 _INVISIBLE = re.compile("[​‌‎‏‪-‮⁠⁦-⁩﻿]")
-_EDITED = re.compile(r"\s*<This message was edited>\s*$", re.M)
+_EDITED = re.compile(r"[ \t]*<This message was edited>[ \t]*$", re.M)
 _ANGLE_LINK = re.compile(r"<(https?://[^>\s]+|[\w.-]+\.\w{2,}/[^>\s]*)>")
 _URL = re.compile(r"https?://\S+")
 _TRACKING_PARAMS = re.compile(r"^(?:r|si|ref|utm_[a-z]+)$")
-_SPOILER_WRAPPER = re.compile(r"^\s*\[[^\]\n]*spoiler[^\]\n]*\]\s*$", re.I | re.M)
+_SPOILER_WRAPPER = re.compile(r"^[ \t]*\[[^\]\n]{0,80}spoiler[^\]\n]{0,80}\][ \t]*$", re.I | re.M)
 
 
 def normalise(text: str) -> str:

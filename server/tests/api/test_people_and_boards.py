@@ -1,3 +1,4 @@
+import re
 def test_guest_gets_a_token_and_me_needs_it(client, seat):
     a = seat("ivan")
     assert a.get("/me").json == {"username": "ivan", "kind": "guest", "tz": "Asia/Kolkata", "email": None, "boards": []}
@@ -23,7 +24,7 @@ def test_create_join_and_nickname(seat):
     chair, judy = seat("shmk"), seat("judy")
     b = chair.post("/boards", {"name": "Soup"}).json
     assert (b["slug"], b["name"], b["you"]["role"]) == ("soup", "soup", "chair")
-    assert chair.post("/boards", {"name": "soup"}).json["slug"] == "soup-2"
+    assert re.fullmatch(r"soup-[0-9a-f]{4}", chair.post("/boards", {"name": "soup"}).json["slug"])
 
     assert judy.get("/boards/soup").status_code == 404  # not a member yet
     assert judy.post("/boards/join", {"code": "wrong"}).status_code == 404

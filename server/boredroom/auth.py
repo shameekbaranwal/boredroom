@@ -5,7 +5,9 @@ from __future__ import annotations
 import hashlib
 import re
 import secrets
+import time
 from dataclasses import dataclass
+from datetime import timedelta
 from functools import wraps
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -70,8 +72,16 @@ def bearer() -> str:
     return header[7:].strip() if header.lower().startswith("bearer ") else ""
 
 
+TOKEN_IDLE = timedelta(days=180)  # a device unused this long signs in again
+
+
 def token_row(s: Session, token: str) -> AuthToken | None:
-    return s.scalar(select(AuthToken).where(AuthToken.token_hash == hash_token(token))) if token else None
+    row = s.scalar(select(AuthToken).where(AuthToken.token_hash == hash_token(token))) if token else None
+    if row is not None and row.last_seen < utcnow() - TOKEN_IDLE:
+        s.delete(row)
+        s.commit()
+        return None
+    return row
 
 
 def auth_required(view):
@@ -99,14 +109,41 @@ class GoogleId:
     name: str | None
 
 
+class _CertCache:
+    """Google's signing certs, fetched at most hourly (with a 5 s timeout) instead of on
+    every sign-in attempt, so junk credentials don't each cost a request to Google."""
+    def __init__(self) -> None:
+        from google.auth.transport import requests as google_requests
+        self._inner, self._kept = google_requests.Request(), {}
+
+    def __call__(self, url, method="GET", **kw):
+        kw.setdefault("timeout", 5)
+        if method != "GET":
+            return self._inner(url, method=method, **kw)
+        hit = self._kept.get(url)
+        if hit and hit[0] > time.monotonic():
+            return hit[1]
+        resp = self._inner(url, method=method, **kw)
+        if resp.status == 200:
+            self._kept[url] = (time.monotonic() + 3600, resp)
+        return resp
+
+
+_certs: _CertCache | None = None
+
+
 def verify_google(credential: str, client_id: str) -> GoogleId:
     """Checks a Google ID token's signature, audience, issuer and expiry."""
-    from google.auth.transport import requests as google_requests
+    global _certs
+    from google.auth.exceptions import GoogleAuthError
     from google.oauth2 import id_token
 
+    if credential.count(".") != 2:  # not even shaped like a JWT
+        fail(400, "that isn't a google credential")
+    _certs = _certs or _CertCache()
     try:
-        claims = id_token.verify_oauth2_token(credential, google_requests.Request(), client_id)
-    except ValueError:
+        claims = id_token.verify_oauth2_token(credential, _certs, client_id)
+    except (ValueError, GoogleAuthError):  # bad signature, audience, issuer, expiry, or no certs
         fail(401, "google didn't vouch for that sign-in; try again")
     if not claims.get("email_verified"):
         fail(401, "that google account's email isn't verified")

@@ -67,9 +67,7 @@ def claim(s: Session, board: Board, claimer: Person, username: str) -> int:
         own = s.get(Membership, (m.board_id, claimer.id))
         if own is None:
             s.add(Membership(board_id=m.board_id, person_id=claimer.id, nickname=m.nickname,
-                             role=m.role, joined_at=m.joined_at))
-        elif m.role == "chair":
-            own.role = "chair"
+                             joined_at=m.joined_at))
         if own is not None and own.left_at is not None:
             own.left_at = None
         s.flush()
@@ -78,7 +76,14 @@ def claim(s: Session, board: Board, claimer: Person, username: str) -> int:
             if s.get(Agenda, (m.board_id, claimer.id, game)) is None:
                 s.add(Agenda(board_id=m.board_id, person_id=claimer.id, game_id=game))
         s.delete(m)  # its agenda rows go with the person, by cascade
-    s.execute(update(Board).where(Board.chair_id == seat.id).values(chair_id=claimer.id))
+    # the chat's chair doesn't come with the seat: anyone holding a forwarded invite could
+    # claim it. The chair goes to the longest-serving person already here, else the claimer.
+    for b in s.scalars(select(Board).where(Board.chair_id == seat.id)).all():
+        heir = s.scalar(select(Membership).join(Person, Person.id == Membership.person_id).where(
+            Membership.board_id == b.id, Membership.left_at.is_(None), Person.kind != "placeholder",
+            Membership.person_id.not_in([claimer.id, seat.id])).order_by(Membership.joined_at))
+        heir = heir or s.get(Membership, (b.id, claimer.id))
+        b.chair_id, heir.role = heir.person_id, "chair"
     s.flush()
     s.delete(seat)
     s.flush()

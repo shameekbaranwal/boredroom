@@ -105,3 +105,10 @@ def test_username_check(seat, client):
     assert check("IVAN", a)["reason"] == "that's you"
     assert check("priya")["available"] is True
     assert check("x")["available"] is False
+
+
+def test_every_response_carries_security_headers(seat):
+    a = seat("ivan")
+    r = a.get("/me")
+    assert r.headers["X-Content-Type-Options"] == "nosniff" and r.headers["X-Frame-Options"] == "DENY"
+    assert r.headers["Cache-Control"] == "no-store"

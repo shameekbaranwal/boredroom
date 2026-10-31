@@ -9,14 +9,12 @@ from __future__ import annotations
 
 import re
 import secrets
-import time
-from collections import defaultdict, deque
 from datetime import datetime, timedelta
 
-from flask import request
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from . import throttle
 from .errors import fail
 from .models import Board, Invite, Person, utcnow
 
@@ -147,36 +145,45 @@ def retire_all(s: Session, board: Board) -> int:
     return n
 
 
+# Wrong codes are cheap to try, so callers who keep missing are stopped: each caller after
+# MISS_LIMIT misses, and everyone at once after GLOBAL_LIMIT (a spread-out guesser). Link
+# previews count too, since a preview says whether a code is real.
+MISS_LIMIT, GLOBAL_LIMIT, MISS_WINDOW = 20, 300, 600
+
+
+def _blocked(s: Session) -> bool:
+    return (throttle.count(s, f"invite:{throttle.caller()}", MISS_WINDOW) >= MISS_LIMIT
+            or throttle.count(s, "invite:*", MISS_WINDOW) >= GLOBAL_LIMIT)
+
+
+def _missed(s: Session) -> None:
+    throttle.note(s, f"invite:{throttle.caller()}", "invite:*")
+
+
+def _live(inv: Invite | None) -> bool:
+    return inv is not None and inv.revoked_at is None and not (inv.expires_at and inv.expires_at <= utcnow())
+
+
 def peek(s: Session, typed: str) -> Invite | None:
-    """The live invite for a code, for link previews: no throttle, since a chat app's
-    crawler fetching a link it was given isn't guessing."""
+    """The live invite for a code, for link previews; None (the generic preview) for a
+    miss, a legacy code, or a caller who's been guessing."""
+    if _blocked(s):
+        return None
     inv = s.scalar(select(Invite).where(Invite.code == normalise(typed)))
-    if inv is None or inv.legacy or inv.revoked_at is not None or (inv.expires_at and inv.expires_at <= utcnow()):
+    if not _live(inv) or inv.legacy:
+        _missed(s)
         return None
     return inv
 
 
-# wrong codes are cheap to try, so a caller who keeps missing is slowed down
-_misses: dict[str, deque[float]] = defaultdict(deque)
-MISS_LIMIT, MISS_WINDOW = 20, 600
-
-
-def _caller() -> str:
-    return request.headers.get("CF-Connecting-IP") or request.remote_addr or "?"
-
-
 def lookup(s: Session, typed: str) -> Invite:
     """The live invite for a code as typed, or a 404 that doesn't say why."""
-    who, now = _caller(), time.monotonic()
-    misses = _misses[who]
-    while misses and now - misses[0] > MISS_WINDOW:
-        misses.popleft()
-    if len(misses) >= MISS_LIMIT:
+    if _blocked(s):
         fail(429, "too many invite codes that didn't work. try again in a few minutes.")
     # legacy codes are case-sensitive and kept as typed; word codes forgive spacing and case
-    candidates = {typed.strip(), normalise(typed)} - {""}
+    candidates = {typed.strip()[:80], normalise(typed)} - {""}
     inv = s.scalar(select(Invite).where(Invite.code.in_(candidates))) if candidates else None
-    if inv is None or inv.revoked_at is not None or (inv.expires_at and inv.expires_at <= utcnow()):
-        misses.append(now)
+    if not _live(inv):
+        _missed(s)
         fail(404, "that invite doesn't work")
     return inv

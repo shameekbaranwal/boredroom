@@ -82,3 +82,14 @@ def test_the_chair_renames_the_board_and_retires_every_invite(client, seat):
     r = a.delete("/boards/soup/invites").json
     assert r["retired"] == 2 and r["board"]["invite"]["code"] not in (old, theirs)
     assert client.get(f"/api/v1/invites/{theirs}").status_code == 404
+
+
+def test_names_lose_hidden_characters_and_stay_unique_on_a_board(seat):
+    a, b = seat("ivan"), seat("judy")
+    code = a.post("/boards", {"name": "Soup‮​  Daily\x00"}).json["invite"]["code"]
+    assert a.get("/me").json["boards"][0]["name"] == "soup daily"
+    b.post("/boards/join", {"code": code})
+    r = b.patch("/boards/soup-daily/me", {"nickname": "IVAN"})
+    assert r.status_code == 409
+    assert b.patch("/boards/soup-daily/me", {"nickname": "​"}).status_code == 400
+    assert a.post("/boards", {"name": "स्वाद"}).json["slug"] != a.post("/boards", {"name": "स्वाद"}).json["slug"]

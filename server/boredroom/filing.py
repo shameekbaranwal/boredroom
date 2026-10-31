@@ -102,7 +102,7 @@ def file_paste(s: Session, person: Person, text: str, now: datetime | None = Non
     events: list[Event] = []
 
     for r in parsed.results:
-        key = key_str(r.puzzle)
+        key = key_str(r.puzzle)[:200]  # the column's width; a page pair can be any length
         ev = Event(kind="filed", game=r.game, puzzle=key, confidence=r.confidence, late=r.status == "late")
         if r.status == "ahead":
             ev.kind = "not_out_yet"
@@ -136,7 +136,7 @@ def file_paste(s: Session, person: Person, text: str, now: datetime | None = Non
         events.append(ev)
 
     for u in parsed.unknown:
-        s.add(GameRequest(person_id=person.id, name=u.name, link=u.link, raw=u.raw))
+        s.add(GameRequest(person_id=person.id, name=u.name and u.name[:100], link=u.link and u.link[:200], raw=u.raw))
     return Filing(paste.id, events, [u.to_dict() for u in parsed.unknown], parsed.note)
 
 

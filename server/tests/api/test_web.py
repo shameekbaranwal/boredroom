@@ -7,7 +7,9 @@ def test_web_app_is_served_with_a_fallback(tmp_path, engine):
     (tmp_path / "index.html").write_text("<div id=root></div>")
     (tmp_path / "assets" / "app-1a2b.js").write_text("// js")
     c = create_app(Config(web_dist=str(tmp_path)), engine=engine).test_client()
-    assert c.get("/").data == b"<div id=root></div>"
+    page = c.get("/")
+    assert page.data == b"<div id=root></div>"
+    assert "script-src 'self'" in page.headers["Content-Security-Policy"] and "frame-ancestors 'none'" in page.headers["Content-Security-Policy"]
     assert c.get("/b/soup/m/wiki").data == b"<div id=root></div>"  # the app routes itself
     js = c.get("/assets/app-1a2b.js")
     assert js.data == b"// js" and "immutable" in js.headers["Cache-Control"]

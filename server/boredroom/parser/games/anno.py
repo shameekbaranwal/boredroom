@@ -10,7 +10,7 @@ class Anno(Game):
     header = r"^ANNO №\s*\d+"
     links = ("anno-game.netlify.app",)
     # headerless shares start at the rounds line: "97🎯  94🎯  26🤔  0💀  12💀"
-    fallback = r"^\s*(?:\d+\S+\s+){4}\d+\S+\s*\n\s*(?:Total:\s*)?\d+/500"
+    fallback = r"^[ \t]*(?:(?>\d+\S+)\s+){4}(?>\d+\S+)[ \t]*\n\s*(?:Total:\s*)?\d+/500"  # atomic: no ReDoS
     anchor = (303, date(2026, 10, 30))
     # 10:30 IST is exactly midnight in Chicago (CDT); confirm when US clocks change on 1 Nov
     reset = Reset("America/Chicago", time(0, 0))

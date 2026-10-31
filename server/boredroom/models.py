@@ -9,7 +9,7 @@ from datetime import date, datetime, timezone
 from typing import Any
 
 from sqlalchemy import (
-    ARRAY, Boolean, Date, DateTime, ForeignKey, ForeignKeyConstraint, Integer, String, Text,
+    ARRAY, Boolean, Date, DateTime, ForeignKey, ForeignKeyConstraint, Index, Integer, String, Text,
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -181,3 +181,13 @@ class GameRequest(Base):
     link: Mapped[str | None] = mapped_column(String(200))
     raw: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ThrottleHit(Base):
+    """One request counted against a rate limit (see throttle.py)."""
+    __tablename__ = "throttle_hit"
+    __table_args__ = (Index("ix_throttle_hit_key_at", "key", "at"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    key: Mapped[str] = mapped_column(String(120))
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

@@ -10,7 +10,7 @@ from typing import Any
 from flask import Blueprint, current_app, g, jsonify, request
 from sqlalchemy import func, select
 
-from . import admin, boards, claims, filing, invites, reads
+from . import admin, boards, claims, filing, invites, names, reads, throttle
 from . import auth
 from .auth import auth_required, create_guest, valid_tz, USERNAME
 from .errors import fail
@@ -42,6 +42,7 @@ def me_json(p: Person) -> dict[str, Any]:
 
 @api.post("/guests")
 def new_guest():
+    throttle.limit(g.db, f"guest:{throttle.caller()}", 10, 3600, "that's a lot of new seats from here. try again in an hour.")
     b = body()
     tz = auth.browser_tz(b.get("tz"), current_app.config["BOREDROOM"].default_tz)
     person, token = create_guest(g.db, b.get("username"), tz, request.headers.get("User-Agent", "")[:200])
@@ -53,7 +54,8 @@ def new_guest():
 def username_check(name):
     """Is this username free? For the live check as someone types. One indexed lookup.
     Signed-in callers get "yours" for their own."""
-    name = name.strip().lower()
+    throttle.limit(g.db, f"uname:{throttle.caller()}", 300, 600, "slow down: too many username checks")
+    name = name.strip().lower()[:40]
     if not USERNAME.match(name):
         return jsonify({"username": name, "available": False, "reason": "2–30 characters: letters, digits, . _ -"})
     owner = g.db.scalar(select(Person.id).where(Person.username == name))
@@ -83,6 +85,9 @@ def google_sign_in():
     credential = b.get("credential")
     if not isinstance(credential, str) or not credential:
         fail(400, "send the google credential")
+    if len(credential) > 4096:
+        fail(400, "that isn't a google credential")
+    throttle.limit(g.db, f"google:{throttle.caller()}", 30, 600, "too many sign-in attempts. try again in a few minutes.")
     verify = current_app.config.get("GOOGLE_VERIFY", auth.verify_google)  # swapped in tests
     who = verify(credential, client_id)
     row = auth.token_row(g.db, auth.bearer())
@@ -112,6 +117,8 @@ def me():
 def update_me():
     b = body()
     if "tz" in b:
+        if not isinstance(b["tz"], str) or len(b["tz"]) > 64:
+            fail(400, "timezones are names like asia/kolkata")
         tz = auth.TZ_ALIASES.get(b["tz"], b["tz"])
         if not valid_tz(tz):
             fail(400, f"unknown timezone {b['tz']}")
@@ -167,7 +174,8 @@ def games():
 @api.post("/boards")
 @auth_required
 def new_board():
-    board = boards.create_board(g.db, g.person, str(body().get("name", "")))
+    throttle.limit(g.db, f"board:{g.person.id}", 10, 86400, "that's enough new boards for one day")
+    board = boards.create_board(g.db, g.person, body().get("name", ""))
     g.db.commit()
     m = g.db.get(Membership, (board.id, g.person.id))
     return jsonify(boards.board_json(g.db, board, m)), 201
@@ -219,10 +227,7 @@ def board_settings(slug):
     b, m = boards.get_board(g.db, slug, g.person)
     if m.role != "chair":
         fail(403, "only the chair can change the board")
-    name = str(body().get("name", b.name)).strip().lower()
-    if not 1 <= len(name) <= 60:
-        fail(400, "board names are 1–60 characters")
-    b.name = name
+    b.name = names.clean(body().get("name", b.name), 60, "a board's name")
     g.db.commit()
     return jsonify(boards.board_json(g.db, b, m))
 
@@ -250,9 +255,9 @@ def board(slug):
 @auth_required
 def board_me(slug):
     b, m = boards.get_board(g.db, slug, g.person)
-    nick = str(body().get("nickname", "")).strip().lower()
-    if not 1 <= len(nick) <= 40:
-        fail(400, "nicknames are 1–40 characters")
+    nick = names.clean(body().get("nickname", ""), 40, "a nickname")
+    if names.taken(g.db, b.id, nick, but=g.person.id):
+        fail(409, f"someone on {b.name} already goes by {nick}")
     m.nickname = nick
     g.db.commit()
     return jsonify(boards.board_json(g.db, b, m))
@@ -350,12 +355,24 @@ def agenda_remove(slug, game):
 
 # -- filing ----------------------------------------------------------------------
 
-@api.post("/pastes")
-@auth_required
-def paste():
+PASTE_CHARS = 16_000  # a day's worth of shares is a few hundred; chat imports use the script
+PASTES_A_DAY = 300
+
+
+def _paste_text() -> str:
     text = body().get("text")
     if not isinstance(text, str) or not text.strip():
         fail(400, "paste something first")
+    if len(text) > PASTE_CHARS:
+        fail(413, f"that's a long paste. send at most {PASTE_CHARS:,} characters at a time.")
+    throttle.limit(g.db, f"paste:{g.person.id}", PASTES_A_DAY, 86400, "the clerk has read enough for today. try again tomorrow.")
+    return text
+
+
+@api.post("/pastes")
+@auth_required
+def paste():
+    text = _paste_text()
     source = "share" if body().get("source") == "share" else "paste"  # "import" is internal
     f = filing.file_paste(g.db, g.person, text, source=source)
     g.db.commit()
@@ -367,9 +384,7 @@ def paste():
 def paste_preview():
     """What filing this paste would do, without keeping any of it: the app shows it
     and files only when the person says save."""
-    text = body().get("text")
-    if not isinstance(text, str) or not text.strip():
-        fail(400, "paste something first")
+    text = _paste_text()
     sp = g.db.begin_nested()
     f = filing.file_paste(g.db, g.person, text)
     out = f.to_dict()
