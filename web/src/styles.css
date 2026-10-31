@@ -563,3 +563,13 @@ a { color: var(--accent); }
 .ucheck.free { color: var(--ok-ink); font-weight: 700; }
 .ucheck.taken, .ucheck.bad { color: var(--bad); }
 .ucheck .lnk { font-size: 12px; }
+
+/* things you tap aren't text: a tap (or a long press on a phone) shouldn't select their
+   words, and they skip the grey tap flash and the double-tap zoom delay */
+button, select, label, [role="button"], [role="tab"], [role="switch"], [role="radio"],
+.it, .wr, .nav, .sheets, .seg, .tabs, .more, .lnk, .pill, .chip, .add, .ttl, .grp, .fxq .tok, .mc-opt, .gbtn {
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+/* except where the words are the point: invite words and links stay selectable */
+.invite-row b, .invite-row .sub, .keep.invite-words { -webkit-user-select: text; user-select: text; }
