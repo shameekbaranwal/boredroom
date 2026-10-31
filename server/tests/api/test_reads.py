@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from boredroom import reads
 from boredroom.models import Board, Person
@@ -84,3 +84,15 @@ def test_invite_preview_needs_no_sign_in(client, seat):
     assert client.get(f"/api/v1/invites/{code}").json == {
         "code": code, "name": "soup", "slug": "soup", "chair": "ivan", "inviter": "ivan", "members": 1, "library": ["wiki game"], "seats": []}
     assert client.get("/api/v1/invites/nope").status_code == 404
+
+
+def test_the_agenda_puts_your_most_filed_games_first(db, seat):
+    a, b, c = board_of(seat)
+    from boredroom import filing
+    ivan = db.query(Person).filter_by(username="ivan").one()
+    for back in (1, 2):  # two old maptaps, no wiki games: maptap outranks wiki's earlier reset
+        old = MAPTAP.replace("October 30", f"October {30 - back}").format(800)
+        filing.file_paste(db, ivan, old, now=NOW - timedelta(days=back))
+    db.commit()
+    t = reads.today(db, db.query(Board).one(), ivan, now=NOW)
+    assert [(i["game"], i["results"]) for i in t["items"]] == [("maptap", 2), ("wiki", 0)]

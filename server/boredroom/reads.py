@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .filing import to_parsed
@@ -137,7 +137,12 @@ def today(s: Session, board: Board, viewer: Person, now: datetime | None = None)
                         "tied": len(top), "metrics": top[0].metrics} if top and game.ranked() else None),
             "mine": result_view(mine, nick[viewer.id], my_place, True, True) if mine else None,
         })
-    items.sort(key=lambda i: (i["filed"], i["resets_at"]))
+    # open first; within each, the games you've filed most often, then the soonest reset
+    filed = dict(s.execute(select(Result.game_id, func.count()).where(
+        Result.person_id == viewer.id, Result.withdrawn_at.is_(None)).group_by(Result.game_id)).all())
+    for i in items:
+        i["results"] = filed.get(i["game"], 0)
+    items.sort(key=lambda i: (i["filed"], -i["results"], i["resets_at"]))
     return {"now": now.isoformat(), "items": items}
 
 
