@@ -42,7 +42,7 @@ export default function Review({ slug }: { slug: string }) {
   const metric = r?.game && r.metric ? games[r.game]?.metrics.find(m => m.name === r.metric) : undefined
   const STAT: Record<string, string> = {
     wins: 'daily wins', rate: 'win rate', days: 'days present', filed: 'puzzles filed',
-    average: `average ${r?.metric ?? ''}`.trim(), best: 'best', played: 'plays',
+    average: `average ${r?.metric ?? ''}`.trim(), best: 'best', played: 'plays', tenure: 'tenure', longest: 'longest tenure',
   }
   const tokens: Token[] = [
     { key: 'board', value: slug, options: me.boards.map(b => [b.slug, b.name]), onPick: s => go(url({ period: q.period }, s), true) },
@@ -72,6 +72,8 @@ export default function Review({ slug }: { slug: string }) {
       case 'average': return [avg(s.average), s.qualified ? `${s.played} played` : `${s.played} of ${r.min_plays} plays`]
       case 'best': return [s.best ? headline(games[r.game!], s.best) : '—', `${s.played} played`]
       case 'played': return [String(s.played), 'plays']
+      case 'tenure': return [`${s.tenure}d`, s.at_risk ? 'at risk today' : 'in a row']
+      case 'longest': return [`${s.longest}d`, s.tenure === s.longest && s.tenure ? 'and counting' : 'best run']
       default: return [String(s.wins), longer ? `of ${s.days} ${s.days === 1 ? 'day' : 'days'}` : s.wins === 1 ? 'win' : 'wins']
     }
   }
@@ -97,6 +99,7 @@ export default function Review({ slug }: { slug: string }) {
 
         {r.game && <div className="stat-row">
           <div><b>{avg(rows[mine]?.average)}</b><small>your average</small></div>
+          <div><b>{rows[mine]?.tenure ?? 0}d</b><small>your tenure{rows[mine]?.at_risk ? ' · at risk' : rows[mine]?.longest ? ` · best ${rows[mine].longest}d` : ''}</small></div>
           <div><b>{rows[mine]?.best ? headline(games[r.game], rows[mine].best!) : '—'}</b><small>your best</small></div>
           <div><b>{r.record ? headline(games[r.game], r.record.metrics) : '—'}</b><small>record{r.record ? ` · ${r.record.me ? 'you' : r.record.nickname}, ${dayLabel(r.record.day, today)}` : ''}</small></div>
         </div>}
@@ -130,7 +133,7 @@ export default function Review({ slug }: { slug: string }) {
         })}
         {rows.length > TOP && <button className="more" onClick={() => setAll(v => !v)}>{all ? `show top ${TOP}` : `all ${rows.length} →`}</button>}
         <div className="sub wrap rv-note">
-          {r.stat === 'average' ? `ranked by average once you have ${r.min_plays}+ plays ${PERIOD[q.period]}. ` : r.stat === 'wins' || r.stat === 'rate' ? 'a daily win is first place in a puzzle at least two of you filed; ties all count. ' : ''}
+          {r.stat === 'tenure' || r.stat === 'longest' ? 'tenure is days in a row with this game filed, over all time. it survives until the reset after a missed day. ' : r.stat === 'average' ? `ranked by average once you have ${r.min_plays}+ plays ${PERIOD[q.period]}. ` : r.stat === 'wins' || r.stat === 'rate' ? 'a daily win is first place in a puzzle at least two of you filed; ties all count. ' : ''}
           tap a name for a head-to-head.
         </div>
 

@@ -68,6 +68,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
                   {i.mine && headline(games[i.game], i.mine.metrics, i.mine.outcome)}
                   {i.mine?.late && <span className="stamp">filed late</span>}
                   <span>· {i.present}/{i.players} present</span>
+                  {i.tenure.days >= 2 && <span className="tenure">· {i.tenure.days}-day tenure</span>}
                 </div>
               </div>
               <div className="pr">
@@ -102,6 +103,7 @@ function OpenRow({ i, slug, now }: { i: Item; slug: string; now: number }) {
             {i.present}/{i.players} present
             {i.leader && <> · {i.leader.nickname ?? `${i.leader.tied} tied`} {headline(games[i.game], i.leader.metrics)}</>}
           </>}
+          {i.tenure.at_risk && i.tenure.days >= 2 && <span className="tenure risk">· your {i.tenure.days}-day tenure lapses at reset</span>}
         </div>
       </div>
       <div className="pr">

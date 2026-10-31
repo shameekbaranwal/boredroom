@@ -60,3 +60,32 @@ def test_the_formula_bar_picks_a_game_a_stat_and_a_rival(db, seat):
     assert [(x["nickname"], x["rate"]) for x in r.json["standings"]] == [("ivan", 0.667), ("judy", 0.667)]
     assert a.get("/boards/soup/review?game=wiki").status_code == 400
     assert a.get("/boards/soup/review?stat=average").status_code == 400
+
+
+def test_tenure_counts_days_in_a_row():
+    from datetime import date
+    d = date(2026, 10, 30)
+    days = {date(2026, 10, x) for x in (20, 21, 22, 23, 27, 28, 29)}
+    assert reads.tenure(days, d) == (3, 4, True)  # alive through yesterday, at risk today
+    assert reads.tenure(days | {d}, d) == (4, 4, False)
+    assert reads.tenure({date(2026, 10, 27)}, d) == (0, 1, False)
+
+
+def test_tenure_shows_on_the_agenda_minutes_and_review(db, seat):
+    a = seat("ivan")
+    a.post("/boards", {"name": "soup"})
+    a.put("/boards/soup/agenda/krillion")
+    viewer = db.query(Person).filter_by(username="ivan").one()
+    n = reads.REGISTRY["krillion"].current(NOW, viewer.tz)
+    for back in (1, 2, 3):
+        a.post("/pastes", {"text": KRILLION.format(n=n - back, score=300)})
+    db.expire_all()
+    board = db.query(Board).one()
+    (item,) = reads.today(db, board, viewer, now=NOW)["items"]
+    assert item["tenure"] == {"days": 3, "at_risk": True}
+    a.post("/pastes", {"text": KRILLION.format(n=n, score=300)})
+    db.expire_all()
+    day = reads.game_day("krillion", viewer, NOW)
+    assert reads.minutes(db, board, viewer, "krillion", day, now=NOW)["rows"][0]["tenure"] == 4
+    r = reads.review(db, board, viewer, "week", game="krillion", stat="tenure", now=NOW)
+    assert (r["standings"][0]["tenure"], r["standings"][0]["longest"], r["standings"][0]["place"]) == (4, 4, 1)

@@ -35,7 +35,7 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
   return (
     <button className={`theme-tg ${className}`} data-mode={shown} role="switch" aria-checked={shown === 'dark'}
       aria-label="dark mode" title={`switch to ${next} mode`}
-      onClick={e => setPref(next, { x: e.clientX, y: e.clientY })}>
+      onClick={() => setPref(next)}>
       <span className="stars" aria-hidden="true"><i /><i /><i /></span>
       <span className="knob" aria-hidden="true">
         <svg className="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="4.2" /><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" /></svg>

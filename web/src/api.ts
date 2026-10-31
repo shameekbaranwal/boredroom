@@ -12,13 +12,13 @@ export type Row = {
   id: number | null; nickname: string; me: boolean; place: string; puzzle: string
   outcome: 'solved' | 'failed' | 'played'; metrics: Record<string, number>; highlights: string[]
   late: boolean; amended: boolean; fields: Field[]; hidden: number; comment: string
-  raw: string | null; forward: string | null; filed_at: string
+  raw: string | null; forward: string | null; filed_at: string; tenure?: number
 }
 export type Item = {
   game: string; name: string; ranked: boolean; links: string[]; day: string; puzzle: string | null
   resets_at: string; filed: boolean; place: string; present: number; players: number; filed_by: string[]
   leader: { nickname: string | null; tied: number; metrics: Record<string, number> } | null
-  mine: Row | null
+  mine: Row | null; tenure: { days: number; at_risk: boolean }
 }
 export type Today = { now: string; items: Item[] }
 export type Minutes = {
@@ -39,7 +39,8 @@ export type Invite = { code: string; name: string; slug: string; chair: string |
   seats: { username: string; nickname: string; results: number }[] }
 export type Period = 'today' | 'week' | 'month' | 'all'
 export type Standing = { nickname: string; me: boolean; wins: number; days: number; filed: number; rate: number; place: number | null
-  played?: number; average?: number | null; best?: Record<string, number> | null; qualified?: boolean }
+  played?: number; average?: number | null; best?: Record<string, number> | null; qualified?: boolean
+  tenure?: number; longest?: number; at_risk?: boolean }
 export type Review = {
   period: Period; game: string | null; stat: string; stats: string[]; vs: string | null; now: string
   standings: Standing[]; members: string[]; ranked_games: string[]; strip: ('' | 'on' | 'ls' | 'lv')[]

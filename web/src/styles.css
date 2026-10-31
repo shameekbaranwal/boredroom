@@ -220,7 +220,9 @@ a { color: var(--accent); }
 .theme-tg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .room-top .theme-tg { border-color: rgba(255,255,255,.3); }
 .room-top .theme-tg:not([data-mode="dark"]) { --track: rgba(255,255,255,.18); }
-::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+/* switching themes: every colour fades at once, on the live page */
+.theming, .theming *, .theming *::before, .theming *::after {
+  transition: background-color .35s ease, color .35s ease, border-color .35s ease, fill .35s ease, stroke .35s ease, box-shadow .35s ease !important; }
 @media (prefers-reduced-motion: reduce) { .theme-tg *, .theme-tg { transition: none !important; } }
 
 /* ---- sign-in: the boardroom ---- */
@@ -538,7 +540,7 @@ a { color: var(--accent); }
 .bd > .wr.me { background: var(--seg); }
 .bd > .wr.cmp { box-shadow: inset 3px 0 0 var(--accent); background: var(--surface); }
 .wr.dim .who, .wr.dim .v { color: var(--muted); font-weight: 400; }
-.bd > .stat-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.bd > .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
 .stat-row > div { display: flex; flex-direction: column; min-width: 0; }
 .stat-row b { font: 700 18px var(--f-num); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stat-row small { color: var(--muted); font-size: 12px; }
@@ -554,3 +556,6 @@ a { color: var(--accent); }
 .strip i.lv, .key i.lv { background: var(--muted); opacity: .5; outline: 0; }
 .key { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
 .key i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: -1px; }
+.tenure { margin-left: 4px; }
+.tenure.risk { color: var(--todo-ink); font-weight: 700; }
+.chip.ten { border-color: var(--accent); color: var(--accent); }

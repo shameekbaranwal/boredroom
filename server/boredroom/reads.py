@@ -49,6 +49,32 @@ def _results(s: Session, game_id: str, day: date, people: list[int]) -> list[Res
         Result.withdrawn_at.is_(None))))
 
 
+def tenure(days: set[date], today: date) -> tuple[int, int, bool]:
+    """A streak, in the board's words: (current, longest, at risk). Current counts back
+    from `today` if it's filed, else from yesterday, when it's still alive but at risk."""
+    longest = run = 0
+    prev = None
+    for d in sorted(days):
+        run = run + 1 if prev is not None and (d - prev).days == 1 else 1
+        longest, prev = max(longest, run), d
+    end = today if today in days else today - timedelta(days=1)
+    current = 0
+    while end - timedelta(days=current) in days:
+        current += 1
+    return current, longest, current > 0 and today not in days
+
+
+def _days(s: Session, game_id: str, people: list[int], until: date) -> dict[int, set[date]]:
+    """Each person's filed days for a game, up to `until`."""
+    out: dict[int, set[date]] = {p: set() for p in people}
+    if people:
+        for p, d in s.execute(select(Result.person_id, Result.puzzle_day).where(
+                Result.game_id == game_id, Result.person_id.in_(people), Result.puzzle_day <= until,
+                Result.withdrawn_at.is_(None), Result.puzzle_day.is_not(None))):
+            out[p].add(d)
+    return out
+
+
 def _placed(rows: list[Result]) -> list[tuple[int, Result]]:
     """[(place, row)] for one game's results; 0 means unranked."""
     parsed = [to_parsed(r) for r in rows]
@@ -95,7 +121,9 @@ def today(s: Session, board: Board, viewer: Person, now: datetime | None = None)
         top = [r for p, r in placed if p == 1]
         my_place = next((_place_label(placed, p) for p, r in placed if r is mine), "")
         current = game.current(now, viewer.tz)
+        run, _, risk = tenure(_days(s, g, [viewer.id], day)[viewer.id], day)
         items.append({
+            "tenure": {"days": run, "at_risk": risk},
             "game": g, "name": game.name, "ranked": game.ranked(), "links": list(game.links),
             "day": day.isoformat(),
             "puzzle": mine.puzzle_key if mine else (str(current.isoformat() if isinstance(current, date)
@@ -129,13 +157,14 @@ def minutes(s: Session, board: Board, viewer: Person, game_id: str, day: date | 
         Result.person_id == viewer.id, Result.game_id == game_id, Result.puzzle_day == day,
         Result.withdrawn_at.is_(None)))
     filed_ids = {r.person_id for r in rows}
+    runs = {p: tenure(ds, day)[0] for p, ds in _days(s, game_id, list(filed_ids), day).items()}
     return {
         "game": game_id, "name": game.name, "ranked": game.ranked(), "day": day.isoformat(),
         "current": day == current_day,
         "resets_at": next_reset(game_id, viewer, now).isoformat() if day == current_day else None,
         "open": seen is not None,
         "rows": [result_view(r, nick[r.person_id], _place_label(placed, p), seen is not None,
-                             r.person_id == viewer.id) for p, r in placed],
+                             r.person_id == viewer.id) | {"tenure": runs.get(r.person_id, 0)} for p, r in placed],
         "not_in": sorted(nick[m.person_id] for m in players if m.person_id not in filed_ids),
     }
 
@@ -143,7 +172,7 @@ def minutes(s: Session, board: Board, viewer: Person, game_id: str, day: date | 
 PERIODS = {"today": 1, "week": 7, "month": 30, "all": None}  # game days, counting back from today's
 STRIP = 30  # days in the "last 30" strip
 # what the standings can be sorted by: across all games, or within one
-STATS = {None: ("wins", "rate", "days", "filed"), "game": ("average", "best", "wins", "played")}
+STATS = {None: ("wins", "rate", "days", "filed"), "game": ("average", "best", "wins", "played", "tenure", "longest")}
 MIN_PLAYS = {"today": 1, "week": 3, "month": 5, "all": 10}  # to qualify for a ranking by average
 
 
@@ -239,9 +268,10 @@ def review(s: Session, board: Board, viewer: Person, period: str = "today", game
 
     high = game and REGISTRY[game].metric_def(_key(game)).better == "high"
     least = MIN_PLAYS[period]
+    alltime = _days(s, game, list(nick), current[game]) if game else {}
     standings = []
     for p in nick:
-        if p not in who and p != viewer.id:
+        if p not in who and p != viewer.id and not (stat in ("tenure", "longest") and alltime.get(p)):
             continue
         x = who.get(p) or me_(p)
         avg = sum(x["vals"]) / len(x["vals"]) if x["vals"] else None
@@ -252,6 +282,8 @@ def review(s: Session, board: Board, viewer: Person, period: str = "today", game
                     "best": x["best"][0].metrics if x["best"] else None,
                     "qualified": x["ranked"] >= least and avg is not None}
         row["_best"] = x["best"][0] if game and x["best"] else None
+        if game:  # tenure runs over all time, whatever the period
+            row["tenure"], row["longest"], row["at_risk"] = tenure(alltime.get(p, set()), current[game])
         standings.append(row)
 
     def order(r: dict[str, Any]) -> tuple:
