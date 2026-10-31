@@ -36,12 +36,13 @@ def test_seed_then_claim(db, seat):
 
     a = seat("tara.k")
     a.post("/boards/join", {"code": invites.current(db, board).code})
+    assert a.get("/boards/soup").json["you"]["claimed"] is False
     seen = a.get("/boards/soup").json["members"]
     assert {m["username"]: m["kind"] for m in seen}["tara"] == "placeholder"
     r = a.post("/boards/soup/claim", {"username": "tara"})
     assert r.status_code == 200 and r.json["moved"] == 1
     you = r.json["board"]["you"]
-    assert (you["role"], you["agenda"]) == ("chair", ["krillion"])
+    assert (you["role"], you["agenda"], you["claimed"]) == ("chair", ["krillion"], True)
     assert [x["game"] for x in a.get("/results").json] == ["krillion"]
     assert a.post("/boards/soup/claim", {"username": "tara"}).status_code == 409  # one seat each
     db.expire_all()

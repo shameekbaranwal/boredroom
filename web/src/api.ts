@@ -28,7 +28,7 @@ export type Minutes = {
 export type Member = { nickname: string; username: string; role: string; kind: Kind; games: number; results: number; joined_at: string }
 export type Board = {
   slug: string; name: string; settings: Record<string, unknown>; invite: { code: string; expires_at: string | null }
-  you: { nickname: string; role: string; agenda: string[] }
+  you: { nickname: string; role: string; agenda: string[]; claimed?: boolean }
   members: Member[]
   library: { game: string; name: string; rules: Record<string, unknown>; players: number; removable: boolean }[]
   leaving: Leaving
@@ -84,6 +84,10 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   const r = await fetch(`/api/v1${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
   const data = await r.json().catch(() => ({}))
+  if (r.status === 401 && t) {  // the seat is gone (signed out elsewhere, or the database was reset): back to the door
+    setToken(null)
+    window.dispatchEvent(new Event('boredroom:signedout'))
+  }
   if (!r.ok) throw new ApiError(r.status, data.error ?? `the server said ${r.status}`)
   return data as T
 }

@@ -169,7 +169,8 @@ def board_json(s: Session, board: Board, m: Membership) -> dict[str, Any]:
     out = {
         "slug": board.slug, "name": board.name,
         "settings": {k: v for k, v in board.settings.items() if k != "claimed"},  # person ids stay here
-        "you": {"nickname": m.nickname, "role": m.role, "agenda": sorted(agendas.get(m.person_id, []))},
+        "you": {"nickname": m.nickname, "role": m.role, "agenda": sorted(agendas.get(m.person_id, [])),
+                "claimed": m.person_id in board.settings.get("claimed", {}).values()},  # one seat each
         "members": [{"nickname": x.nickname, "username": x.person.username, "role": x.role,
                      "kind": x.person.kind, "joined_at": x.joined_at.isoformat(),
                      "games": len(agendas.get(x.person_id, [])), "results": filed.get(x.person_id, 0)}

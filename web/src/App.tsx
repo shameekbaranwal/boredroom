@@ -48,6 +48,12 @@ function Shell() {
   useEffect(() => { api.games().then(gs => setGames(Object.fromEntries(gs.map(g => [g.id, g])))).catch(() => {}) }, [])
   useEffect(() => { if (state === 'loading') refreshMe().catch(() => setState('out')) }, [state, refreshMe])
 
+  useEffect(() => {
+    const out = () => { setMe(null); setState('out'); go('/', true) }
+    window.addEventListener('boredroom:signedout', out)
+    return () => window.removeEventListener('boredroom:signedout', out)
+  }, [])
+
   const joinCode = match('/join/:code', path)?.code
   useEffect(() => { if (joinCode && state === 'out') api.invite(joinCode).then(setInvite).catch(() => setInvite(null)) }, [joinCode, state])
 
