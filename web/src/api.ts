@@ -98,6 +98,7 @@ export const api = {
   guest: (username?: string) => call<{ token: string; me: Me }>('POST', '/guests', { username, tz: tz() }),
   google: (credential: string) => call<{ token: string; created: boolean; me: Me }>('POST', '/auth/google', { credential, tz: tz() }),
   signOut: () => call<{ signed_out: boolean }>('POST', '/auth/signout'),
+  username: (name: string) => call<{ username: string; available: boolean; reason: string | null }>('GET', `/usernames/${encodeURIComponent(name)}`),
   closeAccount: (username: string) => call<{ deleted: boolean; boards_closed: string[] }>('DELETE', '/me', { username }),
   leaving: () => call<Leaving[]>('GET', '/me/leaving'),
   leave: (slug: string) => call<{ left: string; closed: boolean }>('POST', `/boards/${slug}/leave`),

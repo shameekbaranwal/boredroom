@@ -1,3 +1,4 @@
+import { useUsernameCheck } from '../username'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { api, setToken, type Invite } from '../api'
 import { TableMark, ThemeToggle, Wordmark } from '../brand'
@@ -150,6 +151,7 @@ export function Choice({ on, faint, title, sub, onPick, children }: {
 
 export default function SignIn({ invite, onSignedIn }: { invite?: Invite | null; onSignedIn: () => void }) {
   const [name, setName] = useState('')
+  const check = useUsernameCheck(name)
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const [pick, setPick] = useState<'seat' | 'guest' | 'lurk'>('seat')
@@ -193,9 +195,10 @@ export default function SignIn({ invite, onSignedIn }: { invite?: Invite | null;
                 <input id="g" className="input" placeholder="a username, yours alone" value={name} autoFocus
                   onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && guest()}
                   autoCapitalize="none" autoComplete="off" spellCheck={false} />
-                <button className="btn" onClick={guest} disabled={busy}>sit</button>
+                <button className="btn" onClick={guest} disabled={busy || check.state === 'bad' || check.state === 'taken'}>sit</button>
               </div>
             : <button className="alt" onClick={() => setPick('guest')}>pick a username →</button>}
+          {pick === 'guest' && name.trim() && <small className={`ucheck ${check.state}`} aria-live="polite">{check.state === 'free' ? `${name.trim().toLowerCase()} is free` : check.note}</small>}
         </Choice>
         <Choice on={pick === 'lurk'} faint title="keep lurking in the group chat" onPick={() => setPick('lurk')}>
           {pick === 'lurk' && <span className="muted">fair. the seat will be here.</span>}

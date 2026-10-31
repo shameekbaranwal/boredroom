@@ -96,3 +96,12 @@ def test_the_agenda_puts_your_most_filed_games_first(db, seat):
     db.commit()
     t = reads.today(db, db.query(Board).one(), ivan, now=NOW)
     assert [(i["game"], i["results"]) for i in t["items"]] == [("maptap", 2), ("wiki", 0)]
+
+
+def test_username_check(seat, client):
+    a = seat("ivan")
+    check = lambda n, who=None: (who.get(f"/usernames/{n}") if who else client.get(f"/api/v1/usernames/{n}")).json  # noqa: E731
+    assert check("ivan") == {"username": "ivan", "available": False, "reason": "taken"}
+    assert check("IVAN", a)["reason"] == "that's you"
+    assert check("priya")["available"] is True
+    assert check("x")["available"] is False

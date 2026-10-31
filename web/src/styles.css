@@ -559,3 +559,7 @@ a { color: var(--accent); }
 .tenure { margin-left: 4px; }
 .tenure.risk { color: var(--todo-ink); font-weight: 700; }
 .chip.ten { border-color: var(--accent); color: var(--accent); }
+.ucheck { display: flex; gap: 8px; align-items: baseline; font-size: 12.5px; color: var(--muted); }
+.ucheck.free { color: var(--ok-ink); font-weight: 700; }
+.ucheck.taken, .ucheck.bad { color: var(--bad); }
+.ucheck .lnk { font-size: 12px; }

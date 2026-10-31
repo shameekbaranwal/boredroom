@@ -4,6 +4,7 @@ import { Fx, Header, Nav, useApp } from '../ui'
 import { setPref, useTheme, type Pref } from '../theme'
 import { GoogleButton } from './SignIn'
 import { InstallMemo, standalone } from '../install'
+import { useUsernameCheck } from '../username'
 
 /** Settings that belong to the person rather than a board: timezone, appearance,
  *  the account, and signing out. On every board's "you" screen, and on /me. */
@@ -12,11 +13,15 @@ export function Personal({ guestOnly = false, deleting = false }: { guestOnly?: 
   const [theme] = useTheme()
   const [tz, setTz] = useState(me.tz)
   const [user, setUser] = useState(me.username)
+  const check = useUsernameCheck(user, me.username)
+  const [saving, setSaving] = useState(false)
   const saveUser = async () => {
     const v = user.trim().toLowerCase()
-    if (!v || v === me.username) { setUser(me.username); return }
-    try { await api.updateMe({ username: v }); await refreshMe(); toast(`you're ${v} now. your names on boards stay as they are.`) }
-    catch (e) { toast((e as Error).message); setUser(me.username) }
+    if (check.state !== 'free' || saving) return
+    setSaving(true)
+    try { await api.updateMe({ username: v }); await refreshMe(); setUser(v); toast(`you're ${v} now. your names on boards stay as they are.`) }
+    catch (e) { toast((e as Error).message) }
+    finally { setSaving(false) }
   }
 
   const deviceTz = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -45,8 +50,16 @@ export function Personal({ guestOnly = false, deleting = false }: { guestOnly?: 
   return <>
     <div className="field">
       <label htmlFor="user">username <span className="muted">· yours alone across boredroom; boards can call you something else</span></label>
-      <input id="user" className="input keep" value={user} onChange={e => setUser(e.target.value)} onBlur={saveUser}
-        onKeyDown={e => e.key === 'Enter' && saveUser()} autoCapitalize="none" autoComplete="off" spellCheck={false} />
+      <div className="guest">
+        <input id="user" className="input keep" value={user} onChange={e => setUser(e.target.value)} maxLength={30}
+          onKeyDown={e => { if (e.key === 'Enter') saveUser(); if (e.key === 'Escape') setUser(me.username) }}
+          autoCapitalize="none" autoComplete="off" spellCheck={false} aria-describedby="user-check" />
+        <button className="btn" disabled={check.state !== 'free' || saving} onClick={saveUser}>{saving ? 'saving…' : 'change'}</button>
+      </div>
+      <small id="user-check" className={`ucheck ${check.state}`} aria-live="polite">
+        {check.state === 'idle' ? 'type a new one to check it' : check.state === 'free' ? `${user.trim().toLowerCase()} is free` : check.note}
+        {check.state !== 'idle' && <button className="lnk" onClick={() => setUser(me.username)}>undo</button>}
+      </small>
     </div>
     <div className="field">
       <label htmlFor="tz">timezone {tz !== browserTz && <span className="muted">(this device says {browserTz})</span>}</label>

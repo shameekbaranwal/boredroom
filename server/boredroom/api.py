@@ -49,6 +49,22 @@ def new_guest():
     return jsonify({"token": token, "me": me_json(person)}), 201
 
 
+@api.get("/usernames/<name>")
+def username_check(name):
+    """Is this username free? For the live check as someone types. One indexed lookup.
+    Signed-in callers get "yours" for their own."""
+    name = name.strip().lower()
+    if not USERNAME.match(name):
+        return jsonify({"username": name, "available": False, "reason": "2–30 characters: letters, digits, . _ -"})
+    owner = g.db.scalar(select(Person.id).where(Person.username == name))
+    token = auth.bearer()
+    row = token and auth.token_row(g.db, token)
+    me = row.person if row else None
+    if owner is not None and me is not None and owner == me.id:
+        return jsonify({"username": name, "available": True, "reason": "that's you"})
+    return jsonify({"username": name, "available": owner is None, "reason": None if owner is None else "taken"})
+
+
 @api.get("/config")
 def client_config():
     """What a client needs before signing in. The google client id is public by design."""
