@@ -27,12 +27,13 @@ export type Minutes = {
 }
 export type Member = { nickname: string; username: string; role: string; kind: Kind; games: number }
 export type Board = {
-  slug: string; name: string; settings: Record<string, unknown>; invite_code: string
+  slug: string; name: string; settings: Record<string, unknown>; invite: { code: string; expires_at: string | null }
   you: { nickname: string; role: string; agenda: string[] }
   members: Member[]
   library: { game: string; name: string; rules: Record<string, unknown>; players: number }[]
 }
-export type Invite = { code: string; name: string; slug: string; chair: string | null; inviter: string | null; members: number; library: string[] }
+export type Invite = { code: string; name: string; slug: string; chair: string | null; inviter: string | null; members: number; library: string[]
+  seats: { username: string; nickname: string; results: number }[] }
 export type Event = {
   kind: 'filed' | 'merged' | 'duplicate' | 'conflict' | 'not_out_yet'
   game: string; puzzle: string; result_id: number | null; added: string[]; confidence: string; late: boolean
@@ -82,8 +83,9 @@ export const api = {
   signOut: () => call<{ signed_out: boolean }>('POST', '/auth/signout'),
   newBoard: (name: string) => call<Board>('POST', '/boards', { name }),
   invite: (code: string) => call<Invite>('GET', `/invites/${encodeURIComponent(code)}`),
-  join: (code: string) => call<Board>('POST', '/boards/join', { code }),
+  join: (code: string, claim?: string) => call<Board>('POST', '/boards/join', { code, claim }),
   board: (slug: string) => call<Board>('GET', `/boards/${slug}`),
+  renewInvite: (slug: string) => call<Board>('POST', `/boards/${slug}/invite`),
   nickname: (slug: string, nickname: string) => call<Board>('PATCH', `/boards/${slug}/me`, { nickname }),
   agenda: (slug: string, game: string, on: boolean) => call<Board>(on ? 'PUT' : 'DELETE', `/boards/${slug}/agenda/${game}`),
   claim: (slug: string, username: string) => call<{ moved: number; board: Board }>('POST', `/boards/${slug}/claim`, { username }),

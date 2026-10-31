@@ -68,3 +68,21 @@ def test_a_reimport_files_new_messages_to_whoever_claimed_the_seat(tmp_path, db,
     assert (stats["filed"], stats["duplicate"]) == (1, 3)
     assert not db.query(Person).filter_by(kind="placeholder", username="mallory").first()
     assert sorted(x["puzzle"] for x in a.get("/results").json) == ["106", "108"]
+
+
+def test_join_and_claim_in_one_step(tmp_path, db, seat, client):
+    export = tmp_path / "chat.txt"
+    export.write_text(CHAT, encoding="utf-8")
+    import_chat.run(db, export, "soup", {}, "Asia/Kolkata")
+    db.commit()
+    code = invites.current(db, db.query(Board).one()).code
+    seats = client.get(f"/api/v1/invites/{code}").json["seats"]
+    assert sorted((s["nickname"], s["results"]) for s in seats) == [("mallory", 1), ("member (+65)", 1), ("walter", 1)]
+
+    a = seat("mallory.k")
+    r = a.post("/boards/join", {"code": code, "claim": "mallory"})
+    assert r.status_code == 200
+    you = r.json["you"]
+    assert (you["nickname"], you["role"], you["agenda"]) == ("mallory", "chair", ["krillion"])
+    assert len(client.get(f"/api/v1/invites/{code}").json["seats"]) == 2
+    assert seat("bo").post("/boards/join", {"code": code, "claim": "nobody"}).status_code == 404

@@ -13,7 +13,7 @@ MAPTAP = "www.maptap.gg October 30\n90🎯 90🎯 90🎯 90🎯 90🎯\nFinal sc
 
 def board_of(seat):
     a, b, c = seat("ivan"), seat("judy"), seat("dev")
-    code = a.post("/boards", {"name": "soup"}).json["invite_code"]
+    code = a.post("/boards", {"name": "soup"}).json["invite"]["code"]
     for x in (b, c):
         x.post("/boards/join", {"code": code})
     for x in (a, b, c):
@@ -79,8 +79,8 @@ def test_next_reset_for_a_local_midnight_game():
 
 def test_invite_preview_needs_no_sign_in(client, seat):
     a = seat("ivan")
-    code = a.post("/boards", {"name": "soup"}).json["invite_code"]
+    code = a.post("/boards", {"name": "soup"}).json["invite"]["code"]
     a.put("/boards/soup/agenda/wiki")
     assert client.get(f"/api/v1/invites/{code}").json == {
-        "code": code, "name": "soup", "slug": "soup", "chair": "ivan", "inviter": "ivan", "members": 1, "library": ["wiki game"]}
+        "code": code, "name": "soup", "slug": "soup", "chair": "ivan", "inviter": "ivan", "members": 1, "library": ["wiki game"], "seats": []}
     assert client.get("/api/v1/invites/nope").status_code == 404

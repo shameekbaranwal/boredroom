@@ -5,6 +5,7 @@ import { go } from '../router'
 import { Av, Clip, Fx, Header, Loading, Nav, Tile, sendOn, useApp, useNow } from '../ui'
 import Boards from './Boards'
 
+const TODO = 8  // open games shown before "n more"
 const playUrl = (i: Item) => (i.links[0] ? `https://${i.links[0]}` : null)
 
 export default function Agenda({ slug, shared }: { slug: string; shared?: string }) {
@@ -13,6 +14,8 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   const [board, setBoard] = useState<Board | null>(null)
   const [err, setErr] = useState('')
   const [picker, setPicker] = useState(false)
+  const [pickTab, setTab] = useState<'open' | 'filed' | null>(null)
+  const [all, setAll] = useState(false)
   const now = useNow()
 
   const load = useCallback(() => {
@@ -25,7 +28,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   if (!today || !board) return <div className="app"><Header title={`${slug}.xlsx`} meta="agenda" /><Loading what="the agenda" /></div>
 
   const open = today.items.filter(i => !i.filed), filed = today.items.filter(i => i.filed)
-  const next = open[0]
+  const tab = pickTab ?? (open.length || !filed.length ? 'open' : 'filed')
   const extra = board.library.filter(g => !board.you.agenda.includes(g.game)).length
   const placeholders = board.members.filter(m => m.kind === 'placeholder')
 
@@ -35,38 +38,46 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
       <Fx fn="agenda" args={[['board', board.name], ['puzzles', 'current']]} />
       <div className="bd">
         <Pasteboard board={board} shared={shared} onFiled={load} />
-        <div className="st1">
-          <b>{filed.length} of {today.items.length} filed</b>
-          {next ? <span>{next.name} resets in {left(next.resets_at, now)}</span> : today.items.length ? <span>all filed · the board thanks you</span> : null}
-        </div>
         {placeholders.length > 0 && (
           <button className="more" onClick={() => go(`/b/${slug}/you#seats`)}>
             {placeholders.length} imported seats unclaimed · is one of them yours? →
           </button>
         )}
-        {open.map(i => <OpenRow key={i.game} i={i} slug={slug} now={now} />)}
-        {filed.length > 0 && <div className="sec">filed</div>}
-        {filed.map(i => (
-          <div key={i.game} className="it" onClick={() => go(`/b/${slug}/m/${i.game}`)}>
-            <Tile game={i.game} name={i.name} />
-            <div className="g">
-              <div className="nm">{i.name} <span className="muted" style={{ fontWeight: 400, fontSize: 13 }}>{i.mine?.puzzle}</span></div>
-              <div className="sub">
-                {i.mine && headline(games[i.game], i.mine.metrics, i.mine.outcome)}
-                {i.mine?.late && <span className="stamp">filed late</span>}
-                <span>· {i.present}/{i.players} present</span>
+        {today.items.length > 0 && (
+          <div className="tabs" role="tablist" aria-label="today">
+            <button role="tab" aria-selected={tab === 'open'} className={tab === 'open' ? 'on' : ''} onClick={() => setTab('open')}>to do <b>{open.length}</b></button>
+            <button role="tab" aria-selected={tab === 'filed'} className={tab === 'filed' ? 'on' : ''} onClick={() => setTab('filed')}>filed <b>{filed.length}</b></button>
+            <button className="tab-lib" onClick={() => go(`/b/${slug}/you#games`)}>{extra ? `library · ${extra} more →` : 'your games →'}</button>
+          </div>
+        )}
+        {tab === 'open' && <>
+          {open.length === 0 && today.items.length > 0 && <div className="sub wrap">all {filed.length} filed. the board thanks you.</div>}
+          {(all || open.length <= TODO + 1 ? open : open.slice(0, TODO)).map(i => <OpenRow key={i.game} i={i} slug={slug} now={now} />)}
+          {!all && open.length > TODO + 1 && <button className="more" onClick={() => setAll(true)}>{open.length - TODO} more to do ↓</button>}
+        </>}
+        {tab === 'filed' && <>
+          {filed.length === 0 && <div className="sub wrap">nothing filed yet today. paste a result above.</div>}
+          {filed.map(i => (
+            <div key={i.game} className="it" onClick={() => go(`/b/${slug}/m/${i.game}`)}>
+              <Tile game={i.game} name={i.name} />
+              <div className="g">
+                <div className="nm">{i.name} <span className="muted" style={{ fontWeight: 400, fontSize: 13 }}>{i.mine?.puzzle}</span></div>
+                <div className="sub">
+                  {i.mine && headline(games[i.game], i.mine.metrics, i.mine.outcome)}
+                  {i.mine?.late && <span className="stamp">filed late</span>}
+                  <span>· {i.present}/{i.players} present</span>
+                </div>
+              </div>
+              <div className="pr">
+                <span className="pill done">{i.ranked && i.place ? `#${i.place}` : '✓'}</span>
+                <span className="rs">resets in {left(i.resets_at, now)}</span>
+                {i.mine?.forward && <button className="lnk" style={{ fontSize: 12 }} onClick={e => { e.stopPropagation(); sendOn(i.mine!.forward!, toast) }}>send on</button>}
               </div>
             </div>
-            <div className="pr">
-              <span className="pill done">{i.ranked && i.place ? `#${i.place}` : '✓'}</span>
-              {i.mine?.forward && <button className="lnk" style={{ fontSize: 12 }} onClick={e => { e.stopPropagation(); sendOn(i.mine!.forward!, toast) }}>send on</button>}
-            </div>
-          </div>
-        ))}
+          ))}
+        </>}
         {today.items.length === 0 && <div className="sub wrap">nothing on your agenda yet. pick your games, or just paste a result: its game joins your agenda.</div>}
-        <button className="more" onClick={() => go(`/b/${slug}/you`)}>
-          {extra ? `${extra} more in ${board.name}'s library →` : 'your games →'}
-        </button>
+        {today.items.length === 0 && <button className="more" onClick={() => go(`/b/${slug}/you#games`)}>{extra ? `${extra} games in ${board.name}'s library →` : 'your games →'}</button>}
       </div>
       <Nav slug={slug} on="agenda" />
       {picker && <Boards current={slug} onClose={() => setPicker(false)} />}

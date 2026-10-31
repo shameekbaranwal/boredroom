@@ -27,7 +27,7 @@ def test_create_join_and_nickname(seat):
 
     assert judy.get("/boards/soup").status_code == 404  # not a member yet
     assert judy.post("/boards/join", {"code": "wrong"}).status_code == 404
-    joined = judy.post("/boards/join", {"code": b["invite_code"]}).json
+    joined = judy.post("/boards/join", {"code": b["invite"]["code"]}).json
     assert joined["you"] == {"nickname": "judy", "role": "member", "agenda": []}
     assert judy.patch("/boards/soup/me", {"nickname": "j0dy"}).json["you"]["nickname"] == "j0dy"
     assert [m["nickname"] for m in chair.get("/boards/soup").json["members"]] == ["j0dy", "shmk"]
@@ -36,7 +36,7 @@ def test_create_join_and_nickname(seat):
 
 def test_agenda_adds_to_library_and_only_chair_removes(seat):
     chair, ivan = seat("shmk"), seat("ivan")
-    code = chair.post("/boards", {"name": "soup"}).json["invite_code"]
+    code = chair.post("/boards", {"name": "soup"}).json["invite"]["code"]
     ivan.post("/boards/join", {"code": code})
 
     b = ivan.put("/boards/soup/agenda/krillion").json

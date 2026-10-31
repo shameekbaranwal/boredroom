@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from . import invites
+from . import claims, invites
 from .errors import fail
 from .models import Agenda, Board, BoardGame, Membership, Person
 from .parser import REGISTRY
@@ -44,10 +44,14 @@ def get_board(s: Session, slug: str, person: Person) -> tuple[Board, Membership]
     return board, m
 
 
-def join(s: Session, person: Person, code: str) -> Board:
+def join(s: Session, person: Person, code: str, claim: str | None = None) -> Board:
+    """Takes a seat on the invite's board: a new one, or (`claim`) an imported one, whose
+    name and history become yours."""
     board = invites.lookup(s, code).board
     m = s.get(Membership, (board.id, person.id))
-    if m is None:
+    if claim and (m is None or m.left_at is not None):
+        claims.claim(s, board, person, claim)
+    elif m is None:
         s.add(Membership(board_id=board.id, person_id=person.id, nickname=person.username))
     elif m.left_at is not None:
         m.left_at = None
@@ -110,5 +114,6 @@ def board_json(s: Session, board: Board, m: Membership) -> dict[str, Any]:
                      "players": sum(bg.game_id in g for g in agendas.values())}
                     for bg in sorted(board.library, key=lambda b: b.game_id)],
     }
-    out["invite_code"] = invites.current(s, board).code  # any member can hand it out
+    inv = invites.current(s, board, m.person)  # each member hands out their own
+    out["invite"] = {"code": inv.code, "expires_at": inv.expires_at.isoformat() if inv.expires_at else None}
     return out

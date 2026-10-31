@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { api, setToken, type Invite } from '../api'
 import { TableMark, ThemeToggle, Wordmark } from '../brand'
 import { hue } from '../format'
+import { go } from '../router'
 
 declare global {
   interface Window {
@@ -153,7 +154,15 @@ export default function SignIn({ invite, onSignedIn }: { invite?: Invite | null;
   const [busy, setBusy] = useState(false)
   const [pick, setPick] = useState<'seat' | 'guest' | 'lurk'>('seat')
 
-  const done = (t: string) => { setToken(t); onSignedIn() }
+  // signing in from an invite is taking the seat: join straight away, unless the board has
+  // imported seats, when the next page asks which one (if any) is yours
+  const done = async (t: string) => {
+    setToken(t)
+    if (invite && !invite.seats.length) {
+      try { await api.join(invite.code); go(`/b/${invite.slug}/you?welcome=1`, true) } catch { /* the invite page will offer it again */ }
+    } else if (invite) justArrived(invite.code)
+    onSignedIn()
+  }
   const guest = async () => {
     setBusy(true); setErr('')
     try { done((await api.guest(name.trim() || undefined)).token) } catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
@@ -164,9 +173,9 @@ export default function SignIn({ invite, onSignedIn }: { invite?: Invite | null;
       {invite
         ? <>
             <p className="mc-kick"><b>{invite.inviter ?? invite.chair ?? 'someone'}</b> saved you a seat on <b>{invite.name}</b> · {invite.members} {invite.members === 1 ? 'member' : 'members'}</p>
-            <h1>there's an empty chair at {invite.name}'s table.</h1>
+            <h1>there's an empty seat at {invite.name}'s table.</h1>
           </>
-        : <h1>there's an empty chair at your friends' table.</h1>}
+        : <h1>there's an empty seat at your friends' table.</h1>}
       <Chat />
       <p className="mc-pitch">
         paste your daily puzzles like you always do. boredroom keeps the minutes, the scores, and the receipts.
@@ -177,24 +186,31 @@ export default function SignIn({ invite, onSignedIn }: { invite?: Invite | null;
         <Choice on={pick === 'seat'} title="take the seat" sub="your scores follow you to every device" onPick={() => setPick('seat')}>
           <GoogleButton onToken={done} onError={setErr} />
         </Choice>
-        <Choice on={pick === 'guest'} title="sit in for now" sub="a guest seat on this device. sign in whenever" onPick={() => setPick('guest')}>
+        <Choice on={pick === 'guest'} title="sit in for now" sub="as a guest, on this device. sign in whenever" onPick={() => setPick('guest')}>
           {pick === 'guest'
             ? <div className="guest">
                 <label htmlFor="g" className="sr">username</label>
-                <input id="g" className="input" placeholder="pick a username" value={name} autoFocus
+                <input id="g" className="input" placeholder="a username, yours alone" value={name} autoFocus
                   onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && guest()}
                   autoCapitalize="none" autoComplete="off" spellCheck={false} />
                 <button className="btn" onClick={guest} disabled={busy}>sit</button>
               </div>
-            : <button className="alt" onClick={() => setPick('guest')}>guest seat →</button>}
+            : <button className="alt" onClick={() => setPick('guest')}>pick a username →</button>}
         </Choice>
         <Choice on={pick === 'lurk'} faint title="keep lurking in the group chat" onPick={() => setPick('lurk')}>
-          {pick === 'lurk' && <span className="muted">fair. the chair will be here.</span>}
+          {pick === 'lurk' && <span className="muted">fair. the seat will be here.</span>}
         </Choice>
       </div>
       {err && <div className="err">{err}</div>}
     </MailCard>
   )
+}
+
+// the invite page knows you only just signed in, so it skips straight to picking your seat
+const ARRIVED = 'boredroom.arrived'
+const justArrived = (code: string) => { try { sessionStorage.setItem(ARRIVED, code) } catch { /* fine */ } }
+export function arrivedFor(code: string): boolean {
+  try { return sessionStorage.getItem(ARRIVED) === code } catch { return false }
 }
 
 /** The green room with the table and its seats: the left half of the welcome pages. */

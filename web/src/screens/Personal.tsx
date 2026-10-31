@@ -6,7 +6,7 @@ import { GoogleButton } from './SignIn'
 
 /** Settings that belong to the person rather than a board: timezone, appearance,
  *  the account, and signing out. On every board's "you" screen, and on /me. */
-export function Personal() {
+export function Personal({ guestOnly = false }: { guestOnly?: boolean }) {
   const { me, refreshMe, toast, signOut } = useApp()
   const [theme] = useTheme()
   const [tz, setTz] = useState(me.tz)
@@ -24,8 +24,17 @@ export function Personal() {
     try { await api.updateMe({ tz: v }); refreshMe(); toast(`timezone set to ${v}`) } catch (e) { toast((e as Error).message) }
   }
 
+  // a guest's seat lives on this one device; signing in is what keeps it
+  const guestCard = me.kind === 'guest' && (
+    <div className="card guest-card">
+      <b>you're a guest, as {me.username}, on this device only.</b>
+      <small>sign in with google to keep your seat and scores on every device. nothing you've filed is lost.</small>
+      <GoogleButton onToken={t => { setToken(t); refreshMe(); toast('signed in. your guest seat is now your account.') }} onError={m => toast(m)} />
+    </div>
+  )
+  if (guestOnly) return guestCard || null
+
   return <>
-    <div className="sec">you</div>
     <div className="field">
       <label htmlFor="tz">timezone {tz !== browserTz && <span className="muted">(this device says {browserTz})</span>}</label>
       {zones.length
@@ -42,16 +51,9 @@ export function Personal() {
         ))}
       </div>
     </div>
-    <div className="mrow">
-      <span>{me.kind === 'account' ? <>signed in{me.email && <span className="muted keep"> · {me.email}</span>}</> : 'guest seat on this device'}</span>
-      <span className={`chip${me.kind === 'guest' ? ' seat' : ''}`}>{me.kind === 'account' ? 'signed in' : 'guest seat'}</span>
-    </div>
-    {me.kind === 'guest' && (
-      <div className="field">
-        <label>keep this seat: sign in with google</label>
-        <GoogleButton onToken={t => { setToken(t); refreshMe(); toast('signed in. your guest seat is now your account.') }} onError={m => toast(m)} />
-      </div>
-    )}
+    {me.kind === 'account'
+      ? <div className="mrow"><span>signed in as {me.username}{me.email && <span className="muted keep"> · {me.email}</span>}</span><span className="chip">google</span></div>
+      : guestCard}
     <div><button className="lnk" onClick={signOut}>sign out</button></div>
   </>
 }
@@ -63,7 +65,7 @@ export default function MeScreen() {
     <div className="app">
       <Header title="you.xlsx" meta={me.username} />
       <Fx fn="seat" args={[['boards', 'none yet']]} />
-      <div className="bd"><Personal /></div>
+      <div className="bd"><div className="sec">you</div><Personal /></div>
       <Nav on="you" />
     </div>
   )

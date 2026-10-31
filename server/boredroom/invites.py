@@ -1,7 +1,7 @@
 """Invites: three words that open a board ("smug-walrus-adjourns").
 
-An invite is its own row, so a board can hand out more than one and each can expire
-or be revoked without touching the board. The words are random, unique across every
+An invite is its own row. Every member hands out their own, so the board knows who
+brought whom, and each lasts a day (LIFETIME) unless its owner swaps it for a new one sooner. The words are random, unique across every
 invite ever made, and read as a tiny board-meeting sentence: adjective, noun, verb.
 Codes made before word codes existed still work as they were typed.
 """
@@ -11,7 +11,7 @@ import re
 import secrets
 import time
 from collections import defaultdict, deque
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import request
 from sqlalchemy import or_, select
@@ -101,26 +101,42 @@ def normalise(typed: str) -> str:
     return "-".join(re.findall(r"[a-z]+", typed.lower()))
 
 
+LIFETIME = timedelta(hours=24)
+
+
 def create(s: Session, board: Board, by: Person | None, expires_at: datetime | None = None) -> Invite:
-    inv = Invite(code=new_code(s), board_id=board.id, created_by=by.id if by else None, expires_at=expires_at)
+    inv = Invite(code=new_code(s), board_id=board.id, created_by=by.id if by else None,
+                 expires_at=expires_at or utcnow() + LIFETIME)
     s.add(inv)
     s.flush()
     return inv
 
 
-def current(s: Session, board: Board) -> Invite:
-    """The invite members hand out: the board's newest live word invite (made if there is none)."""
+def current(s: Session, board: Board, by: Person | None = None) -> Invite:
+    """The invite `by` hands out for the board: their newest live one, made if there is none.
+    With no `by`, any live invite of the board's (for scripts and tests)."""
     now = utcnow()
-    live = s.scalars(select(Invite).where(
+    q = select(Invite).where(
         Invite.board_id == board.id, Invite.revoked_at.is_(None), Invite.legacy.is_(False),
-        or_(Invite.expires_at.is_(None), Invite.expires_at > now),
-    ).order_by(Invite.created_at.desc(), Invite.id.desc())).first()
+        or_(Invite.expires_at.is_(None), Invite.expires_at > now))
+    if by is not None:
+        q = q.where(Invite.created_by == by.id)
+    live = s.scalars(q.order_by(Invite.created_at.desc(), Invite.id.desc())).first()
     if live:
         return live
-    # every one expired or was revoked: make a fresh one (callers have already committed their work)
-    live = create(s, board, None)
+    # all expired or revoked: make a fresh one (callers have already committed their work)
+    live = create(s, board, by)
     s.commit()
     return live
+
+
+def renew(s: Session, board: Board, by: Person) -> Invite:
+    """A new invite for `by`; the one they had stops working now."""
+    now = utcnow()
+    for old in s.scalars(select(Invite).where(Invite.board_id == board.id, Invite.created_by == by.id,
+                                              Invite.revoked_at.is_(None))):
+        old.revoked_at = now
+    return create(s, board, by)
 
 
 # wrong codes are cheap to try, so a caller who keeps missing is slowed down

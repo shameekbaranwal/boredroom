@@ -8,7 +8,7 @@ from datetime import date
 from typing import Any
 
 from flask import Blueprint, current_app, g, jsonify, request
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from . import boards, claims, filing, invites, reads
 from . import auth
@@ -144,16 +144,32 @@ def invite(code):
     inviter = next((m.nickname for m in live if m.person_id == inv.created_by), None) or chair
     return jsonify({"code": inv.code, "name": board.name, "slug": board.slug, "chair": chair, "inviter": inviter,
                     "members": len(live),
+                    # imported seats, so a newcomer can say "that's me" as they join
+                    "seats": [{"username": p.username, "nickname": m.nickname,
+                               "results": g.db.scalar(select(func.count()).select_from(Result).where(Result.person_id == p.id))}
+                              for p, m in claims.placeholders(g.db, board)],
                     "library": [REGISTRY[bg.game_id].name for bg in sorted(board.library, key=lambda b: b.game_id)]})
 
 
 @api.post("/boards/join")
 @auth_required
 def join_board():
-    board = boards.join(g.db, g.person, str(body().get("code", "")))
+    board = boards.join(g.db, g.person, str(body().get("code", "")), body().get("claim") or None)
     g.db.commit()
     m = g.db.get(Membership, (board.id, g.person.id))
     return jsonify(boards.board_json(g.db, board, m))
+
+
+@api.post("/boards/<slug>/invite")
+@auth_required
+def renew_invite(slug):
+    """A fresh invite for you; your old one stops working."""
+    b, m = boards.get_board(g.db, slug, g.person)
+    if g.person.kind == "placeholder":
+        fail(403, "placeholders don't invite")
+    invites.renew(g.db, b, g.person)
+    g.db.commit()
+    return jsonify(boards.board_json(g.db, b, m))
 
 
 @api.get("/boards/<slug>")

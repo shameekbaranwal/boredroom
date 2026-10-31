@@ -9,7 +9,7 @@ WIKI = "Seawater ➡️ Babe Ruth ⏰ 02:09 🦶5 🔗 https://www.thewikigameda
 
 def test_forget_takes_everything_and_passes_the_chair(db, seat):
     a, b = seat("ivan"), seat("judy")
-    code = a.post("/boards", {"name": "soup"}).json["invite_code"]
+    code = a.post("/boards", {"name": "soup"}).json["invite"]["code"]
     a.post("/boards", {"name": "solo"})
     b.post("/boards/join", {"code": code})
     a.post("/pastes", {"text": WIKI})
