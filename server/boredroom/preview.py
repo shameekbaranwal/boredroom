@@ -137,7 +137,7 @@ def generic_card() -> bytes:
 
 def _set(html: str, attr: str, key: str, value: str) -> str:
     """Rewrites the content of <meta {attr}="{key}" content="...">."""
-    return re.sub(rf'(<meta {attr}="{re.escape(key)}" content=")[^"]*(")', lambda m: m[1] + escape(value) + m[2], html)
+    return re.sub(rf'(<meta {attr}="{re.escape(key)}" content=")[^"]*(")', lambda m: m[1] + escape(value, quote=False).replace('"', "&quot;") + m[2], html)
 
 
 def tags(html: str, origin: str, invite: Invite | None) -> str:
