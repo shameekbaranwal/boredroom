@@ -34,4 +34,5 @@ def test_an_invite_link_previews_who_saved_the_seat(tmp_path, engine, seat):
     png = c.get(f"/og/invite/{code}.png")
     assert png.mimetype == "image/png" and png.data[:4] == b"\x89PNG"
     assert c.get("/og/invite/smug-walrus-nopes.png").data == b"generic png"
-    assert 'og:title" content="boredroom · your group chat has a board"' in c.get("/join/smug-walrus-nopes").text  # a dead invite previews as boredroom
+    dead = c.get("/join/smug-walrus-nopes").text  # a dead invite previews as plain boredroom
+    assert 'og:title" content="boredroom · ' in dead and "/og/invite/" not in dead

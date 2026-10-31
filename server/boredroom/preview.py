@@ -6,7 +6,9 @@ where; every other link shares the static card in the web build (web/public/og.p
 from __future__ import annotations
 
 import io
+import random
 import re
+import zlib
 from html import escape
 from functools import lru_cache
 from pathlib import Path
@@ -101,35 +103,107 @@ def _lines(d: ImageDraw.ImageDraw, x: int, y: int, f: ImageFont.FreeTypeFont, li
 
 
 @lru_cache(maxsize=256)
-def invite_card(headline: str, line: str, board: str, members: tuple[str, ...], small: str) -> bytes:
+def invite_card(headline: str, line: str, board: str, members: tuple[str, ...], small: str, art: str = "table") -> bytes:
     img = Image.new("RGB", (W, H), GREEN)
     d = ImageDraw.Draw(img)
     _wordmark(d, 72, 52, 64)
-    f, lines = _fit(d, headline, 640, (96, 84, 72), 2)
+    room = 760 if art in ART else 600  # the table reaches further left than a game's picture
+    f, lines = _fit(d, headline, room, (92, 84, 76, 68), 1)
     y = _lines(d, 72, 168, f, lines, YELLOW) + 14
     f2, lines2 = _fit(d, line, 600, (44, 40, 36, 32), 3)
     _lines(d, 72, y, f2, lines2, WHITE)
     d.text((72, H - 82), small, font=_font(26, "mono"), fill=PALE)
-    _table(d, 960, 330, board, list(members))
+    if art in ART:
+        ART[art](d)
+    else:
+        _table(d, 960, 330, board, list(members))
     return _png(img)
 
 
-def generic_card() -> bytes:
-    """web/public/og.png, the preview of every link that isn't an invite (copy by fable)."""
-    img = Image.new("RGB", (W, H), GREEN)
-    d = ImageDraw.Draw(img)
-    _wordmark(d, 72, 60, 84)
-    y = _lines(d, 72, 220, _font(92), ["every 6/6,", "on the record."], WHITE)
-    d.text((72, y + 14), "daily puzzle scores, minuted for the whole group.", font=_font(34, "SemiBold"), fill=PALE)
-    d.text((72, H - 82), "boredroom.shmk.dev", font=_font(26, "mono"), fill=PALE)
-    # a filed grid, the receipt in question: a 6/6, solved on the last row
+# the cards a plain boredroom link shows, one picked at random per fetch:
+# name -> (og:title, og:description, headline lines, subline)
+CARDS: dict[str, tuple[str, str, list[str], str]] = {
+    "wordle": ("boredroom · every 6/6, on the record",
+               "paste your wordle like always. boredroom files it, ranks it, and never lets anyone forget.",
+               ["every 6/6,", "on the record."], "your group's daily puzzles, scored."),
+    "connections": ("boredroom · purple first, allegedly",
+                    "paste your connections grid. boredroom keeps the minutes, the scores, and the receipts.",
+                    ["purple first.", "allegedly."], "now there are receipts."),
+    "mini": ("boredroom · 0:52, take your time",
+             "the mini, timed and ranked for your whole group. paste it like always; boredroom does the rest.",
+             ["0:52.", "take your time."], "the mini, timed and ranked against your friends."),
+    "cryptic": ("boredroom · solved in one, no hints",
+                "minute cryptic, wordle, connections and more. paste them; boredroom keeps score for the group.",
+                ["solved in one.", "no hints."], "the board has a few questions."),
+}
+
+
+def _wordle(d: ImageDraw.ImageDraw) -> None:
     rows = ["bybgb", "ygbgb", "ggbgb", "gggyb", "ggggb", "ggggg"]
     colors = {"g": "#6aaa64", "y": "#c9b458", "b": "#3a3a3c"}
     s, gap, x0, y0 = 42, 7, 905, 150
     for r, row in enumerate(rows):
         for c, k in enumerate(row):
-            x, yy = x0 + c * (s + gap), y0 + r * (s + gap)
-            d.rectangle((x, yy, x + s, yy + s), fill=colors[k])
+            x, y = x0 + c * (s + gap), y0 + r * (s + gap)
+            d.rectangle((x, y, x + s, y + s), fill=colors[k])
+
+
+def _connections(d: ImageDraw.ImageDraw) -> None:
+    # a mistake first, then purple, then the rest: the grid people post
+    rows = ["pyyp", "pppp", "bbbb", "gggg", "yyyy"]
+    colors = {"y": "#f9df6d", "g": "#a0c35a", "b": "#b0c4ef", "p": "#ba81c5"}
+    s, gap, x0, y0 = 52, 8, 890, 150
+    for r, row in enumerate(rows):
+        for c, k in enumerate(row):
+            x, y = x0 + c * (s + gap), y0 + r * (s + gap)
+            d.rounded_rectangle((x, y, x + s, y + s), radius=8, fill=colors[k])
+
+
+def _mini(d: ImageDraw.ImageDraw) -> None:
+    black = {(0, 0), (4, 4)}
+    s, x0, y0 = 54, 880, 140
+    for r in range(5):
+        for c in range(5):
+            x, y = x0 + c * s, y0 + r * s
+            d.rectangle((x, y, x + s, y + s), fill=INK if (r, c) in black else WHITE, outline=INK, width=2)
+    f = _font(30, "Bold")
+    for r, word, start in ((0, "memo", 1), (1, "chair", 0)):
+        for c, ch in enumerate(word):
+            d.text((x0 + (start + c) * s + s / 2, y0 + r * s + s / 2 + 2), ch, font=f, fill=INK, anchor="mm")
+    d.rounded_rectangle((x0 + 60, y0 + 5 * s + 22, x0 + 5 * s - 60, y0 + 5 * s + 78), radius=28, fill=YELLOW)
+    d.text((x0 + 5 * s / 2, y0 + 5 * s + 50), "0:52", font=_font(34), fill=INK, anchor="mm")
+
+
+def _cryptic(d: ImageDraw.ImageDraw) -> None:
+    x0, y0, w = 850, 150, 290
+    d.rounded_rectangle((x0, y0, x0 + w, y0 + 250), radius=14, fill=WHITE)
+    f = _font(25, "SemiBold")
+    for i, ln in enumerate(["drilled, and not", "interested (5)"]):
+        d.text((x0 + 22, y0 + 26 + i * 34), ln, font=f, fill=INK)
+    s = 46
+    for c, ch in enumerate("bored"):
+        x = x0 + 22 + c * (s + 6)
+        d.rectangle((x, y0 + 120, x + s, y0 + 120 + s), outline=GREEN, width=3)
+        d.text((x + s / 2, y0 + 120 + s / 2), ch, font=_font(28), fill=GREEN, anchor="mm")
+    d.text((x0 + 22, y0 + 196), "hints used: 0", font=_font(20, "mono"), fill="#6b6b6b")
+
+
+GAME_OF = {"wordle": "wordle", "connections": "connections", "mini": "mini", "cryptic": "cryptic"}  # card art -> game id
+ART = {"wordle": _wordle, "connections": _connections, "mini": _mini, "cryptic": _cryptic}
+
+
+@lru_cache(maxsize=8)
+def generic_card(name: str = "wordle") -> bytes:
+    """A plain link's preview card; web/public/og.png is the wordle one."""
+    _, _, lines, sub = CARDS[name]
+    img = Image.new("RGB", (W, H), GREEN)
+    d = ImageDraw.Draw(img)
+    _wordmark(d, 72, 60, 84)
+    size = 92 if len(lines) == 2 else 80
+    y = _lines(d, 72, 210, _font(size), lines, WHITE)
+    d.text((72, y + 14), sub, font=_font(32, "SemiBold"), fill=PALE)
+    d.text((72, H - 82), "boredroom.shmk.dev", font=_font(26, "mono"), fill=PALE)
+    ART[name](d)
     return _png(img)
 
 
@@ -144,6 +218,11 @@ def tags(html: str, origin: str, invite: Invite | None) -> str:
     """index.html with its preview tags for this instance and, for an invite, that invite."""
     html = html.replace("https://boredroom.shmk.dev/", f"{origin}/")
     if invite is None:
+        name = random.choice(list(CARDS))
+        title, description, _, _ = CARDS[name]
+        for attr, key, value in (("property", "og:title", title), ("property", "og:description", description),
+                                 ("property", "og:image", f"{origin}/og/{name}.png")):
+            html = _set(html, attr, key, value)
         return html
     t = invite_text(invite)
     for attr, key, value in (
@@ -183,4 +262,8 @@ def invite_text(invite: Invite) -> dict[str, str]:
 def invite_png(invite: Invite) -> bytes:
     inviter, board, others = _people(invite)
     t = invite_text(invite)
-    return invite_card(t["headline"], t["line"], board, tuple(others[:6]), t["small"])
+    # the table, or a picture of a game this board plays; the same one every time for an invite
+    plays = {bg.game_id for bg in invite.board.library}
+    arts = ["table"] + [a for a, game in GAME_OF.items() if game in plays]
+    art = arts[zlib.crc32(invite.code.encode()) % len(arts)]
+    return invite_card(t["headline"], t["line"], board, tuple(others[:6]), t["small"], art)

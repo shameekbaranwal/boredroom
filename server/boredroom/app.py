@@ -54,6 +54,14 @@ def _serve_web(app: Flask, dist: Path) -> None:
 
     page = (dist / "index.html").read_text(encoding="utf-8")
 
+    @app.get("/og/<name>.png")
+    def card(name: str):
+        if name not in preview.CARDS:
+            return send_from_directory(dist, "og.png")
+        resp = Response(preview.generic_card(name), mimetype="image/png")
+        resp.cache_control.max_age = 86400
+        return resp
+
     @app.get("/og/invite/<code>.png")
     def invite_card(code: str):
         inv = invites.peek(g.db, code)
