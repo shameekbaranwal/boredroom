@@ -86,7 +86,7 @@ const bySeniority = (ms: Member[]) => [...ms].sort((x, y) => x.joined_at.localeC
 
 type Page = 'add' | 'register' | 'bylaws' | 'claim' | 'strike' | 'retire' | 'resign' | 'close'
 const TITLES: Record<Page, string> = {
-  add: "the board's games", register: 'the register', bylaws: 'the bylaws', claim: 'a claim',
+  add: 'add a game', register: 'the register', bylaws: 'the bylaws', claim: 'a claim',
   strike: 'a game off', retire: 'invitations', resign: 'resignation', close: 'wind up',
 }
 
@@ -111,7 +111,7 @@ export default function You({ slug, page, arg }: { slug: string; page?: string; 
   )
   if (!pg) return <Main b={b} setB={setB} />
 
-  const parent = pg === 'claim' ? `${home}/register` : pg === 'strike' ? `${home}/add` : pg === 'retire' ? `${home}/bylaws` : home
+  const parent = pg === 'claim' ? `${home}/register` : pg === 'strike' || pg === 'retire' || pg === 'add' ? `${home}/bylaws` : home
   const props = { b, setB, back: parent, arg: arg ?? '' }
   return (
     <div className="app">
@@ -233,8 +233,8 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
             )
           })}
           {ids.length === 0 && <div className="sub wrap">{b.name} has no games yet. add one: it goes on the board for everyone, and on your agenda.</div>}
-          <button className="go" onClick={() => go(`/b/${slug}/you/add`)}>
-            <span className="k">{b.name}'s games</span><span className="v">add{b.library.some(g => g.removable) ? ' or take off' : ''} · {b.library.length} on the board</span>
+          <button className="go" onClick={() => go(`/b/${slug}/you/bylaws#games`)}>
+            <span className="k">missing a game?</span><span className="v">add it in the bylaws</span>
           </button>
 
           <div className="sec">the board</div>
@@ -359,8 +359,9 @@ function Register({ b }: P) {
 /** The bylaws: what the board is and how it runs, as numbered articles. Everyone can read
  *  them; the chair's copy has the pen. */
 function Bylaws({ b, setB }: P) {
-  const { me, refreshMe, toast } = useApp()
+  const { me, games, refreshMe, toast } = useApp()
   const [name, setName] = useState<string | null>(null)
+  useEffect(() => { if (location.hash === '#games') document.getElementById('games')?.scrollIntoView({ block: 'start' }) }, [])
   const chairing = b.you.role === 'chair'
   const ps = people(b)
   const chair = b.members.find(m => m.role === 'chair')  // can be a seat imported from the chat, until it's claimed
@@ -382,11 +383,18 @@ function Bylaws({ b, setB }: P) {
         <p>the board shall be known as <b>{b.name}</b>.</p>
         {chairing && <button className="lnk amend" onClick={() => setName(b.name)}>amend ✎</button>}
       </div>
-      <div className="art">
+      <div className="art" id="games">
         <span className="art-n">article 2</span>
         <p>the board keeps <b>{b.library.length}</b> {b.library.length === 1 ? 'game' : 'games'}; each member puts the ones they play on their own agenda. any member may add a game to the board. whoever added one may take it off again until someone else plays it; the chair may take off any.</p>
-        <button className="lnk amend" onClick={() => go(`/b/${b.slug}/you/add`)}>{b.name}'s games ›</button>
       </div>
+      {[...b.library].sort((x, y) => (games[x.game]?.name ?? x.name).localeCompare(games[y.game]?.name ?? y.name)).map(g => (
+        <div key={g.game} className="it game sub-art compact">
+          <Tile game={g.game} name={games[g.game]?.name ?? g.name} />
+          <div className="g"><div className="nm">{games[g.game]?.name ?? g.name} <small className="muted">{g.players} play{games[g.game]?.ranked === false ? ' · for fun' : ''}</small></div></div>
+          {g.removable && <button className="add strike" onClick={() => go(`/b/${b.slug}/you/strike/${encodeURIComponent(g.game)}`)}>take off ›</button>}
+        </div>
+      ))}
+      <button className="go sub-art" onClick={() => go(`/b/${b.slug}/you/add`)}><span className="k">+ add a game to {b.name}</span></button>
       <div className="art">
         <span className="art-n">article 3</span>
         <p>each member holds one invitation, good for a day. new words void the old.</p>
@@ -403,7 +411,7 @@ function Bylaws({ b, setB }: P) {
           <button className="lnk amend" onClick={() => go(`/b/${b.slug}/you/register#seats`)}>see the seats ›</button>
         </div>
       )}
-      <div className="sub wrap">{chairing ? 'you hold the chair: amend above, and take games off on the games page.' : 'only the chair amends the bylaws.'}</div>
+      <div className="sub wrap">{chairing ? 'you hold the chair: amend, add or take off above.' : 'only the chair amends the bylaws.'}</div>
     </div>
   </>
 }
@@ -415,7 +423,6 @@ function AddGame({ b, setB }: P) {
   const [q, setQ] = useState('')
   const [isLit, light] = useMark()
   const [busy, setBusy] = useState('')
-  const agenda = useAgenda(b.slug, b, setB)
   const el = useRef<HTMLInputElement>(null)
   const [order] = useState(() => Object.values(games).sort((x, y) => x.name.localeCompare(y.name)).map(g => g.id))
   useEffect(() => { if (matchMedia('(pointer: fine)').matches) el.current?.focus() }, [])
@@ -425,17 +432,17 @@ function AddGame({ b, setB }: P) {
   const found = order.filter(g => !term || name(g).toLowerCase().includes(term) || g.includes(term))
   // which list a game sits in is decided when the page opens, so adding one doesn't move it
   const [onAtOpen] = useState(() => new Set(b.library.map(g => g.game)))
-  const fresh = found.filter(g => !onAtOpen.has(g)), standing = found.filter(g => onAtOpen.has(g))
+  const fresh = found.filter(g => !onAtOpen.has(g))
   const row = (g: string) => {
     const lg = lib.get(g)
     return (
-      <div key={g} className={`it game${lg && !agenda.on(g) ? ' off' : ''}${isLit(g) ? ' lit' : ''}`}>
+      <div key={g} className={`it game${isLit(g) ? ' lit' : ''}`}>
         <Tile game={g} name={name(g)} />
         <div className="g">
           <div className="nm">{name(g)}</div>
-          <div className="sub">{lg ? <>{agenda.players(g, lg.players)} play it here{lg.removable && <> · <button className="lnk off-board" onClick={() => go(`/b/${b.slug}/you/strike/${encodeURIComponent(g)}`)}>take off the board</button></>}</> : games[g]?.ranked === false ? 'for fun' : 'ranked'}</div>
+          <div className="sub">{lg ? 'on the board, and on your agenda' : games[g]?.ranked === false ? 'for fun' : 'ranked'}</div>
         </div>
-        {lg ? <Switch on={agenda.on(g)} label={`${name(g)} on my agenda`} onFlip={() => { buzz(); agenda.flip(g, name(g)) }} />
+        {lg ? <span className="chip badge">added</span>
           : <button className="btn sm" disabled={busy === g} onClick={() => add(g)}>add</button>}
       </div>
     )
@@ -458,13 +465,10 @@ function AddGame({ b, setB }: P) {
       {q && <button className="fxe-b" onClick={() => { setQ(''); el.current?.focus() }} aria-label="clear">✕</button>}
     </div>
     <div className="bd page">
-      {standing.length > 0 && <div className="sec">on {b.name} <b>{standing.length}</b> <span className="sec-n">· the switch is your agenda{b.you.role === 'chair' ? '. as chair you can take any game off the board' : ''}</span></div>}
-      {standing.map(row)}
-      {standing.length > 0 && b.you.role !== 'chair' && !b.library.some(g => g.removable) && <div className="sub wrap">only the chair takes games off the board (or whoever added one, until someone else plays it).</div>}
       {fresh.length > 0 && <div className="sec">not on {b.name} yet <b>{fresh.length}</b> <span className="sec-n">· add puts it on the board for everyone, and on your agenda</span></div>}
       {!term && fresh.length === 0 && <div className="sub wrap">{b.name} already has every game on file. know one we don't read? paste a result on the agenda and the clerk will ask for it.</div>}
       {fresh.map(row)}
-      {found.length === 0 && <div className="sub wrap">nothing called "{term}" on file. paste one of its results on the agenda and the clerk will ask for it.</div>}
+      {term && fresh.length === 0 && <div className="sub wrap">nothing called "{term}" on file. paste one of its results on the agenda and the clerk will ask for it.</div>}
     </div>
   </>
 }
