@@ -573,3 +573,6 @@ input, textarea, [contenteditable="true"],
 .invite-row b, .invite-row .sub, .mr .grid, .mr .det, .copy {
   -webkit-user-select: text; user-select: text; -webkit-touch-callout: default;
 }
+.wr.ghost { opacity: .45; cursor: default; }
+.wr.ghost .who { font-style: italic; font-weight: 400; }
+.ghost-av { display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: var(--line); }

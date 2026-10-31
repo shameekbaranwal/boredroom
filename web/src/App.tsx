@@ -7,6 +7,7 @@ import Desk from './screens/Desk'
 import Join from './screens/Join'
 import Minutes from './screens/Minutes'
 import Review from './screens/Review'
+import NoBoardReview from './screens/NoBoardReview'
 import NewBoard from './screens/NewBoard'
 import MeScreen from './screens/Personal'
 import SignIn from './screens/SignIn'
@@ -73,6 +74,10 @@ function Route({ path, me }: { path: string; me: Me }) {
   if (match('/new', path)) return <NewBoard />
   if (match('/desk', path)) return <Desk />
   if (match('/me', path)) return <MeScreen />
+  if (match('/review', path)) {  // the review tab from a screen with no board: your last board's, else the empty one
+    const slug = lastBoard() && onBoard(lastBoard()!) ? lastBoard()! : me.boards[0]?.slug
+    return slug ? <Redirect to={`/b/${slug}/review`} /> : <NoBoardReview />
+  }
   if (match('/share', path)) {
     // the android share target: file the text on the board you last used
     const q = query(path), text = [q.get('text'), q.get('url')].filter(Boolean).join('\n')
