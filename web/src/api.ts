@@ -31,7 +31,10 @@ export type Board = {
   you: { nickname: string; role: string; agenda: string[] }
   members: Member[]
   library: { game: string; name: string; rules: Record<string, unknown>; players: number }[]
+  leaving: Leaving
 }
+/** What leaving a board would do. */
+export type Leaving = { slug: string; name: string; chair: boolean; claimed: { nickname: string; results: number } | null; heir: string | null; alone: boolean }
 export type Invite = { code: string; name: string; slug: string; chair: string | null; inviter: string | null; members: number; library: string[]
   seats: { username: string; nickname: string; results: number }[] }
 export type Event = {
@@ -81,6 +84,9 @@ export const api = {
   guest: (username?: string) => call<{ token: string; me: Me }>('POST', '/guests', { username, tz: tz() }),
   google: (credential: string) => call<{ token: string; created: boolean; me: Me }>('POST', '/auth/google', { credential, tz: tz() }),
   signOut: () => call<{ signed_out: boolean }>('POST', '/auth/signout'),
+  closeAccount: (username: string) => call<{ deleted: boolean; boards_closed: string[] }>('DELETE', '/me', { username }),
+  leaving: () => call<Leaving[]>('GET', '/me/leaving'),
+  leave: (slug: string) => call<{ left: string; closed: boolean }>('POST', `/boards/${slug}/leave`),
   newBoard: (name: string) => call<Board>('POST', '/boards', { name }),
   invite: (code: string) => call<Invite>('GET', `/invites/${encodeURIComponent(code)}`),
   join: (code: string, claim?: string) => call<Board>('POST', '/boards/join', { code, claim }),

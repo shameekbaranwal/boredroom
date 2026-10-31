@@ -10,7 +10,7 @@ from typing import Any
 from flask import Blueprint, current_app, g, jsonify, request
 from sqlalchemy import func, select
 
-from . import boards, claims, filing, invites, reads
+from . import admin, boards, claims, filing, invites, reads
 from . import auth
 from .auth import auth_required, create_guest, valid_tz, USERNAME
 from .errors import fail
@@ -109,6 +109,30 @@ def update_me():
         g.person.username = name
     g.db.commit()
     return jsonify(me_json(g.person))
+
+
+@api.get("/me/leaving")
+@auth_required
+def leaving():
+    """What deleting your account would do, board by board."""
+    out = []
+    for m in g.db.scalars(select(Membership).where(Membership.person_id == g.person.id, Membership.left_at.is_(None))):
+        out.append(boards.leaving_json(g.db, m.board, g.person))
+    return jsonify(out)
+
+
+@api.delete("/me")
+@auth_required
+def close_account():
+    """{username}: deletes your account and everything that's yours. Typing the username
+    back is the confirmation. Seats claimed from a chat history go back unclaimed."""
+    if str(body().get("username", "")).strip().lower() != g.person.username:
+        fail(400, "type your username to confirm")
+    if g.person.kind == "placeholder":
+        fail(403, "placeholders can't close accounts")
+    f = admin.close_account(g.db, g.person)
+    g.db.commit()
+    return jsonify({"deleted": True, "boards_closed": f.boards_deleted})
 
 
 # -- the library -----------------------------------------------------------------
@@ -225,6 +249,14 @@ def board_today(slug):
     return jsonify(reads.today(g.db, board, g.person))
 
 
+@api.get("/boards/<slug>/review")
+@auth_required
+def board_review(slug):
+    """?period=today|week|month|all: daily wins, and the games' leaders or records."""
+    board, _ = boards.get_board(g.db, slug, g.person)
+    return jsonify(reads.review(g.db, board, g.person, request.args.get("period", "today")))
+
+
 @api.get("/boards/<slug>/minutes/<game>")
 @auth_required
 def board_minutes(slug, game):
@@ -237,6 +269,16 @@ def board_minutes(slug, game):
     except ValueError:
         fail(400, "day is YYYY-MM-DD")
     return jsonify(reads.minutes(g.db, board, g.person, game, day))
+
+
+@api.post("/boards/<slug>/leave")
+@auth_required
+def leave_board(slug):
+    """Gives up your seat here. A seat you claimed from the chat goes back unclaimed."""
+    b, _ = boards.get_board(g.db, slug, g.person)
+    closed = boards.leave(g.db, b, g.person)
+    g.db.commit()
+    return jsonify({"left": slug, "closed": closed})
 
 
 @api.post("/boards/<slug>/claim")

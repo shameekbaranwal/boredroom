@@ -81,3 +81,48 @@ def claim(s: Session, board: Board, claimer: Person, username: str) -> int:
     s.delete(seat)
     s.flush()
     return moved
+
+
+def _copy(row, **changes):
+    """A new row of the same model with the same columns, apart from its id and `changes`."""
+    cols = {c.key: getattr(row, c.key) for c in row.__table__.columns if c.key != "id"}
+    return type(row)(**{**cols, **changes})
+
+
+def unclaim(s: Session, board: Board, person: Person) -> list[Person]:
+    """Undoes `claim` on `board` for someone leaving it: each chat name they claimed there
+    becomes a placeholder seat again, with the history the import brought (copied, so the
+    leaver keeps theirs elsewhere) and their agenda on the board. Results they filed
+    themselves stay theirs. Returns the new placeholders."""
+    claimed = board.settings.get("claimed", {})
+    names = [n for n, pid in claimed.items() if pid == person.id]
+    if not names:
+        return []
+    own = s.get(Membership, (board.id, person.id))
+    imported = {p.id: p for p in s.scalars(select(Paste).where(
+        Paste.person_id == person.id, Paste.source == "import")).all()}
+    seats = []
+    for i, name in enumerate(names):
+        seat = Person(username=placeholder_username(s, name), kind="placeholder", tz=person.tz)
+        s.add(seat)
+        s.flush()
+        s.add(Membership(board_id=board.id, person_id=seat.id, nickname=name,
+                         **({"joined_at": own.joined_at} if own else {})))
+        s.flush()
+        for game in s.scalars(select(Agenda.game_id).where(
+                Agenda.board_id == board.id, Agenda.person_id == person.id)).all():
+            s.add(Agenda(board_id=board.id, person_id=seat.id, game_id=game))
+        if i == 0:  # an import's pastes don't say whose chat name they were under; the first gets them
+            ids = {}
+            for pid, paste in imported.items():
+                copy = _copy(paste, person_id=seat.id)
+                s.add(copy)
+                s.flush()
+                ids[pid] = copy.id
+            for r in s.scalars(select(Result).where(Result.person_id == person.id)).all():
+                if r.paste_ids and all(p in ids for p in r.paste_ids):
+                    s.add(_copy(r, person_id=seat.id, paste_ids=[ids[p] for p in r.paste_ids]))
+        seats.append(seat)
+    board.settings = {**board.settings, "claimed": {n: p for n, p in claimed.items() if n not in names}}
+    s.flush()
+    return seats

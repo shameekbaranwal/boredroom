@@ -2,7 +2,7 @@
    Components read semantic tokens only, so themes can become user-selectable later. */
 :root {
   --bg: #ffffff; --surface: #f3f3f3; --ink: #222; --muted: #6b6b6b; --line: #e1e1e1;
-  --accent: #217346; --accent-ink: #fff; --ok: #c6efce; --ok-ink: #006100; --bar-o: #cfe3d6;
+  --bad: #c0392b; --bad-bg: #fdecea; --accent: #217346; --accent-ink: #fff; --ok: #c6efce; --ok-ink: #006100; --bar-o: #cfe3d6;
   --hd: #217346; --hd-ink: #fff; --hd-m: #cfe6d7; --fx-bg: #fafafa; --fx-ink: #444;
   --gut: #f3f3f3; --gut-ink: #777; --rule: #d4d4d4; --todo: #ffeb9c; --todo-ink: #9c5700;
   --note: #fff9c4; --note-b: #c9b200; --seg: #e2efda; --ring: rgba(33,115,70,.2); --dim: rgba(0,0,0,.35);
@@ -18,7 +18,7 @@
 /* dark: from the device unless the toggle says light, or from the toggle */
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #0f1420; --surface: #182033; --ink: #e6e9f2; --muted: #8a93a8; --line: #222b40;
-  --accent: #5ee6a8; --accent-ink: #0b1a14; --ok: #12382b; --ok-ink: #5ee6a8; --bar-o: #2a3a55;
+  --bad: #ff8a7a; --bad-bg: rgba(255,138,122,.08); --accent: #5ee6a8; --accent-ink: #0b1a14; --ok: #12382b; --ok-ink: #5ee6a8; --bar-o: #2a3a55;
   --hd: #182033; --hd-ink: #5ee6a8; --hd-m: #8a93a8; --fx-bg: #121829; --fx-ink: #b9c0d4;
   --gut: #131a2a; --gut-ink: #5d6780; --rule: #263049; --todo: #3a2f12; --todo-ink: #ffd38a;
   --note: #221d3a; --note-b: #6b5bb0; --seg: #12382b; --ring: rgba(94,230,168,.2); --dim: rgba(0,0,0,.55);
@@ -32,7 +32,7 @@
 } }
 :root[data-theme="dark"] {
   --bg: #0f1420; --surface: #182033; --ink: #e6e9f2; --muted: #8a93a8; --line: #222b40;
-  --accent: #5ee6a8; --accent-ink: #0b1a14; --ok: #12382b; --ok-ink: #5ee6a8; --bar-o: #2a3a55;
+  --bad: #ff8a7a; --bad-bg: rgba(255,138,122,.08); --accent: #5ee6a8; --accent-ink: #0b1a14; --ok: #12382b; --ok-ink: #5ee6a8; --bar-o: #2a3a55;
   --hd: #182033; --hd-ink: #5ee6a8; --hd-m: #8a93a8; --fx-bg: #121829; --fx-ink: #b9c0d4;
   --gut: #131a2a; --gut-ink: #5d6780; --rule: #263049; --todo: #3a2f12; --todo-ink: #ffd38a;
   --note: #221d3a; --note-b: #6b5bb0; --seg: #12382b; --ring: rgba(94,230,168,.2); --dim: rgba(0,0,0,.55);
@@ -283,6 +283,8 @@ a { color: var(--accent); }
   .app > .hd { padding: 18px 28px; position: sticky; top: 0; }
   .app > .hd .t { font-size: 24px; }
   .app > .fx { padding: 8px 28px; font-size: 14px; }
+  .app:has(> .sheets) { grid-template-rows: auto auto auto 1fr; }
+  .app > .sheets { position: static; padding: 0 28px; border-right: 1px solid var(--line); }
   .bd > *:not(.plain) { padding: 12px 28px 12px 64px; }
   .bd > *:not(.plain)::before { width: 44px; font-size: 12px; }
   .bd { padding-bottom: 40px; min-height: calc(100dvh - 110px); align-self: stretch; }
@@ -474,5 +476,35 @@ a { color: var(--accent); }
 .memo b { font-size: 16px; }
 .memo small { color: var(--muted); font-size: 13.5px; line-height: 1.4; }
 .memo-steps { margin: 2px 0; padding-left: 22px; display: grid; gap: 4px; font-size: 14.5px; }
-.btn.danger { background: #c0392b; color: #fff; }
+.btn.danger { background: var(--bad); color: var(--bg); }
 .field small { font-size: 12.5px; }
+
+/* the "you" page: two sheets, like a workbook's tabs */
+.sheets { display: flex; gap: 2px; background: var(--gut); border-bottom: 1px solid var(--line); padding: 0 12px; position: sticky; top: 0; z-index: 4; }
+.sheets button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 9px 14px 7px; color: var(--muted); font: 700 13px var(--f-ui); cursor: pointer; }
+.sheets button.on { background: var(--bg); color: var(--accent); border-bottom-color: var(--accent); }
+.sec b { color: var(--ink); font-family: var(--f-num); }
+.sec-n { font-weight: 400; letter-spacing: 0; }
+.field.inline { flex-direction: row; align-items: center; gap: 12px; }
+.field.inline label { flex: none; }
+.field.inline .input { flex: 1; min-width: 0; }
+.inv-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.it.game { cursor: default; transition: background .18s ease-out; }
+.it.game .nm { transition: color .18s ease-out; }
+.it.game .ic { transition: opacity .18s ease-out, filter .18s ease-out; }
+.it.game.lit { animation: cell .7s ease-out; }
+@keyframes cell { from { background: var(--ok); } to { background: transparent; } }
+.sw-w { min-width: 11ch; text-align: right; }
+.sw i, .sw i::after { transition-duration: .18s; transition-timing-function: cubic-bezier(.3,.7,.4,1); }
+.add-row { font-weight: 700; }
+.lnk.bad { color: var(--bad); }
+.bd > .motion { display: flex; flex-direction: column; gap: 8px; background: var(--bad-bg); box-shadow: inset 3px 0 0 var(--bad); animation: unfold .18s ease-out; }
+.motion h3 { margin: 0; font-size: 15px; color: var(--bad); outline: none; }
+.motion p { margin: 0; font-size: 14px; max-width: 62ch; }
+.motion .err { color: var(--bad); }
+@keyframes unfold { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .it.game, .it.game .nm, .it.game .ic, .sw i, .sw i::after { transition: none; }
+  .it.game.lit, .bd > .motion { animation: none; }
+}
+.motion > .lnk { align-self: flex-start; text-align: left; }

@@ -4,12 +4,12 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
 from . import claims, invites
 from .errors import fail
-from .models import Agenda, Board, BoardGame, Membership, Person
+from .models import Agenda, Board, BoardGame, Invite, Membership, Paste, Person, Result, utcnow
 from .parser import REGISTRY
 
 
@@ -56,6 +56,52 @@ def join(s: Session, person: Person, code: str, claim: str | None = None) -> Boa
     elif m.left_at is not None:
         m.left_at = None
     return board
+
+
+def heir(s: Session, board: Board, leaving: Person) -> Membership | None:
+    """Who takes the chair when its holder goes: the longest-serving person still on the
+    board, else the longest-serving imported seat."""
+    rest = s.scalars(select(Membership).join(Person, Person.id == Membership.person_id).where(
+        Membership.board_id == board.id, Membership.person_id != leaving.id, Membership.left_at.is_(None))
+        .order_by(Person.kind == "placeholder", Membership.joined_at)).all()
+    return rest[0] if rest else None
+
+
+def leave(s: Session, board: Board, person: Person) -> bool:
+    """Gives up a seat. A seat claimed from the chat history goes back to being unclaimed;
+    the chair passes on. The last one out closes the board. Returns whether it did."""
+    m = s.get(Membership, (board.id, person.id))
+    if m is None or m.left_at is not None:
+        fail(404, "no such board")
+    claims.unclaim(s, board, person)
+    if board.chair_id == person.id:
+        h = heir(s, board, person)
+        if h is None:
+            s.execute(delete(Board).where(Board.id == board.id))  # the database cascades the rest
+            s.expire_all()
+            return True
+        board.chair_id, h.role = h.person_id, "chair"
+    m.role, m.left_at = "member", utcnow()
+    s.execute(delete(Agenda).where(Agenda.board_id == board.id, Agenda.person_id == person.id))
+    s.execute(update(Invite).where(Invite.board_id == board.id, Invite.created_by == person.id,
+                                   Invite.revoked_at.is_(None)).values(revoked_at=utcnow()))
+    s.flush()
+    return False
+
+
+def leaving_json(s: Session, board: Board, person: Person) -> dict[str, Any]:
+    """What leaving `board` would do: the seat that goes back, who takes the chair."""
+    names = [n for n, pid in board.settings.get("claimed", {}).items() if pid == person.id]
+    h = heir(s, board, person) if board.chair_id == person.id else None
+    imported = 0
+    if names:
+        ids = set(s.scalars(select(Paste.id).where(Paste.person_id == person.id, Paste.source == "import")))
+        imported = sum(1 for r in s.scalars(select(Result).where(Result.person_id == person.id))
+                       if r.paste_ids and all(p in ids for p in r.paste_ids))
+    others = sum(1 for m in board.memberships if m.left_at is None and m.person_id != person.id)
+    return {"slug": board.slug, "name": board.name, "chair": board.chair_id == person.id,
+            "claimed": {"nickname": names[0], "results": imported} if names else None,
+            "heir": h.nickname if h else None, "alone": others == 0}
 
 
 def check_game(game_id: str) -> None:
@@ -114,6 +160,7 @@ def board_json(s: Session, board: Board, m: Membership) -> dict[str, Any]:
                      "players": sum(bg.game_id in g for g in agendas.values())}
                     for bg in sorted(board.library, key=lambda b: b.game_id)],
     }
+    out["leaving"] = leaving_json(s, board, m.person)
     inv = invites.current(s, board, m.person)  # each member hands out their own
     out["invite"] = {"code": inv.code, "expires_at": inv.expires_at.isoformat() if inv.expires_at else None}
     return out

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
+from . import boards, claims
 from .errors import ApiError
 from .models import Board, Membership, Paste, Person, Result
 
@@ -20,6 +21,14 @@ class Forgotten:
     chairs_passed: list[str]
 
 
+def close_account(s: Session, p: Person) -> Forgotten:
+    """Someone deleting their own account: like `forget`, except a seat they claimed from
+    a chat history goes back to its board unclaimed, with what the import brought."""
+    for m in s.scalars(select(Membership).where(Membership.person_id == p.id, Membership.left_at.is_(None))).all():
+        claims.unclaim(s, s.get(Board, m.board_id), p)
+    return forget(s, p.username)
+
+
 def forget(s: Session, username: str) -> Forgotten:
     """Deletes a person and everything that's theirs: results, pastes, seats, agendas and
     tokens (by cascade). A board they chair passes to its longest-serving other member,
@@ -30,9 +39,7 @@ def forget(s: Session, username: str) -> Forgotten:
     out = Forgotten(username, s.scalar(select(func.count()).where(Result.person_id == p.id)) or 0,
                     s.scalar(select(func.count()).where(Paste.person_id == p.id)) or 0, [], [])
     for board in s.scalars(select(Board).where(Board.chair_id == p.id)).all():
-        heir = s.scalar(select(Membership).where(
-            Membership.board_id == board.id, Membership.person_id != p.id, Membership.left_at.is_(None))
-            .order_by(Membership.joined_at))
+        heir = boards.heir(s, board, p)
         if heir is None:
             out.boards_deleted.append(board.slug)
             s.execute(delete(Board).where(Board.id == board.id))  # the database cascades the rest

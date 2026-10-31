@@ -15,7 +15,8 @@ from .filing import to_parsed
 from .models import Agenda, Board, Membership, Person, Result, utcnow
 from .parser import REGISTRY
 from .parser.forward import forward_text
-from .parser.rank import rank
+from .parser.rank import compare, rank
+from .errors import fail
 
 
 def game_day(game_id: str, viewer: Person, now: datetime) -> date:
@@ -137,3 +138,82 @@ def minutes(s: Session, board: Board, viewer: Person, game_id: str, day: date | 
                              r.person_id == viewer.id) for p, r in placed],
         "not_in": sorted(nick[m.person_id] for m in players if m.person_id not in filed_ids),
     }
+
+
+PERIODS = {"today": 1, "week": 7, "month": 30, "all": None}  # game days, counting back from today's
+
+
+def review(s: Session, board: Board, viewer: Person, period: str = "today",
+           now: datetime | None = None) -> dict[str, Any]:
+    """The board's review (UX-NOTES §4): daily wins over the period, then today's game by
+    game, or each game's best for a longer one. A daily win is a #1 place, ties included,
+    in a puzzle at least two people filed."""
+    if period not in PERIODS:
+        fail(400, f"period is one of {', '.join(PERIODS)}")
+    now, span = now or utcnow(), PERIODS[period]
+    members = [m for m in board.memberships if m.left_at is None]
+    nick = {m.person_id: m.nickname for m in members}
+    agendas: dict[str, set[int]] = {}
+    for a in s.scalars(select(Agenda).where(Agenda.board_id == board.id)):
+        if a.person_id in nick:
+            agendas.setdefault(a.game_id, set()).add(a.person_id)
+    games = sorted((bg.game_id for bg in board.library), key=lambda g: REGISTRY[g].name)
+    current = {g: game_day(g, viewer, now) for g in games}
+    first = {g: current[g] - timedelta(days=span - 1) for g in games} if span else {}
+
+    rows: dict[tuple[str, date], list[Result]] = {}
+    for g in games:
+        q = select(Result).where(Result.game_id == g, Result.person_id.in_(agendas.get(g, set())),
+                                 Result.withdrawn_at.is_(None), Result.puzzle_day <= current[g])
+        if span:
+            q = q.where(Result.puzzle_day >= first[g])
+        for r in s.scalars(q):
+            rows.setdefault((g, r.puzzle_day), []).append(r)
+
+    wins: dict[int, int] = {}
+    days: dict[int, set[date]] = {}
+    best: dict[str, tuple[Result, date]] = {}
+    for (g, day), rs in rows.items():
+        for r in rs:
+            days.setdefault(r.person_id, set()).add(day)
+        if not REGISTRY[g].ranked():
+            continue
+        placed = _placed(rs)
+        if len(rs) > 1:
+            for p, r in placed:
+                if p == 1:
+                    wins[r.person_id] = wins.get(r.person_id, 0) + 1
+        top = placed[0][1]
+        if g not in best or compare(to_parsed(top), to_parsed(best[g][0])) < 0 \
+                or compare(to_parsed(top), to_parsed(best[g][0])) == 0 and day < best[g][1]:
+            best[g] = (top, day)  # the first to set it keeps a tied record
+
+    standings = sorted(({"nickname": nick[p], "me": p == viewer.id, "wins": wins.get(p, 0),
+                         "days": len(days.get(p, ()))} for p in nick if p in days or p == viewer.id),
+                       key=lambda x: (-x["wins"], -x["days"], x["nickname"]))
+    place = 0
+    for i, x in enumerate(standings):
+        if not i or x["wins"] != standings[i - 1]["wins"]:
+            place = i + 1
+        x["place"] = place
+    out: dict[str, Any] = {"period": period, "now": now.isoformat(), "standings": standings}
+    if period == "today":
+        out["games"] = []
+        for g in games:
+            rs = rows.get((g, current[g]), [])
+            placed = _placed(rs)
+            top = [r for p, r in placed if p == 1]
+            mine = next(((p, r) for p, r in placed if r.person_id == viewer.id), None)
+            out["games"].append({
+                "game": g, "name": REGISTRY[g].name, "ranked": REGISTRY[g].ranked(), "day": current[g].isoformat(),
+                "present": len(rs), "players": len(agendas.get(g, ())),
+                "plays": viewer.id in agendas.get(g, ()),
+                "place": _place_label(placed, mine[0]) if mine else None, "filed": mine is not None,
+                "leader": ({"nickname": nick[top[0].person_id] if len(top) == 1 else None, "tied": len(top),
+                            "metrics": top[0].metrics} if top and REGISTRY[g].ranked() else None),
+            })
+    else:
+        out["records"] = [{"game": g, "name": REGISTRY[g].name, "nickname": nick[r.person_id], "me": r.person_id == viewer.id,
+                           "metrics": r.metrics, "day": d.isoformat()}
+                          for g in games if g in best for r, d in [best[g]]]
+    return out
