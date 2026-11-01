@@ -586,6 +586,7 @@ a { color: var(--accent); }
 .fxq select { position: absolute; inset: 0; opacity: 0; font: inherit; border: 0; padding: 0; width: 100%; cursor: pointer; appearance: none; -webkit-appearance: none; }
 .fxq select option { color: var(--ink); background: var(--bg); }
 .fxq .tv:focus-within { outline: 2px solid var(--ring); }
+.sub .by { color: var(--accent); }  /* what the agenda is sorted by, when the row doesn't say it */
 .bd > .wr { width: 100%; border: 0; border-bottom: 1px solid var(--line); background: var(--bg); color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .bd > .wr:hover { background: var(--surface); }
 .bd > .wr.me { background: var(--seg); }

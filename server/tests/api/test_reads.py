@@ -59,6 +59,21 @@ def test_today_sorts_open_first_and_places(db, seat):
     assert mt["resets_at"] == "2026-10-31T00:00:00+05:30"
 
 
+def test_today_says_how_much_the_board_plays_each_game(db, seat):
+    a, b, c = board_of(seat)
+    from boredroom import filing
+    ivan, judy = (db.query(Person).filter_by(username=n).one() for n in ("ivan", "judy"))
+    filing.file_paste(db, ivan, WIKI, now=NOW)
+    filing.file_paste(db, judy, WIKI, now=NOW)
+    filing.file_paste(db, ivan, MAPTAP.format(900), now=NOW)
+    db.commit()
+    t = reads.today(db, db.query(Board).one(), ivan, now=NOW)
+    assert {i["game"]: (i["board_month"], i["results"]) for i in t["items"]} == {"wiki": (2, 1), "maptap": (1, 1)}
+    # forty days on, none of it counts as lately
+    later = reads.today(db, db.query(Board).one(), ivan, now=NOW + timedelta(days=40))
+    assert {i["board_month"] for i in later["items"]} == {0}
+
+
 def test_endpoints(seat):
     a, b, c = board_of(seat)
     a.post("/pastes", {"text": WIKI})

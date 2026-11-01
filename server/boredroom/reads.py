@@ -141,8 +141,15 @@ def today(s: Session, board: Board, viewer: Person, now: datetime | None = None)
     # open first; within each, the games you've filed most often, then the soonest reset
     filed = dict(s.execute(select(Result.game_id, func.count()).where(
         Result.person_id == viewer.id, Result.withdrawn_at.is_(None)).group_by(Result.game_id)).all())
+    # how much the board plays each one: results by its members over the last 30 days
+    members = [m.person_id for m in board.memberships if m.left_at is None]
+    since = (now - timedelta(days=30)).date()
+    month = dict(s.execute(select(Result.game_id, func.count()).where(
+        Result.game_id.in_(games), Result.person_id.in_(members), Result.puzzle_day >= since,
+        Result.withdrawn_at.is_(None)).group_by(Result.game_id)).all()) if games and members else {}
     for i in items:
         i["results"] = filed.get(i["game"], 0)
+        i["board_month"] = month.get(i["game"], 0)
     items.sort(key=lambda i: (i["filed"], -i["results"], i["resets_at"]))
     return {"now": now.isoformat(), "items": items}
 

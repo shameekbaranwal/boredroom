@@ -19,6 +19,7 @@ export type Item = {
   resets_at: string; filed: boolean; place: string; present: number; players: number; filed_by: string[]
   leader: { nickname: string | null; tied: number; metrics: Record<string, number> } | null
   mine: Row | null; tenure: { days: number; at_risk: boolean }
+  results: number; board_month: number  // filed by you ever; by the board in the last 30 days
 }
 export type Memo = {
   id: number; kind: string; glyph: string; day: string; game: string | null

@@ -2,11 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, type Board, type Filing, type Item, type Memo, type Minutes, type Today } from '../api'
 import { headline, left } from '../format'
 import { go } from '../router'
-import { Av, Clip, Fx, Ghost, Header, Nav, Tile, sendOn, useApp, useFresh, useNow } from '../ui'
+import { Av, Clip, Fx, FxQuery, Ghost, Header, Nav, Tile, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
 import Boards from './Boards'
 import { InstallMemo } from '../install'
 import { playLink } from '../opens'
 import { MemoRow } from '../memos'
+import { orderOptions, readSort, sortOptions, sorted, writeSort, type Sort, type SortBy } from '../sort'
 
 const TODO = 8  // open games shown before "n more"
 const playUrl = (i: Item) => i.play
@@ -17,13 +18,15 @@ const readAway = (): Away | null => { try { return JSON.parse(sessionStorage.get
 const writeAway = (a: Away | null) => { try { if (a) sessionStorage.setItem(AWAY, JSON.stringify(a)); else sessionStorage.removeItem(AWAY) } catch { /* private window */ } }
 
 export default function Agenda({ slug, shared }: { slug: string; shared?: string }) {
-  const { games, toast } = useApp()
+  const { games, toast, me } = useApp()
   const [today, setToday] = useState<Today | null>(null)
   const [board, setBoard] = useState<Board | null>(null)
   const [err, setErr] = useState('')
   const [picker, setPicker] = useState(false)
   const [pickTab, setTab] = useState<'open' | 'filed' | null>(null)
   const [all, setAll] = useState(false)
+  const [sort, setSortState] = useState<Sort>(readSort)  // this device's, see sort.ts
+  const setSort = (x: Sort) => { writeSort(x); setSortState(x); setAll(false) }
   const [fresh, setFresh] = useState<Set<string>>(new Set())  // just filed: the rows flash once
   const [peek, setPeek] = useState<string | null>(null)  // the row opened in place
   const [away, setAwayState] = useState<Away | null>(readAway)
@@ -71,7 +74,8 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
     </div>
   )
 
-  const open = today.items.filter(i => !i.filed), filed = today.items.filter(i => i.filed)
+  const items = sorted(today.items, sort)
+  const open = items.filter(i => !i.filed), filed = items.filter(i => i.filed)
   const tab = pickTab ?? (open.length || !filed.length ? 'open' : 'filed')
   const extra = board.library.filter(g => !board.you.agenda.includes(g.game)).length
   const placeholders = board.members.filter(m => m.kind === 'placeholder')
@@ -80,7 +84,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   return (
     <div className="app">
       <Header title={`${board.name}.xlsx`} meta="agenda" onTitle={() => setPicker(true)} />
-      <Fx fn="agenda" args={[['board', board.name], ['puzzles', 'current']]} />
+      <FxQuery fn="agenda" tokens={tokens(slug, me.boards, sort, setSort)} />
       <div className="bd">
         <Pasteboard board={board} shared={shared} onFiled={filedNow} back={back ? away : null} onBackDone={() => setAway(null)} />
         <InstallMemo onDone={ok => ok && toast('installed. see you on the home screen.')} />
@@ -100,7 +104,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
           {open.length === 0 && today.items.length > 0 && <div className="sub wrap">all {filed.length} filed. the board thanks you.</div>}
           {(all || open.length <= TODO + 1 ? open : open.slice(0, TODO)).map(i => <OpenRow key={i.game} i={i} slug={slug} now={now} lit={fresh.has(i.game)}
             open={peek === i.game} onToggle={() => toggle(i.game)}
-            playing={away?.game === i.game} onPlay={() => setAway({ game: i.game, name: i.name, at: Date.now() })} />)}
+            playing={away?.game === i.game} onPlay={() => setAway({ game: i.game, name: i.name, at: Date.now() })} by={sort.by} />)}
           {!all && open.length > TODO + 1 && <button className="more" onClick={() => setAll(true)}>{open.length - TODO} more to do ↓</button>}
         </>}
         {tab === 'filed' && <>
@@ -117,6 +121,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
                   {i.mine?.late && <span className="stamp">filed late</span>}
                   <span>· {i.present}/{i.players} present</span>
                   {i.tenure.days >= 2 && <span className="tenure">· {i.tenure.days}-day tenure</span>}
+                  <By i={i} by={sort.by} />
                 </div>
               </div>
               <div className="pr">
@@ -158,8 +163,25 @@ function Memos({ slug, memos, onChange }: { slug: string; memos: Memo[]; onChang
   )
 }
 
-function OpenRow({ i, slug, now, lit, open, onToggle, playing, onPlay }:
-  { i: Item; slug: string; now: number; lit: boolean; open: boolean; onToggle: () => void; playing: boolean; onPlay: () => void }) {
+/** The formula bar as the agenda's controls: which board, and the order of its games. */
+function tokens(slug: string, boards: { slug: string; name: string }[], sort: Sort, set: (s: Sort) => void): Token[] {
+  return [
+    { key: 'board', value: slug, options: boards.map(b => [b.slug, b.name]), onPick: s => go(`/b/${s}`) },
+    { key: 'sort', value: sort.by, options: sortOptions, onPick: by => set({ by: by as SortBy, order: 'first' }) },
+    ...(sort.by === 'usual' ? [] : [{ key: 'order', value: sort.order, options: orderOptions(sort.by), onPick: (o: string) => set({ ...sort, order: o as Sort['order'] }) }]),
+  ]
+}
+
+/** What a row is sorted by, when the row doesn't already say it. */
+function By({ i, by }: { i: Item; by: SortBy }) {
+  const t = by === 'mine' ? (i.results ? `${i.results} filed by you` : 'new to you')
+    : by === 'popular' ? (i.board_month ? `${i.board_month} this month` : 'quiet this month')
+      : by === 'tenure' && i.tenure.days >= 2 && !i.filed && !i.tenure.at_risk ? `${i.tenure.days}-day tenure` : null
+  return t ? <span className="by"> · {t}</span> : null
+}
+
+function OpenRow({ i, slug, now, lit, open, onToggle, playing, onPlay, by }:
+  { i: Item; slug: string; now: number; lit: boolean; open: boolean; onToggle: () => void; playing: boolean; onPlay: () => void; by: SortBy }) {
   const { games } = useApp()
   const url = playUrl(i)
   const link = url ? playLink(url) : null
@@ -173,10 +195,11 @@ function OpenRow({ i, slug, now, lit, open, onToggle, playing, onPlay }:
         <div className="g">
           <div className="nm">{i.name} {i.puzzle && <span className="muted" style={{ fontWeight: 400, fontSize: 13 }}>{i.puzzle}</span>}</div>
           <div className="sub">
-            {i.present === 0 ? 'no one yet · be first' : <>
+            {i.present === 0 ? <>no one yet · be first<By i={i} by={by} /></> : <>
               <span className="stack">{i.filed_by.slice(0, 4).map(n => <Av key={n} name={n} />)}</span>
               {i.present}/{i.players} present
               {i.leader && <> · {i.leader.nickname ?? `${i.leader.tied} tied`} {headline(games[i.game], i.leader.metrics)}</>}
+              <By i={i} by={by} />
             </>}
           </div>
           {i.tenure.at_risk && i.tenure.days >= 2 && <div className="risk-l">your {i.tenure.days}-day tenure lapses at reset</div>}
