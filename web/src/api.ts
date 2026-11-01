@@ -5,7 +5,7 @@ export type Kind = 'guest' | 'account' | 'placeholder'
 export type BoardRef = { slug: string; name: string; nickname: string; role: string }
 export type Me = { username: string; kind: Kind; tz: string; email: string | null; boards: BoardRef[] }
 export type Metric = { name: string; kind: string; better: 'high' | 'low'; max: number | null; unit: string | null }
-export type Game = { id: string; name: string; key: string; ranked: boolean; links: string[]; ranker: string[]; metrics: Metric[] }
+export type Game = { id: string; name: string; key: string; ranked: boolean; links: string[]; play: string | null; ranker: string[]; metrics: Metric[] }
 export type Field = { name: string; value: unknown; visibility: 'public' | 'detail' | 'spoiler' }
 
 export type Row = {
@@ -15,7 +15,7 @@ export type Row = {
   raw: string | null; forward: string | null; filed_at: string; tenure?: number
 }
 export type Item = {
-  game: string; name: string; ranked: boolean; links: string[]; day: string; puzzle: string | null
+  game: string; name: string; ranked: boolean; links: string[]; play: string | null; day: string; puzzle: string | null
   resets_at: string; filed: boolean; place: string; present: number; players: number; filed_by: string[]
   leader: { nickname: string | null; tied: number; metrics: Record<string, number> } | null
   mine: Row | null; tenure: { days: number; at_risk: boolean }

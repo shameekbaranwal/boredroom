@@ -1,65 +1,78 @@
-# Boredroom
+# boredroom.xlsx
 
-A leaderboard for the daily puzzle games your friends already play — Wordle,
-Connections, Strands and the long tail of obscure ones. Instead of pasting
-results into a WhatsApp group and losing them in the scroll, you share them to
-Boredroom, and your rooms keep the streaks, rankings and bragging rights.
+**A leaderboard for the daily puzzles your group chat already argues about.**
 
-## Status
+Wordle, Connections, MapTap, Krillion, Fermi and the long tail of obscure ones. Paste
+the share text the game gives you; boredroom files it, ranks the table, and keeps the
+minutes. Streaks become *tenure*, the person who started it all is *the chair*, and every
+screen is a spreadsheet, because this is a board meeting and you are all, regrettably,
+on the board.
 
-UX is locked (v8). The parser reads 26 games. The server (milestone 1, plus today and
-minutes from milestone 2) and a first slice of the web app are live at boredroom.shmk.dev:
-sign-in, boards and invites, pasting, the agenda, minutes, your games, and claiming an
-imported seat. Review, the game screen and memos come next.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screens/agenda-dark.png">
+    <img src="docs/screens/agenda-light.png" width="260" alt="the agenda: today's open games, who's present, whose tenure lapses at reset">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screens/minutes-dark.png">
+    <img src="docs/screens/minutes-light.png" width="260" alt="the minutes: today's maptap, ranked">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screens/review-dark.png">
+    <img src="docs/screens/review-light.png" width="260" alt="the review: daily wins this month">
+  </picture>
+</p>
+<p align="center"><sub>the agenda · the minutes · the review (a made-up board)</sub></p>
 
-## Layout
+## What's on the agenda
+
+- **Paste, don't type.** One paste can hold a whole day of shares; the clerk reads 26
+  games and files each one where it belongs. On Android it's a share target, so it's one
+  tap from the game.
+- **One result, every board.** Results belong to you, not the board, so a Wordle counts
+  in the family board and the work board alike.
+- **Resets that match the game.** MapTap rolls over at your midnight, Fermi and Krillion at
+  midnight in New York, Metazooa at midnight UTC; "today" means the game's today.
+- **The minutes, the review, the head-to-heads.** Daily standings, monthly wins, records,
+  tenure, and a formula bar to slice it all.
+- **An installable app.** It lives on your home screen and opens games in the app or your
+  browser, your call.
+
+<details>
+<summary>the 26 games</summary>
+
+anno, connections, daily red, dailyorbs, fermi, globle, historydle, krillion, layers,
+maptap, metazooa, minute cryptic, noillirk, nyt mini, perceptle, petguessr, pindrop, pips,
+pyragrams, pyraphemes, pyrithmetic, strands, system design daily, travle, wiki game, wordle
+</details>
+
+## Running it
 
 ```
-server/          Flask backend (a uv project)
-  boredroom/     the package; parser/ turns pasted share texts into results
-  tests/         server tests
-  migrations/    alembic
-  scripts/       forget.py (delete people and everything theirs)
-web/             the PWA (React + Vite + TS); its tests live inside it
-build/           Dockerfiles and build scripts (see build/README.md)
-tests/           end-to-end tests across server and web (none yet)
-docs/            decisions, specs, UX
-research/        private source material and the tools that read it (gitignored; never committed)
+server/   Flask + SQLAlchemy + Alembic (a uv project); parser/ turns share texts into results
+web/      the PWA: React + Vite + TypeScript
+build/    images, deploys and data tools (see build/README.md)
+docs/     decisions, specs, voice, UX
 ```
 
 ```
-cd server
-uv run pytest                          # tests
-../build/dev-db.sh start                # dev postgres on 127.0.0.1:5433
+build/dev-db.sh start                     # dev postgres on 127.0.0.1:5433
+cd server && uv run pytest                # tests
 uv run alembic upgrade head
-uv run flask --app "boredroom.app:create_app()" run --debug -p 5078   # api on :5078
-
-cd web && npm install && npm run dev   # app at http://localhost:5173 (proxies /api to :5078)
+uv run flask --app "boredroom.app:create_app()" run --debug -p 5078    # api on :5078
+cd web && npm install && npm run dev      # app on :5173, proxies /api to :5078
 ```
 
-Google sign-in in development needs `GOOGLE_OAUTH_CLIENT_ID` in the Flask server's
-environment, and `http://localhost:5173` as an authorized JavaScript origin.
+Google sign-in in development needs `GOOGLE_OAUTH_CLIENT_ID` in the server's environment
+and `http://localhost:5173` as an authorized JavaScript origin. Guests need nothing.
 
-**Deploy (homeserver):** production only runs master. Every change is a feature branch in its own worktree (`build/feature.sh new NAME`). It's rebased onto master and goes to stage first (stage-boredroom.shmk.dev). Once approved, `build/feature.sh promote NAME` merges it into master and puts master on production and stage. See build/README.md. Production: `bea build boredroom` builds `boredroom:latest` via
-`build/build-docker-image.sh`. It runs as the `boredroom` service in yams on port 5077
-(172.60.0.60), public at boredroom.shmk.dev through the Cloudflare tunnel, with its
-Postgres as `boredroom-db` (172.60.0.61). The image serves the API and the built web app,
-and migrates the database on boot. A board's history can be seeded before
-its members join (`boredroom.seed`: placeholder seats people claim with "that's me"); the
-tools that turn a private chat into that history live in research/, outside git.
+**Deploying:** production only runs master. Every change is a feature branch in its own
+worktree that goes to stage first, then `build/feature.sh promote` merges it and ships
+master. The whole flow is in [build/README.md](build/README.md).
 
-- [`docs/ux/boredroom-ux.html`](docs/ux/boredroom-ux.html) — design philosophy, UX
-  requirements, core flows and screen mockups (also published as an artifact)
-- [`docs/VOICE.md`](docs/VOICE.md) — brand voice and nomenclature (agenda, the Chair,
-  tenure, the daily bored meeting…)
-- [`docs/DECISIONS.md`](docs/DECISIONS.md) — what's been decided so far and why
-- [`docs/OPEN-QUESTIONS.md`](docs/OPEN-QUESTIONS.md) — what still needs an answer
+## Further reading
 
-## Core objects
-
-- **Games** — the library: name, link, when the puzzle resets, how a shared
-  result is scored.
-- **Rooms** — persistent groups of friends (admins + members) that track a set
-  of games.
-- **Results** — one person's result for one puzzle. Belongs to the person, not
-  the room, so one share counts in every room tracking that game.
+- [docs/VOICE.md](docs/VOICE.md): the board's vocabulary (agenda, minutes, tenure, the chair)
+- [docs/DECISIONS.md](docs/DECISIONS.md): what's been decided and why
+- [docs/PARSER.md](docs/PARSER.md): how a share text becomes a result
+- [docs/ux/boredroom-ux.html](docs/ux/boredroom-ux.html): design philosophy and core flows

@@ -3,7 +3,8 @@ import { api, setToken, type Leaving } from '../api'
 import { Av, Fx, FxEdit, Header, Nav, goBack, useApp } from '../ui'
 import { setPref, useTheme, type Pref } from '../theme'
 import { GoogleButton } from './SignIn'
-import { standalone, useInstall } from '../install'
+import { useInstall } from '../install'
+import { canChooseOpens, opensIn, setOpensIn, standalone, type Opens } from '../opens'
 import { useUsernameCheck } from '../username'
 import { go } from '../router'
 
@@ -89,12 +90,31 @@ export function YourFile({ onEditName, closeTo }: { onEditName: () => void; clos
         : how === 'prompt' ? <button className="btn sm" onClick={async () => { if (await install()) toast('installed. see you on the home screen.') }}>install</button>
           : <span className="chip">{how === 'ios' ? 'two taps' : 'in the browser'}</span>}
     </div>
+    {canChooseOpens() && <OpensIn />}
     <div className="cell">
       <span className="k">sign out<small className="muted">{me.kind === 'guest' ? 'a guest seat is lost for good' : 'sign in again with google any time'}</small></span>
       <HoldToSign label="sign out" hint="hold to sign out" tone="ghost" busy={false} ready onDone={signOut} />
     </div>
     <button className="go bad" onClick={() => go(closeTo)}><span className="k">wind up your account</span></button>
   </>
+}
+
+/** Where play links open from the installed app: in it, or in the phone's browser. */
+function OpensIn() {
+  const [o, setO] = useState<Opens>(opensIn)
+  const pick = (v: Opens) => { setOpensIn(v); setO(v) }
+  return (
+    <div className="cell">
+      <span className="k">games open<small className="muted">{o === 'app' ? 'inside boredroom; back is one swipe' : 'in your browser, where you may be signed in'}</small></span>
+      <div className="seg" role="radiogroup" aria-label="games open">
+        {(['app', 'browser'] as Opens[]).map(v => (
+          <button key={v} role="radio" aria-checked={o === v} className={o === v ? 'on' : ''} onClick={() => pick(v)}>
+            {v === 'app' ? 'in the app' : 'in the browser'}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 /** A guest's seat lives on this one device; signing in is what keeps it. */

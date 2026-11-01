@@ -125,6 +125,7 @@ def today(s: Session, board: Board, viewer: Person, now: datetime | None = None)
         items.append({
             "tenure": {"days": run, "at_risk": risk},
             "game": g, "name": game.name, "ranked": game.ranked(), "links": list(game.links),
+            "play": game.play_url(),
             "day": day.isoformat(),
             "puzzle": mine.puzzle_key if mine else (str(current.isoformat() if isinstance(current, date)
                                                        else current) if current is not None else None),

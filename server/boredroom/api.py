@@ -163,7 +163,7 @@ def close_account():
 @api.get("/games")
 def games():
     return jsonify([{"id": c.id, "name": c.name, "key": c.key, "ranked": c.ranked(),
-                     "links": list(c.links), "ranker": list(c.ranker),
+                     "links": list(c.links), "play": c.play_url(), "ranker": list(c.ranker),
                      "metrics": [{"name": m.name, "kind": m.kind, "better": m.better, "max": m.max,
                                   "unit": m.unit} for m in c.metrics]}
                     for c in sorted(REGISTRY.values(), key=lambda c: c.name) if not c.ignore])

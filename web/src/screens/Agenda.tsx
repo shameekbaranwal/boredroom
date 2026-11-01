@@ -5,9 +5,10 @@ import { go } from '../router'
 import { Av, Clip, Fx, Ghost, Header, Nav, Tile, sendOn, useApp, useFresh, useNow } from '../ui'
 import Boards from './Boards'
 import { InstallMemo } from '../install'
+import { playLink } from '../opens'
 
 const TODO = 8  // open games shown before "n more"
-const playUrl = (i: Item) => (i.links[0] ? `https://${i.links[0]}` : null)
+const playUrl = (i: Item) => i.play
 const DAY = 86400000
 const AWAY = 'boredroom.away'  // the game you left to play, so the agenda can greet you when you're back
 type Away = { game: string; name: string; at: number }
@@ -140,6 +141,7 @@ function OpenRow({ i, slug, now, lit, open, onToggle, playing, onPlay }:
   { i: Item; slug: string; now: number; lit: boolean; open: boolean; onToggle: () => void; playing: boolean; onPlay: () => void }) {
   const { games } = useApp()
   const url = playUrl(i)
+  const link = url ? playLink(url) : null
   const ms = new Date(i.resets_at).getTime() - now
   const urg = ms < 3600000
   return (
@@ -155,12 +157,12 @@ function OpenRow({ i, slug, now, lit, open, onToggle, playing, onPlay }:
               {i.present}/{i.players} present
               {i.leader && <> · {i.leader.nickname ?? `${i.leader.tied} tied`} {headline(games[i.game], i.leader.metrics)}</>}
             </>}
-            {i.tenure.at_risk && i.tenure.days >= 2 && <span className="tenure risk">· your {i.tenure.days}-day tenure lapses at reset</span>}
           </div>
+          {i.tenure.at_risk && i.tenure.days >= 2 && <div className="risk-l">your {i.tenure.days}-day tenure lapses at reset</div>}
         </div>
         <div className="pr">
-          {url
-            ? <a className={`play${urg ? ' urg' : ''}${playing ? ' away' : ''}`} href={url} target="_blank" rel="noreferrer"
+          {link
+            ? <a className={`play${urg ? ' urg' : ''}${playing ? ' away' : ''}`} href={link.href} target={link.newTab ? '_blank' : undefined} rel="noreferrer"
                 style={{ ['--left' as string]: Math.max(0, Math.min(1, ms / DAY)) }}
                 aria-label={`play ${i.name}, ${left(i.resets_at, now)} left`}
                 onClick={e => { e.stopPropagation(); onPlay() }}>

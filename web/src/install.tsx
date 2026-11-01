@@ -1,4 +1,5 @@
 import { useState, useSyncExternalStore } from 'react'
+import { ios, standalone } from './opens'
 
 // Putting boredroom on the home screen. Chrome and Edge offer an install prompt the page
 // can trigger; iPhones don't, so there the memo shows the two taps in Safari instead.
@@ -18,9 +19,6 @@ if (typeof window !== 'undefined') {
   }
 }
 
-export const standalone = () =>
-  matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true
-const ios = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 
 /** 'prompt': the browser will install on a tap. 'ios': show the steps. null: nothing to offer. */
 export function useInstall(): ['prompt' | 'ios' | null, () => Promise<boolean>] {

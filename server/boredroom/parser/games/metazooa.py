@@ -1,6 +1,6 @@
-from datetime import date
+from datetime import date, time
 
-from ..core import Game, Metric
+from ..core import Game, Metric, Reset
 
 
 class Metazooa(Game):
@@ -9,6 +9,7 @@ class Metazooa(Game):
     header = r"^\S+ Animal #\d+(?: \S+)?$"  # the emoji around it change daily
     links = ("metazooa.com",)
     anchor = (1187, date(2026, 10, 30))
+    reset = Reset("UTC", time(0, 0))  # 05:30 IST: the chat files the old number until then
     metrics = (Metric("guesses", "count", "low", max=20),)
     ranker = ("guesses",)
 

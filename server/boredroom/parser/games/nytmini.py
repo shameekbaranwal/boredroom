@@ -7,6 +7,7 @@ class NYTMini(Game):
     name = "nyt mini"
     header = r"^I solved the \d{1,2}/\d{1,2}/\d{4} New York Times Mini Crossword"
     links = ("nytimes.com", "nytimes.onelink.me")
+    play = "https://www.nytimes.com/crosswords/game/mini"
     key = "date"
     metrics = (Metric("time", "duration", "low", unit="s"),)
     ranker = ("time",)

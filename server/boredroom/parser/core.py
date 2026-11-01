@@ -181,6 +181,8 @@ class Game:
     header: ClassVar[str]
     # domains that confirm the game when the header is missing (see `fallback`)
     links: ClassVar[tuple[str, ...]] = ()
+    # where "play" opens, when the game isn't at https://links[0] (that's often the home page)
+    play: ClassVar[str | None] = None
     # optional start marker used only in text no header claimed; results are `inferred`
     fallback: ClassVar[str | None] = None
     key: ClassVar[Literal["number", "date", "pair"]] = "number"
@@ -194,6 +196,10 @@ class Game:
     ignore: ClassVar[bool] = False
     # how far a metric may differ between two pastes of the same play (see merge.py)
     tolerance: ClassVar[dict[str, float]] = {}
+
+    @classmethod
+    def play_url(cls) -> str | None:
+        return cls.play or (f"https://{cls.links[0]}" if cls.links else None)
 
     def __init_subclass__(cls, **kw):
         super().__init_subclass__(**kw)

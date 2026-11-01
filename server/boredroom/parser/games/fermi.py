@@ -10,7 +10,7 @@ class Fermi(Game):
     header = r"^Fermi · No\. ?\d+"
     links = ("fermi.gg",)
     anchor = (96, date(2026, 10, 30))
-    reset = Reset("UTC", time(0, 0))
+    reset = Reset("America/New_York", time(0, 0))  # midnight eastern: 09:30 IST in us summer, 10:30 in winter
     # how many times off your guesses were, combined; 1× is perfect
     metrics = (Metric("score", "ratio", "low", unit="×"),)
     ranker = ("score",)

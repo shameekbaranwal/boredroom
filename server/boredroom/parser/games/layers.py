@@ -8,6 +8,7 @@ class Layers(Game):
     name = "layers"
     header = r"^(?:\S+\s*)?Layers #\d+"
     links = ("hiddenlayerlabs.com/layers",)
+    play = "https://hiddenlayerlabs.com/play/"
     anchor = (352, date(2026, 10, 30))
     metrics = (Metric("guesses", "count", "low", max=6),)
     ranker = ("guesses",)

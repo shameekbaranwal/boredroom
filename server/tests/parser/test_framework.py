@@ -65,7 +65,15 @@ def test_reset_is_per_game():
     night = datetime(2026, 10, 30, 21, 30, tzinfo=timezone.utc)
     assert REGISTRY["maptap"].current(night, "Asia/Kolkata") == date(2026, 10, 31)
     assert REGISTRY["pindrop"].current(night, "Asia/Kolkata") == 242
-    assert REGISTRY["fermi"].current(night, "Asia/Kolkata") == REGISTRY["fermi"].current(early, "Asia/Kolkata")
+    assert REGISTRY["fermi"].current(early, "Asia/Kolkata") == 95  # 09:00 IST, half an hour before it moves
+    assert REGISTRY["fermi"].current(night, "Asia/Kolkata") == 96
+    # fermi goes at midnight in new york: 07:00 IST on 31 Oct is still the 30th's (96), 10:00 the 31st's
+    assert REGISTRY["fermi"].current(datetime(2026, 10, 31, 1, 30, tzinfo=timezone.utc), "Asia/Kolkata") == 96
+    assert REGISTRY["fermi"].current(datetime(2026, 10, 31, 4, 30, tzinfo=timezone.utc), "Asia/Kolkata") == 97
+    # after us daylight time ends (1 Nov) it's 10:30 IST: 10:00 IST on 2 Nov is still 98
+    assert REGISTRY["fermi"].current(datetime(2026, 11, 2, 4, 30, tzinfo=timezone.utc), "Asia/Kolkata") == 98
+    # metazooa goes at utc midnight: 03:00 IST on 31 Oct is still the 30th's (1187)
+    assert REGISTRY["metazooa"].current(night, "Asia/Kolkata") == 1187
 
 
 def test_out_of_range_is_partial(p):
@@ -93,3 +101,10 @@ def test_forward_wraps_spoilers(p):
     out = forward_text(wiki)
     assert out.startswith("[wiki game spoiler]") and "​" * 100 in out
     assert forward_text(one(p(KRILL.format(score=1)))) == KRILL.format(score=1)
+
+
+def test_play_opens_the_game_not_its_home_page():
+    assert REGISTRY["maptap"].play_url() == "https://maptap.gg"
+    assert REGISTRY["sdd"].play_url() == "https://systemdesigndaily.com/quiz"
+    assert REGISTRY["layers"].play_url() == "https://hiddenlayerlabs.com/play/"
+    assert REGISTRY["mini"].play_url() == "https://www.nytimes.com/crosswords/game/mini"
