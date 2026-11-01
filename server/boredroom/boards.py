@@ -151,6 +151,14 @@ def set_agenda(s: Session, board: Board, person: Person, game_id: str, on: bool)
         s.delete(row)
 
 
+def set_nudge(s: Session, board: Board, person: Person, game_id: str, on: bool) -> None:
+    """A push an hour before the game resets, if you haven't filed. Only for games on your agenda."""
+    row = s.get(Agenda, (board.id, person.id, game_id))
+    if row is None:
+        fail(409, "put it on your agenda first")
+    row.nudge = on
+
+
 def agenda_of(s: Session, board: Board, person: Person) -> list[str]:
     return list(s.scalars(select(Agenda.game_id).where(
         Agenda.board_id == board.id, Agenda.person_id == person.id).order_by(Agenda.game_id)))
@@ -159,8 +167,11 @@ def agenda_of(s: Session, board: Board, person: Person) -> list[str]:
 def board_json(s: Session, board: Board, m: Membership) -> dict[str, Any]:
     members = [x for x in board.memberships if x.left_at is None]
     agendas: dict[int, list[str]] = {}
+    nudges: list[str] = []
     for a in s.scalars(select(Agenda).where(Agenda.board_id == board.id)):
         agendas.setdefault(a.person_id, []).append(a.game_id)
+        if a.nudge and a.person_id == m.person_id:
+            nudges.append(a.game_id)
     # what each member has on file here: their results for the board's games
     lib = [bg.game_id for bg in board.library]
     filed = dict(s.execute(select(Result.person_id, func.count()).where(
@@ -170,7 +181,8 @@ def board_json(s: Session, board: Board, m: Membership) -> dict[str, Any]:
         "slug": board.slug, "name": board.name,
         "settings": {k: v for k, v in board.settings.items() if k != "claimed"},  # person ids stay here
         "you": {"nickname": m.nickname, "role": m.role, "agenda": sorted(agendas.get(m.person_id, [])),
-                "claimed": m.person_id in board.settings.get("claimed", {}).values()},  # one seat each
+                "claimed": m.person_id in board.settings.get("claimed", {}).values(),  # one seat each
+                "digest": m.digest, "nudges": sorted(nudges)},
         "members": [{"nickname": x.nickname, "username": x.person.username, "role": x.role,
                      "kind": x.person.kind, "joined_at": x.joined_at.isoformat(),
                      "games": len(agendas.get(x.person_id, [])), "results": filed.get(x.person_id, 0)}

@@ -7,6 +7,8 @@ import { Av, Clip, Fx, FxQuery, Ghost, Header, Nav, Overlay, Tile, Trouble, Who,
 import Boards from './Boards'
 import { InstallMemo } from '../install'
 import { NewsMemo } from '../news'
+import { AskMemo } from '../reminders'
+import { shouldAsk, usePush } from '../push'
 import { playLink } from '../opens'
 import { MemoRow } from '../memos'
 import { orderOptions, readSort, sortOptions, sorted, writeSort, type Sort, type SortBy } from '../sort'
@@ -43,6 +45,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   const [away, setAwayState] = useState<Away | null>(readAway)
   const [back, setBack] = useState(() => !!readAway())  // came back from playing: the pasteboard asks for the result
   const now = useNow()
+  const asking = shouldAsk(usePush())  // one memo at a time: the ask comes first, for its few days
   const setAway = (a: Away | null) => { writeAway(a); setAwayState(a); if (!a) setBack(false) }
   // an hour old, or already filed: stop asking
   useEffect(() => {
@@ -108,7 +111,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
       <div className="bd">
         <Pasteboard board={board} shared={shared} onFiled={filedNow} back={back ? away : null} onBackDone={() => setAway(null)} />
         <NewsMemo />
-        <InstallMemo onDone={ok => ok && toast('installed. see you on the home screen.')} />
+        {asking ? <AskMemo /> : <InstallMemo onDone={ok => ok && toast('installed. see you on the home screen.')} />}
         {placeholders.length > 0 && !board.you.claimed && (
           <button className="more" onClick={() => go(`/b/${slug}/you/register#seats`)}>
             {placeholders.length} imported seats unclaimed · is one of them yours? →

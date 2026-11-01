@@ -3,6 +3,7 @@ import { api, ApiError, setToken, token, type Game, type Invite, type Me } from 
 import { go, match, query, usePath } from './router'
 import { AppCtx, Loading, NetBar, Toast, Trouble, type Ctx } from './ui'
 import { send, type Sent } from './outbox'
+import { look } from './push'
 import Agenda from './screens/Agenda'
 import Desk from './screens/Desk'
 import Join from './screens/Join'
@@ -86,6 +87,10 @@ function Shell() {
     send()
     return () => window.removeEventListener('boredroom:sent', sent)
   }, [state, games])
+
+  // this device's reminders, once there's a seat to keep them under
+  const who = me?.username
+  useEffect(() => { if (who) look() }, [who])
 
   const joinCode = match('/join/:code', path)?.code
   useEffect(() => { if (joinCode && state === 'out') api.invite(joinCode).then(setInvite).catch(() => setInvite(null)) }, [joinCode, state])

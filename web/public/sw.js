@@ -2,7 +2,8 @@
 // network when it's there and from the last copy when it isn't (or the server isn't answering); built assets have hashed
 // names, so a cached one never goes stale. The API is never cached: scores are live.
 // Google Fonts are kept too, so text doesn't swap fonts or shift on a slow or offline open.
-const CACHE = 'boredroom-v2'
+// It also shows reminders: every push becomes a notification (iPhones revoke silent ones).
+const CACHE = 'boredroom-v3'
 const FONTS = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com']
 
 self.addEventListener('install', e => {
@@ -48,4 +49,32 @@ self.addEventListener('fetch', e => {
       return res
     })))
   }
+})
+
+self.addEventListener('push', e => {
+  let p = {}
+  try { p = e.data ? e.data.json() : {} } catch { p = { body: e.data && e.data.text() } }
+  e.waitUntil(self.registration.showNotification(p.title || 'boredroom', {
+    body: p.body || '', tag: p.tag || 'boredroom', data: { url: p.url || '/' },
+    icon: '/icons/icon-192.png', badge: '/icons/badge-96.png',
+  }))
+})
+
+// a tap opens the board: the app's window if it's open, else a new one
+self.addEventListener('notificationclick', e => {
+  e.notification.close()
+  const url = new URL(e.notification.data?.url || '/', location.origin).href
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(ws => {
+    const w = ws.find(w => new URL(w.url).origin === location.origin)
+    return w ? w.focus().then(w => w.navigate(url)) : self.clients.openWindow(url)
+  }))
+})
+
+// the browser replaced the subscription: hand the new one to the server, same seat
+self.addEventListener('pushsubscriptionchange', e => {
+  const opts = e.oldSubscription && e.oldSubscription.options
+  if (!opts) return
+  e.waitUntil(self.registration.pushManager.subscribe(opts).then(sub =>
+    fetch('/api/v1/me/push/renew', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ old: e.oldSubscription.endpoint, sub: sub.toJSON() }) })))
 })

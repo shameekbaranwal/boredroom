@@ -41,7 +41,7 @@ export type Minutes = {
 export type Member = { nickname: string; username: string; role: string; kind: Kind; games: number; results: number; joined_at: string }
 export type Board = {
   slug: string; name: string; settings: Record<string, unknown>; invite: { code: string; expires_at: string | null }
-  you: { nickname: string; role: string; agenda: string[]; claimed?: boolean }
+  you: { nickname: string; role: string; agenda: string[]; claimed?: boolean; digest: boolean; nudges: string[] }
   members: Member[]
   library: { game: string; name: string; rules: Record<string, unknown>; players: number; removable: boolean }[]
   leaving: Leaving
@@ -87,6 +87,8 @@ export type MyResult = {
   outcome: 'solved' | 'failed' | 'played'; metrics: Record<string, number>; late: boolean; withdrawn: boolean; filed_at: string
 }
 export type Unknown = { name: string; link: string | null; score: string | null; raw: string }
+export type Device = { id: number; device: string | null; endpoint: string; since: string; last_ok_at: string | null }
+export type Devices = { available?: boolean; devices: Device[] }
 export type Filing = { paste_id: number; events: Event[]; unknown: Unknown[]; note: string }
 
 const TOKEN = 'boredroom.token'
@@ -171,7 +173,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
 const tz = () => Intl.DateTimeFormat().resolvedOptions().timeZone
 
 export const api = {
-  config: () => call<{ google_client_id: string | null; environment: string }>('GET', '/config'),
+  config: () => call<{ google_client_id: string | null; environment: string; vapid_public_key: string | null }>('GET', '/config'),
   games: () => call<Game[]>('GET', '/games'),
   me: () => call<Me>('GET', '/me'),
   updateMe: (b: Partial<{ tz: string; username: string; agenda_sort: string | null }>) => call<Me>('PATCH', '/me', b),
@@ -191,6 +193,12 @@ export const api = {
   dropGame: (slug: string, game: string) => call<Board>('DELETE', `/boards/${encodeURIComponent(slug)}/library/${encodeURIComponent(game)}`),
   renewInvite: (slug: string) => call<Board>('POST', `/boards/${encodeURIComponent(slug)}/invite`),
   nickname: (slug: string, nickname: string) => call<Board>('PATCH', `/boards/${encodeURIComponent(slug)}/me`, { nickname }),
+  digest: (slug: string, digest: boolean) => call<Board>('PATCH', `/boards/${encodeURIComponent(slug)}/me`, { digest }),
+  nudge: (slug: string, game: string, on: boolean) => call<Board>(on ? 'PUT' : 'DELETE', `/boards/${encodeURIComponent(slug)}/agenda/${encodeURIComponent(game)}/nudge`),
+  devices: () => call<Devices>('GET', '/me/push'),
+  subscribe: (sub: PushSubscriptionJSON) => call<Devices>('PUT', '/me/push', sub),
+  unsubscribe: (id: number) => call<Devices>('DELETE', `/me/push/${id}`),
+  testPush: () => call<{ sent: number } & Devices>('POST', '/me/push/test'),
   agenda: (slug: string, game: string, on: boolean) => call<Board>(on ? 'PUT' : 'DELETE', `/boards/${encodeURIComponent(slug)}/agenda/${encodeURIComponent(game)}`),
   claim: (slug: string, username: string) => call<{ moved: number; board: Board }>('POST', `/boards/${encodeURIComponent(slug)}/claim`, { username }),
   review: (slug: string, q: ReviewQuery) => call<Review>('GET', `/boards/${encodeURIComponent(slug)}/review?${new URLSearchParams(

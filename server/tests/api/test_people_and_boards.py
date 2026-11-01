@@ -29,7 +29,8 @@ def test_create_join_and_nickname(seat):
     assert judy.get("/boards/soup").status_code == 404  # not a member yet
     assert judy.post("/boards/join", {"code": "wrong"}).status_code == 404
     joined = judy.post("/boards/join", {"code": b["invite"]["code"]}).json
-    assert joined["you"] == {"nickname": "judy", "role": "member", "agenda": [], "claimed": False}
+    assert joined["you"] == {"nickname": "judy", "role": "member", "agenda": [], "claimed": False,
+                             "digest": True, "nudges": []}
     assert judy.patch("/boards/soup/me", {"nickname": "j0dy"}).json["you"]["nickname"] == "j0dy"
     assert [m["nickname"] for m in chair.get("/boards/soup").json["members"]] == ["j0dy", "shmk"]
     assert [x["slug"] for x in judy.get("/me").json["boards"]] == ["soup"]

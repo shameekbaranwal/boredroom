@@ -20,3 +20,14 @@ class Config:
     web_dist: str = os.environ.get("BOREDROOM_WEB_DIST", DEV_WEB_DIST)
     # "production", "stage" or "dev"; the app badges anything that isn't production
     environment: str = os.environ.get("BOREDROOM_ENV", "dev")
+    # web push (reminders). The public key goes to browsers; the private key never leaves
+    # the server. Without both, reminders are off and the app says so.
+    vapid_public_key: str | None = os.environ.get("BOREDROOM_VAPID_PUBLIC_KEY") or None
+    vapid_private_key: str | None = os.environ.get("BOREDROOM_VAPID_PRIVATE_KEY") or None
+    contact_email: str | None = os.environ.get("BOREDROOM_CONTACT_EMAIL") or None
+    # the minute-by-minute reminder scheduler; on in the image, off in tests and dev
+    scheduler: bool = os.environ.get("BOREDROOM_SCHEDULER", "off") == "on"
+
+    @property
+    def push(self) -> bool:
+        return bool(self.vapid_public_key and self.vapid_private_key)

@@ -5,6 +5,7 @@ import { Av, Fx, FxEdit, Header, Nav, goBack, useApp } from '../ui'
 import { setPref, useTheme, type Pref } from '../theme'
 import { GoogleButton } from './SignIn'
 import { useInstall } from '../install'
+import { DeviceReminders } from '../reminders'
 import { canChooseOpens, opensIn, setOpensIn, standalone, type Opens } from '../opens'
 import { useUsernameCheck } from '../username'
 import { go } from '../router'
@@ -91,6 +92,7 @@ export function YourFile({ onEditName, closeTo }: { onEditName: () => void; clos
         : how === 'prompt' ? <button className="btn sm" onClick={async () => { if (await install()) toast('installed. see you on the home screen.') }}>install</button>
           : <span className="chip">{how === 'ios' ? 'two taps' : 'in the browser'}</span>}
     </div>
+    <DeviceReminders />
     {canChooseOpens() && <OpensIn />}
     <div className="cell">
       <span className="k">sign out<small className="muted">{me.kind === 'guest' ? 'a guest seat is lost for good' : 'sign in again with google any time'}</small></span>

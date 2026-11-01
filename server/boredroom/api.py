@@ -10,7 +10,7 @@ from typing import Any
 from flask import Blueprint, current_app, g, jsonify, request
 from sqlalchemy import func, select
 
-from . import admin, boards, claims, filing, invites, memos, names, news, people, reads, throttle
+from . import admin, boards, claims, filing, invites, memos, names, news, people, push, reads, throttle
 from . import auth
 from .auth import auth_required, create_guest, valid_tz, USERNAME
 from .errors import fail
@@ -134,7 +134,8 @@ def username_check(name):
 def client_config():
     """What a client needs before signing in. The google client id is public by design."""
     cfg = current_app.config["BOREDROOM"]
-    return jsonify({"google_client_id": cfg.google_client_id, "environment": cfg.environment})
+    return jsonify({"google_client_id": cfg.google_client_id, "environment": cfg.environment,
+                    "vapid_public_key": cfg.vapid_public_key if cfg.push else None})
 
 
 @api.post("/auth/google")
@@ -202,6 +203,73 @@ def update_me():
         g.person.agenda_sort = None if v is None or v == "usual:first" else v
     g.db.commit()
     return jsonify(me_json(g.person))
+
+
+# -- reminders: this person's devices -----------------------------------------------
+
+def _sender() -> push.Sender:
+    return current_app.config.get("PUSH_SENDER", push.webpush_sender)  # swapped in tests
+
+
+@api.get("/me/push")
+@auth_required
+def push_devices():
+    return jsonify({"available": current_app.config["BOREDROOM"].push, "devices": push.devices_json(g.db, g.person)})
+
+
+@api.put("/me/push")
+@auth_required
+def push_subscribe():
+    """{endpoint, keys: {p256dh, auth}}: this device takes reminders. Idempotent."""
+    if not current_app.config["BOREDROOM"].push:
+        fail(503, "reminders aren't set up on this server")
+    push.subscribe(g.db, g.person, body(), request.headers.get("User-Agent", "")[:300])
+    g.db.commit()
+    return jsonify({"devices": push.devices_json(g.db, g.person)})
+
+
+@api.post("/me/push/renew")
+def push_renew():
+    """{old, sub}: the service worker, after the browser replaced a subscription. It has no
+    token; knowing the old endpoint (a secret the push service handed this device) is enough."""
+    throttle.limit(g.db, f"renew:{throttle.caller()}", 20, 3600, "too many renewals from here")
+    b = body()
+    old = g.db.scalar(select(push.PushSubscription).where(push.PushSubscription.endpoint == str(b.get("old", ""))))
+    if old is None:
+        fail(404, "no such device")
+    person = g.db.get(Person, old.person_id)
+    sub = b.get("sub") if isinstance(b.get("sub"), dict) else {}
+    if sub.get("endpoint") != old.endpoint:
+        g.db.delete(old)
+        g.db.flush()
+    push.subscribe(g.db, person, sub, request.headers.get("User-Agent", "")[:300])
+    g.db.commit()
+    return jsonify({"renewed": True})
+
+
+@api.delete("/me/push/<int:sid>")
+@auth_required
+def push_unsubscribe(sid):
+    sub = g.db.get(push.PushSubscription, sid)
+    if sub is None or sub.person_id != g.person.id:
+        fail(404, "no such device")
+    g.db.delete(sub)
+    g.db.commit()
+    return jsonify({"devices": push.devices_json(g.db, g.person)})
+
+
+@api.post("/me/push/test")
+@auth_required
+def push_test():
+    """A test memo to every device you have."""
+    cfg = current_app.config["BOREDROOM"]
+    if not cfg.push:
+        fail(503, "reminders aren't set up on this server")
+    throttle.limit(g.db, f"pushtest:{g.person.id}", 5, 3600, "that's enough tests for an hour. the board can reach you.")
+    sent = push.deliver(g.db, g.person.id, push.Push("test memo: the board can reach you.",
+                        "this is what a reminder looks like. turn them off under you → everywhere.", "/desk", "test"),
+                        cfg, _sender())
+    return jsonify({"sent": sent, "devices": push.devices_json(g.db, g.person)})
 
 
 @api.get("/me/leaving")
@@ -324,11 +392,18 @@ def board(slug):
 @api.patch("/boards/<slug>/me")
 @auth_required
 def board_me(slug):
+    """{nickname?, digest?}: your seat here."""
     b, m = boards.get_board(g.db, slug, g.person)
-    nick = names.clean(body().get("nickname", ""), 40, "a nickname")
-    if names.taken(g.db, b.id, nick, but=g.person.id):
-        fail(409, f"someone on {b.name} already goes by {nick}")
-    m.nickname = nick
+    data = body()
+    if "nickname" in data or "digest" not in data:
+        nick = names.clean(data.get("nickname", ""), 40, "a nickname")
+        if names.taken(g.db, b.id, nick, but=g.person.id):
+            fail(409, f"someone on {b.name} already goes by {nick}")
+        m.nickname = nick
+    if "digest" in data:
+        if not isinstance(data["digest"], bool):
+            fail(400, "digest is true or false")
+        m.digest = data["digest"]
     g.db.commit()
     return jsonify(boards.board_json(g.db, b, m))
 
@@ -484,6 +559,24 @@ def agenda_add(slug, game):
 def agenda_remove(slug, game):
     b, m = boards.get_board(g.db, slug, g.person)
     boards.set_agenda(g.db, b, g.person, game, False)
+    g.db.commit()
+    return jsonify(boards.board_json(g.db, b, m))
+
+
+@api.put("/boards/<slug>/agenda/<game>/nudge")
+@auth_required
+def nudge_on(slug, game):
+    b, m = boards.get_board(g.db, slug, g.person)
+    boards.set_nudge(g.db, b, g.person, game, True)
+    g.db.commit()
+    return jsonify(boards.board_json(g.db, b, m))
+
+
+@api.delete("/boards/<slug>/agenda/<game>/nudge")
+@auth_required
+def nudge_off(slug, game):
+    b, m = boards.get_board(g.db, slug, g.person)
+    boards.set_nudge(g.db, b, g.person, game, False)
     g.db.commit()
     return jsonify(boards.board_json(g.db, b, m))
 

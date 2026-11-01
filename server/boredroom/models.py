@@ -94,6 +94,7 @@ class Membership(Base):
     role: Mapped[str] = mapped_column(String(12), default="member")  # chair | member
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     left_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    digest: Mapped[bool] = mapped_column(Boolean, default=True)  # the evening digest for this board
 
     board: Mapped[Board] = relationship(back_populates="memberships")
     person: Mapped[Person] = relationship(back_populates="memberships")
@@ -125,6 +126,7 @@ class Agenda(Base):
     person_id: Mapped[int] = mapped_column(ForeignKey("person.id", ondelete="CASCADE"), primary_key=True)
     game_id: Mapped[str] = mapped_column(String(40), primary_key=True)
     added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    nudge: Mapped[bool] = mapped_column(Boolean, default=False)  # a push an hour before it resets
 
 
 class Paste(Base):
@@ -247,3 +249,39 @@ class Skip(Base):
     game_id: Mapped[str] = mapped_column(String(40), primary_key=True)
     day: Mapped[date] = mapped_column(Date, primary_key=True)
     skipped_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class PushSubscription(Base):
+    """A device that takes reminders: a browser's web push endpoint and its keys."""
+    __tablename__ = "push_subscription"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    person_id: Mapped[int] = mapped_column(ForeignKey("person.id", ondelete="CASCADE"), index=True)
+    endpoint: Mapped[str] = mapped_column(Text, unique=True)
+    p256dh: Mapped[str] = mapped_column(String(200))
+    auth: Mapped[str] = mapped_column(String(100))
+    device: Mapped[str | None] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    last_ok_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    failures: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class PushLog(Base):
+    """One reminder, written before it's sent: a key is never sent to a person twice."""
+    __tablename__ = "push_log"
+    __table_args__ = (UniqueConstraint("person_id", "key"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    person_id: Mapped[int] = mapped_column(ForeignKey("person.id", ondelete="CASCADE"))
+    key: Mapped[str] = mapped_column(String(200))  # "reset:krillion:2026-11-01", "digest:soup:2026-11-01"
+    kind: Mapped[str] = mapped_column(String(12))  # reset | digest | test
+    status: Mapped[str] = mapped_column(String(12), default="sending")  # sending | sent | failed
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class SchedulerState(Base):
+    """When the reminder scheduler last ran, for /health."""
+    __tablename__ = "scheduler_state"
+
+    name: Mapped[str] = mapped_column(String(40), primary_key=True)
+    last_tick: Mapped[datetime] = mapped_column(DateTime(timezone=True))

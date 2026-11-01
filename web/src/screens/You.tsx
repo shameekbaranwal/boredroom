@@ -5,6 +5,8 @@ import { go, query, usePath } from '../router'
 import { Av, Fx, FxEdit, Ghost, Header, Nav, Tile, Trouble, Weekly, Who, goBack, sendOn, useApp, useFresh, useNow } from '../ui'
 import Boards from './Boards'
 import { CloseAccount, Motion, YourFile, useUsernameEdit } from './Personal'
+import { Bell } from '../reminders'
+import { useDevice } from '../push'
 
 // The "you" page keeps a board's books: your seat, your agenda, the register of members,
 // the bylaws. Two things about games, kept apart in the words too:
@@ -15,10 +17,10 @@ import { CloseAccount, Motion, YourFile, useUsernameEdit } from './Personal'
 //   a motion (red, always last) opens a page that says what will happen, then yes or no
 
 /** On or off, and it says which. */
-export function Switch({ on, label, onFlip }: { on: boolean; label: string; onFlip: () => void }) {
+export function Switch({ on, label, onFlip, words = ['playing', 'not playing'] }: { on: boolean; label: string; onFlip: () => void; words?: [string, string] }) {
   return (
     <button className={`sw${on ? ' on' : ''}`} role="switch" aria-checked={on} aria-label={label} onClick={onFlip}>
-      <span className="sw-w">{on ? 'playing' : 'not playing'}</span><i aria-hidden="true" />
+      <span className="sw-w">{on ? words[0] : words[1]}</span><i aria-hidden="true" />
     </button>
   )
 }
@@ -149,6 +151,22 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
   const [isStruck, strike] = useMark(600)
   const [order] = useState(() => sortGames(b, name))
   const stamp = query(path).get('stamp')
+  const device = useDevice()
+  const nudge = async (g: string) => {
+    const on = !b.you.nudges.includes(g)
+    if (on && !(await device.ensure())) return
+    buzz()
+    setB({ ...b, you: { ...b.you, nudges: on ? [...b.you.nudges, g] : b.you.nudges.filter(x => x !== g) } })
+    try { setB(await api.nudge(slug, g, on)); toast(on ? `${name(g)}: a nudge an hour before it resets, if it's still open.` : `no more ${name(g)} nudges.`) }
+    catch (e) { toast((e as Error).message); api.board(slug).then(setB).catch(() => {}) }
+  }
+  const digest = async () => {
+    const on = !b.you.digest
+    if (on && !(await device.ensure())) return
+    setB({ ...b, you: { ...b.you, digest: on } })
+    try { setB(await api.digest(slug, on)); toast(on ? `the ${b.name} digest is on: 20:00, if anything's open.` : `no evening digest from ${b.name}.`) }
+    catch (e) { toast((e as Error).message) }
+  }
 
   useEffect(() => {
     if (location.hash === '#seats') go(`/b/${slug}/you/register#seats`, true)
@@ -228,6 +246,7 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
                   <div className="nm"><span>{name(g)}</span><Weekly game={g} /></div>
                   <div className="sub">{agenda.players(g, lg.players)} of {b.members.length} play{games[g]?.ranked === false ? ' · for fun' : ''}</div>
                 </div>
+                {device.usable && on && <Bell on={b.you.nudges.includes(g)} label={`nudge me before ${name(g)} resets`} onFlip={() => nudge(g)} />}
                 <Switch on={on} label={`${name(g)} on my agenda`} onFlip={() => flip(g)} />
               </div>
             )
@@ -236,6 +255,12 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
           <button className="go" onClick={() => go(`/b/${slug}/you/bylaws#games`)}>
             <span className="k">missing a game?</span><span className="v">add it in the bylaws</span>
           </button>
+          {device.usable && (
+            <div className="cell">
+              <span className="k">evening digest<small className="muted">{device.p.on ? `20:00, what's still open on ${b.name} · the bells nudge before a reset` : 'reminders are off on this device'}</small></span>
+              <Switch on={b.you.digest} label={`evening digest from ${b.name}`} onFlip={digest} words={['on', 'off']} />
+            </div>
+          )}
 
           <div className="sec">the board</div>
           {!small && <Invitation b={b} setB={setB} now={now} />}

@@ -7,7 +7,7 @@ from pathlib import Path
 from flask import Flask, Response, g, request, send_from_directory
 from sqlalchemy.engine import Engine
 
-from . import errors, invites, preview
+from . import errors, invites, preview, reminders
 from .api import api
 from .config import Config
 from .db import make_engine, make_sessionmaker
@@ -73,12 +73,16 @@ def create_app(config: Config | None = None, engine: Engine | None = None) -> Fl
 
     @app.get("/health")
     def health():
-        return {"ok": True}
+        if not (config.scheduler and config.push):
+            return {"ok": True}
+        return {"ok": True, "scheduler_ok": reminders.healthy(g.db)}  # for uptime kuma; never fails the healthcheck
 
     errors.register(app)
     app.register_blueprint(api)
     app.register_blueprint(legal)
     _serve_web(app, Path(config.web_dist), config.environment)
+    if config.scheduler and config.push:
+        reminders.start(engine, config)
     return app
 
 

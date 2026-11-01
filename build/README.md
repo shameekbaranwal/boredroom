@@ -78,3 +78,4 @@ person, on either instance (`--prod`), which is also how deletion requests are h
 | `deploy.sh` | `stage` (this checkout's branch) or `master` (production and stage) |
 | `feature.sh` | feature worktrees: `new`, `stage`, `list`, `rebase`, `promote`, `done` |
 | `db.sh` | `snapshot`, `restore`, `list`, `reset`, `forget` on stage, or production with `--prod` |
+| `vapid.sh` | a VAPID key pair for one instance's reminders, written straight into its env file |
