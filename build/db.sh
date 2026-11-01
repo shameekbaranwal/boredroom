@@ -13,7 +13,8 @@ set -euo pipefail
 # Production commands that destroy data ask you to type "production" first.
 
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-SNAPS="$ROOT/snapshots"
+MAIN="$(git -C "$ROOT" worktree list --porcelain | sed -n '1s/^worktree //p')"
+SNAPS="$MAIN/snapshots"   # one folder for every worktree: the main checkout's
 DBC=boredroom-db
 TARGET=stage
 if [[ "${1:-}" == "--prod" ]]; then TARGET=prod; shift; fi
