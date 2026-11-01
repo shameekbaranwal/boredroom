@@ -38,3 +38,14 @@ def test_an_invite_link_previews_who_saved_the_seat(tmp_path, engine, seat):
     assert c.get("/og/invite/smug-walrus-nopes.png").data == b"generic png"
     dead = c.get("/join/smug-walrus-nopes").text  # a dead invite previews as plain boredroom
     assert 'og:title" content="boredroom · ' in dead and "/og/invite/" not in dead
+
+
+def test_stage_installs_under_its_own_name(tmp_path, engine):
+    (tmp_path / "index.html").write_text("<div id=root></div>")
+    (tmp_path / "manifest.webmanifest").write_text('{"name": "boredroom", "short_name": "boredroom", "start_url": "/"}')
+    def get(env):
+        return create_app(Config(web_dist=str(tmp_path), environment=env), engine=engine).test_client().get("/manifest.webmanifest")
+    assert get("production").json == {"name": "boredroom", "short_name": "boredroom", "start_url": "/"}
+    stage = get("stage")
+    assert stage.json["name"] == "boredroom stage" and stage.json["short_name"] == "stage"
+    assert stage.mimetype == "application/manifest+json"

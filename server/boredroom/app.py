@@ -1,6 +1,7 @@
 """The Flask app: `create_app()` for gunicorn (boredroom.app:create_app()) and tests."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from flask import Flask, Response, g, request, send_from_directory
@@ -77,17 +78,27 @@ def create_app(config: Config | None = None, engine: Engine | None = None) -> Fl
     errors.register(app)
     app.register_blueprint(api)
     app.register_blueprint(legal)
-    _serve_web(app, Path(config.web_dist))
+    _serve_web(app, Path(config.web_dist), config.environment)
     return app
 
 
-def _serve_web(app: Flask, dist: Path) -> None:
+def _serve_web(app: Flask, dist: Path, environment: str) -> None:
     """The built web app: real files as they are, every other path gets index.html
     (the app routes itself). Skipped when there's no build, as in the API tests."""
     if not (dist / "index.html").is_file():
         return
 
     page = (dist / "index.html").read_text(encoding="utf-8")
+
+    @app.get("/manifest.webmanifest")
+    def manifest():
+        # stage and dev install under their own name, so they sit apart from production on a home screen
+        m = json.loads((dist / "manifest.webmanifest").read_text(encoding="utf-8"))
+        if environment != "production":
+            m["name"], m["short_name"] = f"boredroom {environment}", environment
+        resp = Response(json.dumps(m, ensure_ascii=False), mimetype="application/manifest+json")
+        resp.cache_control.no_cache = True
+        return resp
 
     @app.get("/og/<name>.png")
     def card(name: str):
