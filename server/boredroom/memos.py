@@ -36,10 +36,16 @@ WEEK = 7  # the rolling week: the review's, the takeover's and the pip's
 AGENDA = 2  # memos on the agenda, at most
 EVERY = 60  # seconds between two runs of one board's rules
 MILESTONES = (7, 30, 50, 100)  # then every 100
+RUNS = (4, 7, 10, 14, 21, 30)  # daily wins in a row worth a memo, then every 10
+BOARD_COUNTS = (500, 1000, 2500, 5000, 10000)  # the board's nth result, then every 5000
+LOW, LOW_A_DAY = 35, 3  # memos this interesting or less: at most three a day, so the small talk can't crowd the meeting
 GLYPH = {"takeover": "▲", "pip": "▼", "record": "♛", "pb": "★", "highlight": "✦", "tenure": "◆",
-         "ended": "◇", "photo": "≈", "comeback": "↗", "missed": "✗"}
+         "ended": "◇", "photo": "≈", "comeback": "↗", "missed": "✗", "precedent": "§", "run": "⇈",
+         "coup": "↯", "jinx": "∥", "unanimous": "⊜", "sweep": "◉", "rumour": "◌", "buzzer": "◷",
+         "night": "☾", "milestone": "№", "quorum": "⊞", "usual": "↻", "commendation": "✪"}
 # the agenda only carries the big news; everything is in the meeting
-ON_AGENDA = {"takeover", "record", "pb", "highlight", "tenure", "ended"}
+ON_AGENDA = {"takeover", "record", "pb", "highlight", "tenure", "ended", "precedent", "run", "coup", "sweep",
+             "rumour", "milestone", "commendation"}
 
 
 @dataclass
@@ -59,8 +65,9 @@ class Ledger:
     who has that game on their agenda here, the way the review counts them."""
 
     def __init__(self, s: Session, board: Board, viewer: Person, now: datetime):
-        self.s, self.board = s, board
+        self.s, self.board, self.now = s, board, now
         self.nick = {m.person_id: m.nickname for m in board.memberships if m.left_at is None}
+        self.tz = {m.person_id: m.person.tz for m in board.memberships if m.left_at is None}
         self.players: dict[str, set[int]] = {}
         for a in s.scalars(select(Agenda).where(Agenda.board_id == board.id)):
             if a.person_id in self.nick:
@@ -111,6 +118,21 @@ class Ledger:
             for back in (1, 2):
                 yield g, self.current[g] - timedelta(days=back)
 
+    def day_closed(self) -> date | None:
+        """The day before every ranked game's current puzzle: from here back, nothing moves."""
+        ranked = [g for g in self.games if self.ranked(g)]
+        return min(self.current[g] for g in ranked) if ranked else None
+
+    def wins_run(self, g: str, pid: int, d: date) -> int:
+        """Outright daily wins in a row on `g` ending at `d`, each against two or more others."""
+        k = 0
+        while True:
+            day = d - timedelta(days=k)
+            first = [r.person_id for p, r in self.placed(g, day) if p == 1]
+            if first != [pid] or len(self.by.get((g, day), [])) < 3:
+                return k
+            k += 1
+
     def week(self, until: date) -> tuple[dict[int, int], dict[int, set[date]]]:
         """Daily wins and days present over the rolling week of closed puzzles before `until`."""
         wins: dict[int, int] = {}
@@ -152,7 +174,14 @@ def records_and_bests(b: Ledger) -> Iterator[Candidate]:
             top = sorted((r for p, r in b.placed(g, d) if p == 1), key=lambda r: r.filed_at)[0]
             if all(b.better(top, r) for r in before):
                 holder = top
-                yield Candidate(f"record:{g}:{d}", "record", d, [top.person_id], 85, g, top.id, _facts(top, d))
+                f = _facts(top, d)
+                best = before[0]
+                for r in before[1:]:
+                    if b.better(r, best) or not b.better(best, r) and r.puzzle_day < best.puzzle_day:
+                        best = r
+                if best.person_id != top.person_id:
+                    f |= {"was": best.person_id, "held": (d - best.puzzle_day).days}
+                yield Candidate(f"record:{g}:{d}", "record", d, [top.person_id], 85, g, top.id, f)
         for r in rs:
             mine = [x for x in before if x.person_id == r.person_id]
             if r is not holder and len(mine) >= 5 and all(b.better(r, x) for x in mine):
@@ -161,11 +190,17 @@ def records_and_bests(b: Ledger) -> Iterator[Candidate]:
 
 @rule
 def highlights(b: Ledger) -> Iterator[Candidate]:
-    """What the game itself calls out (flawless, perfect, grade s), and how often lately."""
+    """What the game itself calls out (flawless, perfect, grade s), and how often lately.
+    The first of its kind on the board, with twenty results before it, is a precedent."""
     for g, d in b.live():
         for r in b.by.get((g, d), []):
             h = next((h for h in r.highlights if h != "personal best"), None)  # bests are ours to call
             if h is None:
+                continue
+            earlier = [x for x in b.history[g] if (x.filed_at, x.id) < (r.filed_at, r.id)]
+            if len(earlier) >= 20 and not any(h in x.highlights for x in earlier):
+                yield Candidate(f"precedent:{g}:{h}", "precedent", d, [r.person_id], 75, g, r.id,
+                                {"on": d.isoformat(), "h": h})
                 continue
             n = sum(1 for x in b.history[g] if x.person_id == r.person_id and h in x.highlights
                     and d - timedelta(days=WEEK) < x.puzzle_day <= d)
@@ -205,9 +240,26 @@ def closings(b: Ledger) -> Iterator[Candidate]:
         if b.ranked(g):
             placed = b.placed(g, d)
             first = [r for p, r in placed if p == 1]
-            if len(rs) >= 2 and len(first) >= 2 and first[0].outcome != "failed":
+            clean = first[0].outcome != "failed"
+            if len(rs) >= 4 and len(first) == len(rs) and clean:
+                yield Candidate(f"unanimous:{g}:{d}", "unanimous", report, sorted(r.person_id for r in rs), 45, g,
+                                facts=_facts(first[0], d) | {"n": len(rs)})
+            elif len(rs) >= 2 and len(first) >= 2 and clean:
                 yield Candidate(f"photo:{g}:{d}", "photo", report, sorted(r.person_id for r in first), 45, g,
                                 facts=_facts(first[0], d))
+            if len(rs) >= 3 and clean:
+                for r in first[:1]:
+                    k = b.wins_run(g, r.person_id, d)
+                    if k in RUNS or k > 30 and k % 10 == 0:
+                        yield Candidate(f"run:{g}:{r.person_id}:{d}", "run", report, [r.person_id],
+                                        45 if k < 7 else 60 if k < 10 else 70, g, r.id, {"on": d.isoformat(), "n": k})
+                if len(first) == 1:
+                    w = first[0].person_id
+                    fallen = [(b.wins_run(g, r.person_id, d - timedelta(days=1)), r.person_id) for p, r in placed if p > 1]
+                    k, h = max(fallen, default=(0, None))
+                    if k >= 4:
+                        yield Candidate(f"coup:{g}:{d}", "coup", report, [w, h], 65, g, first[0].id,
+                                        {"on": d.isoformat(), "n": k})
             before = b.placed(g, d - timedelta(days=1))
             if len(placed) >= 3 and len(before) >= 3 and len(first) == 1:
                 worst = max(p for p, _ in before)
@@ -216,6 +268,8 @@ def closings(b: Ledger) -> Iterator[Candidate]:
                     pid = first[0].person_id
                     yield Candidate(f"comeback:{g}:{pid}:{d}", "comeback", report, [pid], 40, g, first[0].id,
                                     {"on": d.isoformat()})
+        yield from _jinxes(b, g, d, rs, report)
+        yield from _buzzers(b, g, d, rs, report)
         missed = sum(r.outcome == "failed" for r in rs)
         if missed >= 2:  # never one person singled out
             yield Candidate(f"missed:{g}:{d}", "missed", report, [], 10, g,
@@ -239,9 +293,16 @@ def the_week(b: Ledger) -> Iterator[Candidate]:
     for day in (today - timedelta(days=1), today):
         wins, present = b.week(day)
         now, was = _leader(wins), _leader(b.week(day - timedelta(days=1))[0])
-        if now and was and now != was and not _recent(b, "takeover", {now, was}, day, 3):
+        took = now and was and now != was and not _recent(b, "takeover", {now, was}, day, 3)
+        if took:
             yield Candidate(f"takeover:{day}:{now}>{was}", "takeover", day, [now, was], 90,
                             facts={"wins": wins[now], "was": wins.get(was, 0)})
+        # a rumour: one daily win off #1, while it's news
+        second = _leader({p: w for p, w in wins.items() if p != now}) if now else None
+        if (second and wins[second] >= 2 and wins[second] == wins[now] - 1 and not took
+                and not _recent(b, "rumour", {second, now}, day, 3) and not _recent(b, "takeover", {second, now}, day, 2)):
+            yield Candidate(f"rumour:{day}:{second}>{now}", "rumour", day, [second, now], 50,
+                            facts={"wins": wins[second], "lead": wins[now]})
         # a pip: last among 4+ present, of those here 3+ days and filing for at least a week
         first = {p: min((r.puzzle_day for g in b.games for r in b.history[g] if r.person_id == p), default=day)
                  for p in present}
@@ -252,6 +313,168 @@ def the_week(b: Ledger) -> Iterator[Candidate]:
             if len(last) == 1 and not _recent(b, "pip", {last[0]}, day, WEEK):
                 p = last[0]
                 yield Candidate(f"pip:{p}:{day}", "pip", day, [p], 70, facts={"wins": low, "days": len(present[p])})
+
+
+def _grid(b: Ledger, r: Result) -> tuple[str, ...] | None:
+    """A result's emoji grid, as the game drew it, in one palette (wordle's high-contrast
+    and light squares are the same squares)."""
+    rows = next((f["value"] for f in r.fields if f["name"] == "grid"), None)
+    if not rows or len(rows) < (5 if r.game_id == "connections" else 3):
+        return None
+    if r.game_id == "wordle":
+        rows = [x.replace("⬜", "⬛").replace("🟧", "🟩").replace("🟦", "🟨") for x in rows]
+    return tuple(rows)
+
+
+def _jinxes(b: Ledger, g: str, d: date, rs: list[Result], report: date) -> Iterator[Candidate]:
+    """Two or more people with the same grid, square for square. Only on a solve: a shared
+    miss is nobody's business."""
+    same: dict[tuple[str, ...], list[Result]] = {}
+    for r in rs:
+        grid = _grid(b, r) if r.outcome != "failed" else None
+        if grid:
+            same.setdefault(grid, []).append(r)
+    for group in same.values():
+        if len(group) >= 2:
+            who = sorted(r.person_id for r in group)
+            yield Candidate(f"jinx:{g}:{d}:{who[0]}", "jinx", report, who, 55 if len(who) > 2 else 45, g,
+                            facts=_facts(group[0], d) | {"n": len(who)})
+
+
+def _buzzers(b: Ledger, g: str, d: date, rs: list[Result], report: date) -> Iterator[Candidate]:
+    """Filed in the last ten minutes before the puzzle closed. Once a week each, at most."""
+    reset = REGISTRY[g].reset
+    for r in rs:
+        tz = reset.tz or b.tz.get(r.person_id, "Asia/Kolkata")
+        close = datetime.combine(d + timedelta(days=1), reset.at, ZoneInfo(tz))
+        left = (close - r.filed_at).total_seconds()
+        if r.late or not 0 < left <= 600 or _recent(b, "buzzer", {r.person_id}, report, WEEK):
+            continue
+        yield Candidate(f"buzzer:{r.person_id}:{d}", "buzzer", report, [r.person_id], 50 if left < 60 else 35, g,
+                        r.id, {"on": d.isoformat(), "s": int(left)})
+
+
+def _closed_days(b: Ledger) -> Iterator[tuple[date, date]]:
+    """(the day, the meeting that reports it) for the last two days every game has closed."""
+    today = b.day_closed()
+    if today:
+        for day in (today - timedelta(days=1), today):
+            yield day - timedelta(days=1), day
+
+
+@rule
+def sweeps(b: Ledger) -> Iterator[Candidate]:
+    """#1 on every ranked item you filed in a day: four or more, each against two others."""
+    for d, report in _closed_days(b):
+        mine: dict[int, list[int]] = {}
+        for g in b.games:
+            if b.ranked(g) and len(b.by.get((g, d), [])) >= 3:
+                placed = b.placed(g, d)
+                tied = sum(p == 1 for p, _ in placed) > 1
+                for p, r in placed:
+                    mine.setdefault(r.person_id, []).append(0 if p != 1 else 1 if tied else 2)
+        for pid, xs in mine.items():
+            if len(xs) >= 4 and all(xs) and sum(x == 2 for x in xs) >= 3:
+                yield Candidate(f"sweep:{pid}:{d}", "sweep", report, [pid], 80, facts={"on": d.isoformat(), "n": len(xs)})
+
+
+@rule
+def quorum(b: Ledger) -> Iterator[Candidate]:
+    """Everyone who's been around lately filed something: five or more. Once a week at most."""
+    for d, report in _closed_days(b):
+        active, came = set(), set()
+        for g in b.games:
+            for r in b.history[g]:
+                if d - timedelta(days=14) <= r.puzzle_day < d:
+                    active.add(r.person_id)
+                elif r.puzzle_day == d:
+                    came.add(r.person_id)
+        if len(active) >= 5 and active <= came and not _recent(b, "quorum", set(), report, WEEK):
+            yield Candidate(f"quorum:{d}", "quorum", report, [], 30, facts={"on": d.isoformat(), "n": len(came)})
+
+
+@rule
+def night_shift(b: Ledger) -> Iterator[Candidate]:
+    """Filed between 2 and 5 in the morning, your time. Every few days at most."""
+    seen: dict[tuple[int, date], list[tuple[datetime, str]]] = {}
+    for g, d in b.live():
+        for r in b.by.get((g, d), []):
+            at = r.filed_at.astimezone(ZoneInfo(b.tz.get(r.person_id, "Asia/Kolkata")))
+            if not r.late and 2 <= at.hour < 5:
+                seen.setdefault((r.person_id, at.date()), []).append((at, g))
+    for (pid, day), xs in sorted(seen.items(), key=lambda x: x[0][1]):
+        if _recent(b, "night", {pid}, day, 3):
+            continue
+        at, g = min(xs)
+        yield Candidate(f"night:{pid}:{day}", "night", day, [pid], 20, g if len(xs) == 1 else None,
+                        facts={"on": day.isoformat(), "at": at.strftime("%H:%M"), "n": len(xs)})
+
+
+@rule
+def milestones(b: Ledger) -> Iterator[Candidate]:
+    """The board's 500th, 1,000th, … result, filed in the last two days (the import's
+    history never counts as news)."""
+    every = sorted((r for g in b.games for r in b.history[g]), key=lambda r: (r.filed_at, r.id))
+    n = BOARD_COUNTS[-1] + 5000
+    marks = [*BOARD_COUNTS]
+    while n <= len(every):
+        marks.append(n)
+        n += 5000
+    for n in marks:
+        if n <= len(every) and every[n - 1].filed_at >= b.now - timedelta(hours=48):
+            r = every[n - 1]
+            yield Candidate(f"milestone:{n}", "milestone", r.puzzle_day, [r.person_id], 75, r.game_id, r.id,
+                            {"on": r.puzzle_day.isoformat(), "n": n})
+
+
+@rule
+def the_usual(b: Ledger) -> Iterator[Candidate]:
+    """The same score five (or ten) puzzles running: solved each time, nothing special."""
+    for g, d in b.live():
+        if not b.ranked(g):
+            continue
+        for r in b.by.get((g, d), []):
+            if r.outcome == "failed" or r.highlights:
+                continue
+            k = 1
+            while True:
+                prev = [x for x in b.by.get((g, d - timedelta(days=k)), []) if x.person_id == r.person_id]
+                if not prev or prev[0].outcome == "failed" or prev[0].highlights or prev[0].metrics != r.metrics:
+                    break
+                k += 1
+            if k in (5, 10):
+                yield Candidate(f"usual:{g}:{r.person_id}:{d}", "usual", d, [r.person_id], 25, g, r.id,
+                                _facts(r, d) | {"n": k})
+
+
+@rule
+def member_of_the_month(b: Ledger) -> Iterator[Candidate]:
+    """On the 1st: the best daily-win rate over the month just ended, thirty contested
+    puzzles or more. A rate, not a count, or it goes to whoever plays the most games."""
+    today = b.day_closed()
+    for day in ((today - timedelta(days=1), today) if today else ()):
+        if day.day != 1:
+            continue
+        start = (day - timedelta(days=1)).replace(day=1)
+        wins: dict[int, int] = {}
+        played: dict[int, int] = {}
+        for g in b.games:
+            if not b.ranked(g):
+                continue
+            d = start
+            while d < day:
+                if len(b.by.get((g, d), [])) >= 2:
+                    for p, r in b.placed(g, d):
+                        played[r.person_id] = played.get(r.person_id, 0) + 1
+                        wins[r.person_id] = wins.get(r.person_id, 0) + (p == 1)
+                d += timedelta(days=1)
+        rate = {p: wins.get(p, 0) / n for p, n in played.items() if n >= 30}
+        if not rate or max(rate.values()) == 0:
+            continue
+        top = max(rate.values())
+        who = sorted(p for p, x in rate.items() if x == top)
+        yield Candidate(f"commendation:{start:%Y-%m}", "commendation", day, who, 85,
+                        facts={"on": start.isoformat(), "pct": round(top * 100)})
 
 
 def _recent(b: Ledger, kind: str, who: set[int], day: date, days: int) -> bool:
@@ -274,12 +497,22 @@ def refresh(s: Session, board: Board, viewer: Person, now: datetime | None = Non
     now = now or utcnow()
     b = Ledger(s, board, viewer, now)
     new = 0
+    low: dict[date, int] = {}
     for r in RULES:
         for c in r(b):
-            new += len(s.execute(insert(Memo).values(
+            if c.interest <= LOW:
+                if c.day not in low:
+                    low[c.day] = len(s.scalars(select(Memo.id).where(
+                        Memo.board_id == board.id, Memo.day == c.day, Memo.interest <= LOW)).all())
+                if low[c.day] >= LOW_A_DAY:
+                    continue
+            added = len(s.execute(insert(Memo).values(
                 board_id=board.id, key=c.key, kind=c.kind, day=c.day, subjects=c.subjects, game_id=c.game,
                 result_id=c.result, facts=c.facts, interest=c.interest, created_at=now,
             ).on_conflict_do_nothing(index_elements=["board_id", "key"]).returning(Memo.id)).all())
+            new += added
+            if added and c.interest <= LOW:
+                low[c.day] += 1
     s.flush()
     return new
 
@@ -310,6 +543,10 @@ def text(m: Memo, nick: dict[int, str], me: int | None) -> str:
             return "you're on a pip. the board believes in you, mostly."
         return f"{n(p)} is on a pip: {f['wins']} daily wins in {f['days']} days present."
     if k == "record":
+        if "was" in f and f["was"] == me:
+            return f"board record on {game}: {n(p)} took yours, held {_days(f['held'])}. your frame is in storage."
+        if "was" in f:
+            return f"board record on {game}: {n(p)}, taking it from {n(f['was'])} after {_days(f['held'])}. it will be framed."
         return f"board record on {game}: {n(p)}. it will be framed."
     if k == "pb":
         return f"{n(p)} set a personal best on {game}."
@@ -327,7 +564,62 @@ def text(m: Memo, nick: dict[int, str], me: int | None) -> str:
         return f"comeback on {game}: {n(p)}, last the day before, first this time."
     if k == "missed":
         return f"{f['n']} members missed target on {game}. a tough room."
+    if k == "precedent":
+        return f"precedent on {game}: {f['h']} from {n(p)}, a first for the board. it will be cited."
+    if k == "run":
+        has = "you've" if p == me else f"{n(p)} has"
+        return f"bull run: {has} won {game} {f['n']} days running. the shareholders are delighted."
+    if k == "coup":
+        w, h = m.subjects
+        if me == h:
+            return f"coup on {game}: {n(w)} ended your {f['n']}-day run. the board thanks you for your service."
+        return f"coup on {game}: {n(w)} ended {pos(h)} {f['n']}-day run. the old guard is out."
+    if k == "jinx":
+        names = sorted((n(x) for x in m.subjects), key=lambda x: (x == "you", x))
+        return f"jinx: {_names(names)} filed the same {game} grid, square for square. compliance has been notified."
+    if k == "unanimous":
+        return f"unanimous on {game}: all {f['n']} present tied for #1. motion carried."
+    if k == "sweep":
+        return f"clean sweep: #1 on all {f['n']} of {pos(p)} items. the board demands a recount."
+    if k == "rumour":
+        s_, lead = m.subjects
+        if me == s_:
+            return "rumour: you're one daily win off #1 this week. the board smells a takeover."
+        if me == lead:
+            return f"rumour: {n(s_)} is one daily win behind you this week. watch your back."
+        return f"rumour: {n(s_)} is one daily win off {pos(lead)} #1 this week. markets are jittery."
+    if k == "buzzer":
+        left = f"{f['s']} seconds" if f["s"] < 60 else f"{f['s'] // 60} minute{'s' * (f['s'] >= 120)}"
+        tail = " the board respects the hustle." if p == me else ""
+        return f"closing bell: {n(p)} filed {game} with {left} to spare.{tail}"
+    if k == "night":
+        what = game if f["n"] == 1 else f"{f['n']} items"
+        return f"night shift: {n(p)} filed {what} at {_clock(f['at'])}. the board does not pay overtime."
+    if k == "milestone":
+        if p == me:
+            return f"you filed the board's {f['n']:,}th result ({game}). the minutes are being bound in leather."
+        return f"the board's {f['n']:,}th result, filed by {n(p)} ({game}). the minutes are being bound in leather."
+    if k == "quorum":
+        return f"quorum: all {f['n']} active members filed. the motion to keep doing this carries."
+    if k == "usual":
+        who = "" if p == me else f"{n(p)}, "
+        return f"the usual: {who}same {game} score {f['n']} days running. the board admires the consistency."
+    if k == "commendation":
+        month = date.fromisoformat(f["on"]).strftime("%B").lower()
+        if len(m.subjects) > 1:
+            names = sorted((n(x) for x in m.subjects), key=lambda x: (x == "you", x))
+            return f"joint board members of the month for {month}: {_names(names)}. the parking space will be shared."
+        return f"board member of the month for {month}: {n(p)}, with a {f['pct']}% win rate. a parking space has been reserved."
     return k
+
+
+def _days(n: int) -> str:
+    return "a day" if n < 2 else f"{n} days"
+
+
+def _clock(hm: str) -> str:
+    h, m = map(int, hm.split(":"))
+    return f"{h % 12 or 12}:{m:02d}{'am' if h < 12 else 'pm'}"
 
 
 def _number(m: Memo) -> str:
@@ -335,19 +627,26 @@ def _number(m: Memo) -> str:
     return {"takeover": lambda: f"{f['wins']}–{f['was']}", "pip": lambda: f"{f['wins']} wins",
             "tenure": lambda: f"{f['n']}d", "ended": lambda: f"{f['n']}d",
             "highlight": lambda: f"×{f['n']}" if f["n"] > 1 else "", "comeback": lambda: "#1",
-            "missed": lambda: f"{f['n']}/{f['of']}"}.get(m.kind, lambda: "")()
+            "missed": lambda: f"{f['n']}/{f['of']}", "precedent": lambda: "1st", "run": lambda: f"{f['n']} straight",
+            "coup": lambda: f"{f['n']}d", "jinx": lambda: f"×{f['n']}", "unanimous": lambda: f"{f['n']}/{f['n']}",
+            "sweep": lambda: f"{f['n']}/{f['n']}", "rumour": lambda: f"{f['wins']}–{f['lead']}",
+            "buzzer": lambda: f"{f['s']}s" if f["s"] < 60 else f"{f['s'] // 60}m", "night": lambda: _clock(f["at"]),
+            "milestone": lambda: f"#{f['n']:,}", "quorum": lambda: f"{f['n']}/{f['n']}", "usual": lambda: f"{f['n']}d",
+            "commendation": lambda: f"{f['pct']}%"}.get(m.kind, lambda: "")()
 
 
 def _link(m: Memo, slug: str) -> str:
-    if m.kind in ("takeover", "pip"):
+    if m.kind in ("takeover", "pip", "rumour") or m.game_id is None and m.kind != "commendation":
         return f"/b/{slug}/review?period=week"
+    if m.kind == "commendation":
+        return f"/b/{slug}/review?period=all"
     if m.kind == "record":
         return f"/b/{slug}/review?period=all&game={m.game_id}"
     return f"/b/{slug}/m/{m.game_id}/{m.facts['on']}"
 
 
 def memo_json(m: Memo, board: Board, nick: dict[int, str], me: Person, dismissed: set[int]) -> dict[str, Any]:
-    scored = m.kind in ("record", "pb", "photo")
+    scored = m.kind in ("record", "pb", "photo", "jinx", "unanimous", "usual")
     return {
         "id": m.id, "kind": m.kind, "glyph": GLYPH.get(m.kind, "·"), "day": m.day.isoformat(), "game": m.game_id,
         "text": text(m, nick, me.id), "plain": text(m, nick, None),

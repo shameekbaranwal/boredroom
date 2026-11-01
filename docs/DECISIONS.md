@@ -203,5 +203,18 @@ See docs/UX-NOTES.md for the functional requirements that came with this.
 ## 2026-11-01 — Fewer memos up front
 
 The agenda carries at most two memos, the games stay the point of the page. The daily
-bored meeting shows its six biggest first, and the rest behind "N more on the record".
+bored meeting shows its eight biggest first (six until 2026-11-02, raised as new kinds arrived), and the rest behind "N more on the record".
 Sending the meeting to the chat still sends every item.
+
+## 2026-11-02 — More gossip
+
+Thirteen more kinds of memo, so the meeting has more to say than records and tenures:
+precedent (a highlight the board has never seen), bull run and coup (outright daily wins
+in a row, and the day someone ends one), jinx (the same grid square for square, solves
+only), unanimous (everyone tied, in place of a photo finish), clean sweep, rumour (one
+daily win off #1), closing bell (filed in the last ten minutes), night shift (2–5am),
+the board's 500th/1,000th result, quorum, the usual (the same score five days running)
+and board member of the month (the best win rate, not the most wins). Records say whose
+they were and for how long. The small talk (interest 35 or less) is capped at three a
+day, and the cheap ones carry cooldowns, so no one appears in it daily. Nothing is ever
+about one person's miss.

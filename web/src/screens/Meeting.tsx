@@ -5,7 +5,7 @@ import { go } from '../router'
 import { Fx, Ghost, Header, Nav, sendOn, useApp, useFresh } from '../ui'
 import { MemoRow, meetingText } from '../memos'
 
-const UPFRONT = 6  // memos shown before "more"
+const UPFRONT = 8  // memos shown before "more"
 
 /** The daily bored meeting: every memo the board had that day, the biggest news first. */
 export default function Meeting({ slug, day }: { slug: string; day?: string }) {
