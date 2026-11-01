@@ -217,8 +217,9 @@ the board's 500th/1,000th result, quorum, the usual (the same score five days ru
 and board member of the month (the best win rate, not the most wins). Then two more: rivalry
 of the week (mondays: the two closest head-to-heads of the month, meeting only) and strong
 quarter (a week's average well up on the week before; never the downward version). And perfect
-attendance: every item on your agenda filed, 7, 30, 60, 100 days running, a game counting
-from the first day you filed it here. Records say whose
+attendance: all your regulars filed (games you filed on 10 of the 14 days before), 5, 10,
+20, 30, 50, 100 days running. Not the whole agenda: the import put every game anyone ever
+played on it, and no one in soup managed more than three days of that. Records say whose
 they were and for how long. The small talk (interest 35 or less) is capped at three a
 day, and the cheap ones carry cooldowns, so no one appears in it daily. Nothing is ever
 about one person's miss.

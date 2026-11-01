@@ -221,12 +221,14 @@ def test_a_strong_quarter_and_never_a_weak_one(db, seat):
 
 def test_perfect_attendance(db, seat):
     (trent, judy), p, b = board(db, seat, "trent", "judy", games=("wordle", "krillion", "globle"))
-    for k in range(8, 0, -1):  # judy files all three for 8 days; trent skips a globle
+    for k in range(20, 0, -1):  # both file all three for 20 days, trent skips a globle 4 days ago
         for n in p:
             file(db, p[n], wordle(ago(k), 4), ago(k))
-            file(db, p[n], krillion(ago(k), 300), ago(k))
+            file(db, p[n], krillion(ago(k), 300 if n == "judy" else 250 + k), ago(k))
             if n == "judy" or k != 4:
                 file(db, p[n], globle(ago(k), 5), ago(k))
     got = run(db, b, p["judy"], OCT30)
-    assert [k for k in got if k.startswith("attendance")] == [f"attendance:{p['judy'].id}:{ago(2)}"]  # 7 days, two days ago
-    assert "perfect attendance: every item on judy's agenda, 7 days running. hr is drafting a certificate." in texts(trent, ago(1))
+    # games are regulars once filed on 10 of the 14 days before: from 10 days ago, so yesterday
+    # is judy's 10th in a row (and 2 days ago her 9th, no memo); trent's run restarted after the skip
+    assert [k for k in got if k.startswith("attendance")] == [f"attendance:{p['judy'].id}:{ago(1)}"]
+    assert "perfect attendance: all of judy's regulars, 10 days running. hr is drafting a certificate." in texts(trent)

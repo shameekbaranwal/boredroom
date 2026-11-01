@@ -38,6 +38,7 @@ WEEK = 7  # the rolling week: the review's, the takeover's and the pip's
 AGENDA = 2  # memos on the agenda, at most
 EVERY = 60  # seconds between two runs of one board's rules
 MILESTONES = (7, 30, 50, 100)  # then every 100
+ATTENDANCE = (5, 10, 20, 30, 50, 100)  # days of perfect attendance worth a memo, then every 100
 RUNS = (4, 7, 10, 14, 21, 30)  # daily wins in a row worth a memo, then every 10
 BOARD_COUNTS = (500, 1000, 2500, 5000, 10000)  # the board's nth result, then every 5000
 LOW, LOW_A_DAY = 35, 3  # memos this interesting or less: at most three a day, so the small talk can't crowd the meeting
@@ -521,23 +522,24 @@ def rivalries(b: Ledger) -> Iterator[Candidate]:
 
 @rule
 def attendance(b: Ledger) -> Iterator[Candidate]:
-    """Every item on your agenda filed, three or more, 7, 30, 60, 100 days running and
-    every 100 after. A game counts from the day you first filed it here, so adding one
-    doesn't break the run (the import dated every agenda to the day it ran)."""
+    """All your regulars filed, 5, 10, 20, 30, 50, 100 days running and every 100 after: a
+    regular is a game you filed on 10 of the 14 days before, three of them at least. Not
+    the whole agenda, which the import filled with every game anyone ever played."""
+    def regulars(pid: int, day: date) -> list[str]:
+        return [g for g in b.games if pid in b.players[g]
+                and sum(day - timedelta(days=j) in b.days(g, pid) for j in range(1, 15)) >= 10]
     for d, report in _closed_days(b):
         for pid in b.nick:
-            first = {g: min(days) for g in b.games if pid in b.players[g] and (days := b.days(g, pid))}
             k = 0
             while True:
                 day = d - timedelta(days=k)
-                due = [g for g, f in first.items() if f <= day]
+                due = regulars(pid, day)
                 if len(due) < 3 or any(day not in b.days(g, pid) for g in due):
                     break
                 k += 1
-            if k in (7, 30, 60) or k >= 100 and k % 100 == 0:
+            if k in ATTENDANCE or k >= 100 and k % 100 == 0:
                 yield Candidate(f"attendance:{pid}:{d}", "attendance", report, [pid], 55 if k < 30 else 65 if k < 100 else 75,
                                 facts={"on": d.isoformat(), "n": k})
-
 
 def _value(b: Ledger, g: str):
     """The metric a game's average is over, if an average of it means something: not a
@@ -715,7 +717,8 @@ def text(m: Memo, nick: dict[int, str], me: int | None) -> str:
             return f"joint board members of the month for {month}: {_names(names)}. the parking space will be shared."
         return f"board member of the month for {month}: {n(p)}, with a {f['pct']}% win rate. a parking space has been reserved."
     if k == "attendance":
-        return f"perfect attendance: every item on {pos(p)} agenda, {f['n']} days running. hr is drafting a certificate."
+        week = " a full working week." if f["n"] == 5 else ""
+        return f"perfect attendance: all of {pos(p)} regulars, {f['n']} days running.{week} hr is drafting a certificate."
     if k == "rivalry":
         lead, trail = m.subjects
         tail = "over the month. it's personal."
