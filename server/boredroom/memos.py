@@ -45,10 +45,10 @@ GLYPH = {"takeover": "▲", "pip": "▼", "record": "♛", "pb": "★", "highlig
          "ended": "◇", "photo": "≈", "comeback": "↗", "missed": "✗", "precedent": "§", "run": "⇈",
          "coup": "↯", "jinx": "∥", "unanimous": "⊜", "sweep": "◉", "rumour": "◌", "buzzer": "◷",
          "night": "☾", "milestone": "№", "quorum": "⊞", "usual": "↻", "commendation": "✪", "rivalry": "⇄",
-         "earnings": "∆"}
+         "earnings": "∆", "attendance": "▣"}
 # the agenda only carries the big news; everything is in the meeting
 ON_AGENDA = {"takeover", "record", "pb", "highlight", "tenure", "ended", "precedent", "run", "coup", "sweep",
-             "rumour", "milestone", "commendation"}
+             "rumour", "milestone", "commendation", "attendance"}
 
 
 @dataclass
@@ -89,6 +89,7 @@ class Ledger:
                     self.history[r.game_id].append(r)
         self._parsed: dict[int, Any] = {}
         self._placed: dict[tuple[str, date], list[tuple[int, Result]]] = {}
+        self._days: dict[tuple[str, int], set[date]] = {}
 
     def ranked(self, g: str) -> bool:
         return REGISTRY[g].ranked()
@@ -107,7 +108,9 @@ class Ledger:
         return self._placed[(g, d)]
 
     def days(self, g: str, pid: int) -> set[date]:
-        return {r.puzzle_day for r in self.history[g] if r.person_id == pid}
+        if (g, pid) not in self._days:
+            self._days[(g, pid)] = {r.puzzle_day for r in self.history[g] if r.person_id == pid}
+        return self._days[(g, pid)]
 
     def live(self) -> Iterator[tuple[str, date]]:
         """Puzzles that may still be open: each game's current one and the one before."""
@@ -516,6 +519,26 @@ def rivalries(b: Ledger) -> Iterator[Candidate]:
                 break
 
 
+@rule
+def attendance(b: Ledger) -> Iterator[Candidate]:
+    """Every item on your agenda filed, three or more, 7, 30, 60, 100 days running and
+    every 100 after. A game counts from the day you first filed it here, so adding one
+    doesn't break the run (the import dated every agenda to the day it ran)."""
+    for d, report in _closed_days(b):
+        for pid in b.nick:
+            first = {g: min(days) for g in b.games if pid in b.players[g] and (days := b.days(g, pid))}
+            k = 0
+            while True:
+                day = d - timedelta(days=k)
+                due = [g for g, f in first.items() if f <= day]
+                if len(due) < 3 or any(day not in b.days(g, pid) for g in due):
+                    break
+                k += 1
+            if k in (7, 30, 60) or k >= 100 and k % 100 == 0:
+                yield Candidate(f"attendance:{pid}:{d}", "attendance", report, [pid], 55 if k < 30 else 65 if k < 100 else 75,
+                                facts={"on": d.isoformat(), "n": k})
+
+
 def _value(b: Ledger, g: str):
     """The metric a game's average is over, if an average of it means something: not a
     ratio, where one 195,288,089× swamps a week."""
@@ -691,6 +714,8 @@ def text(m: Memo, nick: dict[int, str], me: int | None) -> str:
             names = sorted((n(x) for x in m.subjects), key=lambda x: (x == "you", x))
             return f"joint board members of the month for {month}: {_names(names)}. the parking space will be shared."
         return f"board member of the month for {month}: {n(p)}, with a {f['pct']}% win rate. a parking space has been reserved."
+    if k == "attendance":
+        return f"perfect attendance: every item on {pos(p)} agenda, {f['n']} days running. hr is drafting a certificate."
     if k == "rivalry":
         lead, trail = m.subjects
         tail = "over the month. it's personal."
@@ -734,7 +759,7 @@ def _number(m: Memo) -> str:
             "sweep": lambda: f"{f['n']}/{f['n']}", "rumour": lambda: f"{f['wins']}–{f['lead']}",
             "buzzer": lambda: f"{f['s']}s" if f["s"] < 60 else f"{f['s'] // 60}m", "night": lambda: _clock(f["at"]),
             "milestone": lambda: f"#{f['n']:,}", "quorum": lambda: f"{f['n']}/{f['n']}", "usual": lambda: f"{f['n']}d",
-            "commendation": lambda: f"{f['pct']}%", "rivalry": lambda: f"{f['w']}–{f['l']}",
+            "commendation": lambda: f"{f['pct']}%", "rivalry": lambda: f"{f['w']}–{f['l']}", "attendance": lambda: f"{f['n']}d",
             "earnings": lambda: f"{_fmt(f['kind'], f['was'])}→{_fmt(f['kind'], f['now'])}"}.get(m.kind, lambda: "")()
 
 

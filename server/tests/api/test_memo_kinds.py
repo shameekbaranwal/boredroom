@@ -217,3 +217,16 @@ def test_a_strong_quarter_and_never_a_weak_one(db, seat):
     got = run(db, b, p["trent"], OCT30)
     assert [k for k in got if k.startswith("earnings")] == [f"earnings:wordle:{p['judy'].id}:{ago(2)}"]  # once a fortnight
     assert "strong quarter: judy's wordle average went from 5.0 to 3.3 this week. analysts are upgrading." in texts(trent, ago(1))
+
+
+def test_perfect_attendance(db, seat):
+    (trent, judy), p, b = board(db, seat, "trent", "judy", games=("wordle", "krillion", "globle"))
+    for k in range(8, 0, -1):  # judy files all three for 8 days; trent skips a globle
+        for n in p:
+            file(db, p[n], wordle(ago(k), 4), ago(k))
+            file(db, p[n], krillion(ago(k), 300), ago(k))
+            if n == "judy" or k != 4:
+                file(db, p[n], globle(ago(k), 5), ago(k))
+    got = run(db, b, p["judy"], OCT30)
+    assert [k for k in got if k.startswith("attendance")] == [f"attendance:{p['judy'].id}:{ago(2)}"]  # 7 days, two days ago
+    assert "perfect attendance: every item on judy's agenda, 7 days running. hr is drafting a certificate." in texts(trent, ago(1))
