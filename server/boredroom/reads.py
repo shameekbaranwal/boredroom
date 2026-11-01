@@ -176,6 +176,7 @@ def minutes(s: Session, board: Board, viewer: Person, game_id: str, day: date | 
 
 PERIODS = {"today": 1, "week": 7, "month": 30, "all": None}  # game days, counting back from today's
 STRIP = 30  # days in the "last 30" strip
+GRID = {"week": 7, "month": 30, "all": 30}  # the member x day grid's columns: a week fits a phone, longer scrolls
 # what the standings can be sorted by: across all games, or within one
 STATS = {None: ("wins", "rate", "days", "filed"), "game": ("average", "best", "wins", "played", "tenure", "longest")}
 MIN_PLAYS = {"today": 1, "week": 3, "month": 5, "all": 10}  # to qualify for a ranking by average
@@ -188,14 +189,20 @@ def _key(game_id: str) -> str | None:
 
 
 def review(s: Session, board: Board, viewer: Person, period: str = "today", game: str | None = None,
-           stat: str | None = None, vs: str | None = None, now: datetime | None = None) -> dict[str, Any]:
+           stat: str | None = None, vs: str | None = None, now: datetime | None = None,
+           view: str = "list") -> dict[str, Any]:
     """The board's review (UX-NOTES §2 and §4): one query, written in the formula bar as
     =review(board, period, game, stat, vs). Across all games the standings are daily wins
     (a #1 place, ties included, in a puzzle at least two people filed), win rate, days
     present or puzzles filed; for one game, average, best, wins or plays. `vs` adds a
-    head-to-head over the puzzles you both filed, and the 30-day strip follows it."""
+    head-to-head over the puzzles you both filed, and the 30-day strip follows it.
+    `view="grid"` adds the member x day grid (UX-NOTES §1) for the last week or 30 days."""
     if period not in PERIODS:
         fail(400, f"period is one of {', '.join(PERIODS)}")
+    if view not in ("list", "grid"):
+        fail(400, "view is list or grid")
+    if view == "grid" and period == "today":
+        fail(400, "a grid needs more than one day: week, month or all")
     lib = {bg.game_id for bg in board.library}
     if game is not None and (game not in lib or not REGISTRY[game].ranked()):
         fail(400, f"{game} isn't a ranked game on this board")
@@ -226,6 +233,11 @@ def review(s: Session, board: Board, viewer: Person, period: str = "today", game
             rows.setdefault((g, r.puzzle_day), []).append(r)
     in_period = (lambda g, d: d > current[g] - timedelta(days=span)) if span else (lambda g, d: True)
     ago = lambda g, d: (current[g] - d).days  # noqa: E731
+    # the grid's columns are dates: a krillion day and a wordle day share one
+    last = max(current.values(), default=now.astimezone(ZoneInfo(viewer.tz)).date())
+    cols = [last - timedelta(days=i) for i in range(GRID[period] - 1, -1, -1)] if view == "grid" else []
+    in_grid = set(cols)
+    grid: dict[tuple[int, date], dict[str, Any]] = {}  # (person, day) -> its cell
 
     who: dict[int, dict[str, Any]] = {}
     def me_(p: int) -> dict[str, Any]:  # noqa: E306
@@ -247,6 +259,16 @@ def review(s: Session, board: Board, viewer: Person, period: str = "today", game
                     cell[0 if c < 0 else 1 if c > 0 else 2] += 1
             elif mine and g_ranked:
                 cell[0 if place_of[viewer.id] == 1 and len(rs) > 1 else 1] += 1
+        if day in in_grid:
+            for p, r in placed:
+                won = g_ranked and p == 1 and len(rs) > 1
+                if game:  # one game: the score itself, coloured by how it went
+                    grid[(r.person_id, day)] = {"k": "miss" if r.outcome == "failed" else "top" if won else "played",
+                                                "m": r.metrics, "o": r.outcome, "late": r.late}
+                else:  # every game: that day's daily wins; filed without a win is a tint
+                    c = grid.setdefault((r.person_id, day), {"v": 0, "f": 0})
+                    c["v"] += won
+                    c["f"] += 1
         if not in_period(g, day):
             continue
         for p, r in placed:
@@ -328,6 +350,26 @@ def review(s: Session, board: Board, viewer: Person, period: str = "today", game
     out["strip"] = cells
     if rival:
         out["h2h"] = h2h
+    if view == "grid":
+        ghosts = {m.person_id for m in members if m.person.kind == "placeholder"}
+        # before someone took a game up (added it, or first filed it, whichever came first)
+        since = {a.person_id: min([a.added_at.astimezone(ZoneInfo(viewer.tz)).date(), *alltime.get(a.person_id, ())])
+                 for a in s.scalars(select(Agenda).where(Agenda.board_id == board.id, Agenda.game_id == game))} if game else {}
+        by_nick = {n: p for p, n in nick.items()}
+        grid_rows, absent = [], 0
+        for r in standings:  # the standings' order, so the grid reads like the list beside it
+            p = by_nick[r["nickname"]]
+            cells = [grid.get((p, d)) for d in cols]
+            if not any(cells) and p != viewer.id:
+                absent += 1
+                continue
+            if game:  # hadn't taken the game up yet that day: hatched, never read as absence
+                cells = [c or ({"k": "off"} if p in since and d < since[p] else None) for c, d in zip(cells, cols)]
+            grid_rows.append({"nickname": r["nickname"], "me": p == viewer.id, "ghost": p in ghosts, "cells": cells,
+                              "total": sum(1 for c in cells if c and c.get("k") == "top") if game
+                              else sum(c["v"] for c in cells if c)})
+        absent += sum(1 for p in nick if p not in {by_nick[r["nickname"]] for r in standings})
+        out["grid"] = {"days": [d.isoformat() for d in cols], "rows": grid_rows, "absent": absent}
     if game:
         out["min_plays"], out["metric"] = least, _key(game)
         rec = best.get(game)

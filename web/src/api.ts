@@ -45,12 +45,17 @@ export type Review = {
   period: Period; game: string | null; stat: string; stats: string[]; vs: string | null; now: string
   standings: Standing[]; members: string[]; ranked_games: string[]; strip: ('' | 'on' | 'ls' | 'lv')[]
   h2h?: { you: number; them: number; level: number }
+  grid?: { days: string[]; rows: GridRow[]; absent: number }
   min_plays?: number; metric?: string; record?: { nickname: string; me: boolean; metrics: Record<string, number>; day: string } | null
   games?: { game: string; name: string; ranked: boolean; day: string; present: number; players: number; plays: boolean
     place: string | null; filed: boolean; leader: { nickname: string | null; tied: number; metrics: Record<string, number> } | null }[]
   records?: { game: string; name: string; nickname: string; me: boolean; metrics: Record<string, number>; day: string }[]
 }
-export type ReviewQuery = { period: Period; game?: string | null; stat?: string | null; vs?: string | null }
+export type ReviewQuery = { period: Period; game?: string | null; stat?: string | null; vs?: string | null; view?: 'grid' | null }
+/** One member's row in the review grid. Across all games a cell is {v: daily wins, f: filed};
+ *  for one game it's the score, k saying how it went ("off": hadn't taken the game up yet). */
+export type GridCell = { v: number; f: number } | { k: 'top' | 'miss' | 'played'; m: Record<string, number>; o: string; late: boolean } | { k: 'off' } | null
+export type GridRow = { nickname: string; me: boolean; ghost: boolean; total: number; cells: GridCell[] }
 export type Event = {
   kind: 'filed' | 'merged' | 'duplicate' | 'conflict' | 'not_out_yet'
   game: string; puzzle: string; result_id: number | null; added: string[]; confidence: string; late: boolean

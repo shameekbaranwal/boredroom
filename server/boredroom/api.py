@@ -273,11 +273,11 @@ def board_today(slug):
 @api.get("/boards/<slug>/review")
 @auth_required
 def board_review(slug):
-    """?period=today|week|month|all&game=&stat=&vs=: the formula bar's query (reads.review)."""
+    """?period=today|week|month|all&game=&stat=&vs=&view=list|grid: the formula bar's query (reads.review)."""
     board, _ = boards.get_board(g.db, slug, g.person)
     a = request.args
     return jsonify(reads.review(g.db, board, g.person, a.get("period", "today"), a.get("game") or None,
-                                a.get("stat") or None, a.get("vs") or None))
+                                a.get("stat") or None, a.get("vs") or None, view=a.get("view") or "list"))
 
 
 @api.get("/boards/<slug>/minutes/<game>")

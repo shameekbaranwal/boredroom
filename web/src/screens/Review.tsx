@@ -1,5 +1,5 @@
-import { Fragment, useEffect, useState } from 'react'
-import { api, type Period, type Review as R, type ReviewQuery, type Standing } from '../api'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { api, type Game, type GridCell, type Period, type Review as R, type ReviewQuery, type Standing } from '../api'
 import { dayLabel, fmtMetric, headline } from '../format'
 import { go, query, usePath } from '../router'
 import { Av, FxQuery, Ghost, Header, Nav, Tile, sendOn, useApp, useFresh, type Token } from '../ui'
@@ -19,7 +19,9 @@ export default function Review({ slug }: { slug: string }) {
   const path = usePath()
   const qs = query(path)
   const asked = qs.get('period') as Period | null
-  const q: ReviewQuery = { period: asked && asked in PERIOD ? asked : 'today', game: qs.get('game'), stat: qs.get('stat'), vs: qs.get('vs') }
+  const period: Period = asked && asked in PERIOD ? asked : 'today'
+  // the grid is a second way to read the same query; it needs more than one day
+  const q: ReviewQuery = { period, game: qs.get('game'), stat: qs.get('stat'), vs: qs.get('vs'), view: qs.get('view') === 'grid' && period !== 'today' ? 'grid' : null }
   const [r, setR] = useState<R | null>(null)
   const [err, setErr] = useState('')
   const [all, setAll] = useState(false)
@@ -32,12 +34,17 @@ export default function Review({ slug }: { slug: string }) {
   const url = (x: ReviewQuery, s = slug) => {
     const p = new URLSearchParams()
     if (x.period !== 'today') p.set('period', x.period)
-    for (const k of ['game', 'stat', 'vs'] as const) if (x[k]) p.set(k, x[k]!)
+    for (const k of ['game', 'stat', 'vs', 'view'] as const) if (x[k]) p.set(k, x[k]!)
     const str = p.toString()
     return `/b/${s}/review${str ? `?${str}` : ''}`
   }
   // a new game changes which stats make sense, so the stat goes back to its default
-  const set = (x: Partial<ReviewQuery>) => { setAll(false); go(url({ ...q, ...('game' in x ? { stat: null } : {}), ...x }), true) }
+  const set = (x: Partial<ReviewQuery>) => {
+    setAll(false)
+    const n = { ...q, ...('game' in x ? { stat: null } : {}), ...x }
+    if (n.period === 'today') n.view = null  // one column isn't a grid
+    go(url(n), true)
+  }
 
   const name = (g: string) => games[g]?.name ?? g
   const metric = r?.game && r.metric ? games[r.game]?.metrics.find(m => m.name === r.metric) : undefined
@@ -51,6 +58,8 @@ export default function Review({ slug }: { slug: string }) {
     { key: 'game', value: q.game ?? '', options: [['', 'all games'], ...(r?.ranked_games ?? (q.game ? [q.game] : [])).map(g => [g, name(g)] as [string, string])], onPick: g => set({ game: g || null }) },
     { key: 'stat', value: r?.stat ?? q.stat ?? '', options: r ? r.stats.map(s => [s, STAT[s]]) : [[q.stat ?? '', q.stat ?? '…']], onPick: s => set({ stat: s }) },
     { key: 'vs', value: q.vs ?? '', options: [['', 'no one'], ...(r?.members ?? (q.vs ? [q.vs] : [])).map(m => [m, m] as [string, string])], onPick: v => set({ vs: v || null }) },
+    { key: 'view', value: q.view ?? 'list', options: [['list', 'standings'], ['grid', 'member × day grid']],
+      onPick: v => set(v === 'grid' ? { view: 'grid', period: q.period === 'today' ? 'week' : q.period } : { view: null }) },
   ]
   const head = <>
     <Header title={`${board.name}.xlsx`} meta={q.game ? name(q.game) : 'review'} onTitle={() => setPicker(true)} />
@@ -113,7 +122,17 @@ export default function Review({ slug }: { slug: string }) {
           </div>
         </>}
 
-        <div className="sec rv-sec"><span>{title}</span><button className="lnk" onClick={share}>send to {board.name}</button></div>
+        <div className="sec rv-sec">
+          <span>{title}</span>
+          <span className="rv-acts">
+            <button className="lnk" aria-pressed={!!q.view} onClick={() => set(q.view ? { view: null } : { view: 'grid', period: q.period === 'today' ? 'week' : q.period })}>
+              {q.view ? 'as a list' : 'as a grid'}
+            </button>
+            <button className="lnk" onClick={share}>send to {board.name}</button>
+          </span>
+        </div>
+        {q.view && r.grid ? <MemberGrid g={r.grid} game={r.game ? games[r.game] : undefined} vs={r.vs} today={r.grid.days[r.grid.days.length - 1]}
+          onName={n => set({ vs: n === r.vs ? null : n })} onDay={d => r.game && go(`/b/${slug}/m/${r.game}/${d}`)} /> : <>
         {rows.length === 0 && <div className="sub wrap">nothing filed {q.period === 'today' ? 'yet today' : PERIOD[q.period]}. the minutes are empty.</div>}
         {shown.map((s, k) => {
           const [v, t2] = value(s)
@@ -137,6 +156,7 @@ export default function Review({ slug }: { slug: string }) {
           {r.stat === 'tenure' || r.stat === 'longest' ? 'tenure is days in a row with this game filed, over all time. it survives until the reset after a missed day. ' : r.stat === 'average' ? `ranked by average once you have ${r.min_plays}+ plays ${PERIOD[q.period]}. ` : r.stat === 'wins' || r.stat === 'rate' ? 'a daily win is first place in a puzzle at least two of you filed; ties all count. ' : ''}
           tap a name for a head-to-head.
         </div>
+        </>}
 
         <div className="sec">{h ? `last 30 days · you vs ${r.vs}` : `your last 30 days${r.game ? ` · ${name(r.game)}` : ''}`}</div>
         <div className="strip-row">
@@ -189,4 +209,68 @@ export default function Review({ slug }: { slug: string }) {
       {picker && <Boards current={slug} onClose={() => setPicker(false)} />}
     </div>
   )
+}
+
+const WD = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa']
+
+/** A cell's short form: the first metric the game ranks by, without its "/1000". */
+function compact(game: Game | undefined, c: Extract<GridCell, { m: unknown }>): string {
+  if (c.o === 'failed') return '✗'
+  const name = game?.ranker[0] ?? Object.keys(c.m)[0]
+  const v = c.m[name]
+  if (v == null) return '✓'
+  const m = game?.metrics.find(x => x.name === name)
+  return m?.kind === 'duration' ? fmtMetric(m, v) : Number.isInteger(v) ? String(v) : v.toFixed(1)
+}
+
+/** The review's second view: members down the side, days across (UX-NOTES §1). A week fits a
+ *  phone; a month scrolls sideways inside its own box, names pinned, opening on today. */
+function MemberGrid({ g, game, vs, today, onName, onDay }: {
+  g: NonNullable<R['grid']>; game?: Game; vs: string | null; today: string; onName: (n: string) => void; onDay: (d: string) => void
+}) {
+  const box = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => { if (box.current) box.current.scrollLeft = box.current.scrollWidth }, [g.days.length])
+  const cols = { ['--n' as string]: g.days.length }
+  return <>
+    <div className="mg-w"><div className={`mg${g.days.length > 7 ? ' long' : ''}`} ref={box} role="table" aria-label="member by day">
+      <div className="mg-r mg-h" role="row" style={cols}>
+        <span className="mg-n" role="columnheader" />
+        {g.days.map(d => {
+          const dt = new Date(d + 'T00:00:00')
+          return (
+            <button key={d} role="columnheader" className={`mg-d${d === today ? ' now' : ''}`} disabled={!game}
+              title={game ? `${game.name}, ${dayLabel(d, today)}` : dayLabel(d, today)} onClick={() => onDay(d)}>
+              <small>{WD[dt.getDay()]}</small>{dt.getDate()}
+            </button>
+          )
+        })}
+        <span className="mg-t" role="columnheader" title={game ? 'times #1' : 'daily wins'}>Σ</span>
+      </div>
+      {g.rows.map(r => (
+        <div key={r.nickname} role="row" style={cols}
+          className={`mg-r${r.me ? ' me' : ''}${vs && (r.me || r.nickname === vs) ? ' cmp' : ''}${r.ghost ? ' ghost' : ''}`}>
+          <button className="mg-n" role="rowheader" onClick={() => !r.me && onName(r.nickname)} title={r.me ? undefined : `you vs ${r.nickname}`}>
+            <Av name={r.nickname} /><span>{r.nickname}</span>
+          </button>
+          {r.cells.map((c, i) => {
+            const d = g.days[i]
+            if (!c) return <span key={d} role="cell" className="mg-c" />
+            if ('v' in c) return <span key={d} role="cell" className={`mg-c ${c.v ? 'win' : 'tint'}`}
+              title={`${c.v} daily win${c.v === 1 ? '' : 's'}, ${c.f} filed · ${dayLabel(d, today)}`}>{c.v || ''}</span>
+            if (c.k === 'off') return <span key={d} role="cell" className="mg-c off" title="hadn't taken it up yet" />
+            return <span key={d} role="cell" className={`mg-c ${c.k}${c.late ? ' late' : ''}`}
+              title={`${headline(game, c.m, c.o)} · ${dayLabel(d, today)}${c.late ? ' · filed late' : ''}`}>{compact(game, c)}</span>
+          })}
+          <b className="mg-t" role="cell">{r.total || ''}</b>
+        </div>
+      ))}
+    </div></div>
+    <div className="key mg-key">
+      {game ? <><span><i className="top" />#1</span><span><i className="miss" />missed</span><span><i className="off" />not taken up yet</span></>
+        : <><span><i className="win" />daily wins</span><span><i className="tint" />filed, no win</span></>}
+    </div>
+    <div className="sub wrap rv-note">
+      {g.absent > 0 && `+${g.absent} absent ${g.days.length > 7 ? 'all month' : 'all week'} · `}tap a name for a head-to-head{game ? ', a day for its minutes' : ''}.
+    </div>
+  </>
 }

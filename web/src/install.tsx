@@ -66,7 +66,8 @@ export function InstallMemo({ always = false, onDone }: { always?: boolean; onDo
     <div className="memo">
       <div className="memo-h"><span>memo</span><span>from: the chair</span><span>re: your home screen</span></div>
       <b>motion to put boredroom on your home screen.</b>
-      <small>one tap from the puzzle to the minutes, it opens like an app, and it's the only way the board can nudge you before a puzzle resets.</small>
+      {/* only an iphone needs the home screen for reminders; android chrome can nudge from a tab */}
+      <small>one tap from the puzzle to the minutes, and it opens like an app{how === 'ios' ? ". on an iphone it's also the only way the board can nudge you before a puzzle resets" : ''}.</small>
       {steps && (
         <ol className="memo-steps">
           <li>in safari, tap <ShareGlyph /> share</li>

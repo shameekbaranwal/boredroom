@@ -89,3 +89,39 @@ def test_tenure_shows_on_the_agenda_minutes_and_review(db, seat):
     assert reads.minutes(db, board, viewer, "krillion", day, now=NOW)["rows"][0]["tenure"] == 4
     r = reads.review(db, board, viewer, "week", game="krillion", stat="tenure", now=NOW)
     assert (r["standings"][0]["tenure"], r["standings"][0]["longest"], r["standings"][0]["place"]) == (4, 4, 1)
+
+
+def test_the_grid_shows_who_turned_up_and_who_won(db, seat):
+    a, b, c, d = seat("ivan"), seat("judy"), seat("priya"), seat("trent")
+    code = a.post("/boards", {"name": "soup"}).json["invite"]["code"]
+    for x in (b, c, d):
+        x.post("/boards/join", {"code": code})
+    for x in (a, b, c, d):
+        x.put("/boards/soup/agenda/krillion")
+    board = db.query(Board).one()
+    viewer = db.query(Person).filter_by(username="ivan").one()
+    n = reads.REGISTRY["krillion"].current(NOW, viewer.tz)
+    for back, (mine, theirs) in enumerate([(300, 280), (250, 290)]):
+        a.post("/pastes", {"text": KRILLION.format(n=n - back, score=mine)})
+        b.post("/pastes", {"text": KRILLION.format(n=n - back, score=theirs)})
+    c.post("/pastes", {"text": KRILLION.format(n=n - 2, score=100)})  # alone: filed, no win
+    db.expire_all()
+
+    g = reads.review(db, board, viewer, "week", view="grid", now=NOW)["grid"]
+    today = reads.game_day("krillion", viewer, NOW)
+    assert len(g["days"]) == 7 and g["days"][-1] == today.isoformat()
+    assert g["absent"] == 1  # trent filed nothing all week
+    rows = {r["nickname"]: r for r in g["rows"]}
+    assert [r["nickname"] for r in g["rows"]] == ["ivan", "judy", "priya"]  # the standings' order
+    assert rows["ivan"]["cells"][-2:] == [{"v": 0, "f": 1}, {"v": 1, "f": 1}] and rows["ivan"]["total"] == 1
+    assert rows["priya"]["cells"][-3] == {"v": 0, "f": 1} and rows["priya"]["cells"][-1] is None
+
+    one = reads.review(db, board, viewer, "month", game="krillion", view="grid", now=NOW)["grid"]
+    assert len(one["days"]) == 30
+    rows = {r["nickname"]: r for r in one["rows"]}
+    assert [(c["k"], c["m"]) for c in rows["ivan"]["cells"][-2:]] == [("played", {"score": 250}), ("top", {"score": 300})]
+    assert rows["judy"]["total"] == 1
+    assert rows["priya"]["cells"][0] == {"k": "off"}  # before she took krillion up: hatched, not absent
+    assert rows["priya"]["cells"][-1] is None  # after: a plain gap
+    assert a.get("/boards/soup/review?view=grid").status_code == 400  # today is one column
+    assert a.get("/boards/soup/review?period=week&view=grid").json["grid"]["absent"] == 1
