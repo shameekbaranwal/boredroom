@@ -20,7 +20,13 @@ export type Item = {
   leader: { nickname: string | null; tied: number; metrics: Record<string, number> } | null
   mine: Row | null; tenure: { days: number; at_risk: boolean }
 }
-export type Today = { now: string; items: Item[] }
+export type Memo = {
+  id: number; kind: string; glyph: string; day: string; game: string | null
+  text: string; plain: string; number: string; score: { metrics: Record<string, number>; outcome: string } | null
+  link: string; about: string[]; me: boolean; dismissed: boolean
+}
+export type Today = { now: string; items: Item[]; memos: Memo[] }
+export type Meeting = { day: string; today: string; earlier: string | null; memos: Memo[] }
 export type Minutes = {
   game: string; name: string; ranked: boolean; day: string; current: boolean; resets_at: string | null
   open: boolean; rows: Row[]; not_in: string[]
@@ -122,6 +128,8 @@ export const api = {
   today: (slug: string) => call<Today>('GET', `/boards/${encodeURIComponent(slug)}/today`),
   minutes: (slug: string, game: string, day?: string) =>
     call<Minutes>('GET', `/boards/${encodeURIComponent(slug)}/minutes/${encodeURIComponent(game)}${day ? `?day=${encodeURIComponent(day)}` : ''}`),
+  meeting: (slug: string, day?: string) => call<Meeting>('GET', `/boards/${encodeURIComponent(slug)}/meeting${day ? `?day=${encodeURIComponent(day)}` : ''}`),
+  dismissMemo: (slug: string, id: number, on: boolean) => call<{ memos: Memo[] }>(on ? 'POST' : 'DELETE', `/boards/${encodeURIComponent(slug)}/memos/${id}/dismiss`),
   paste: (text: string, source: 'paste' | 'share' = 'paste') => call<Filing>('POST', '/pastes', { text, source }),
   preview: (text: string) => call<Filing>('POST', '/pastes/preview', { text }),
   replace: (id: number, paste_id: number) => call<unknown>('POST', `/results/${id}/replace`, { paste_id }),

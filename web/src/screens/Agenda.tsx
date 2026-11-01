@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { api, type Board, type Filing, type Item, type Minutes, type Today } from '../api'
+import { api, type Board, type Filing, type Item, type Memo, type Minutes, type Today } from '../api'
 import { headline, left } from '../format'
 import { go } from '../router'
 import { Av, Clip, Fx, Ghost, Header, Nav, Tile, sendOn, useApp, useFresh, useNow } from '../ui'
 import Boards from './Boards'
 import { InstallMemo } from '../install'
 import { playLink } from '../opens'
+import { MemoRow } from '../memos'
 
 const TODO = 8  // open games shown before "n more"
 const playUrl = (i: Item) => i.play
@@ -128,11 +129,31 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
             </div>
           ))}
         </>}
+        <Memos slug={slug} memos={today.memos} onChange={memos => setToday(t => t && { ...t, memos })} />
         {today.items.length === 0 && <div className="sub wrap">nothing on your agenda yet. pick your games, or just paste a result: its game joins your agenda.</div>}
         {today.items.length === 0 && <button className="more" onClick={() => go(`/b/${slug}/you#games`)}>{extra ? `${extra} of ${board.name}'s games aren't on your agenda →` : 'your agenda →'}</button>}
       </div>
       <Nav slug={slug} on="agenda" />
       {picker && <Boards current={slug} onClose={() => setPicker(false)} />}
+    </div>
+  )
+}
+
+/** Memos from the chair: the day's big news, three at most; the rest is in the meeting. */
+function Memos({ slug, memos, onChange }: { slug: string; memos: Memo[]; onChange: (m: Memo[]) => void }) {
+  const { games, toast } = useApp()
+  if (!memos.length) return null
+  const dismiss = async (m: Memo) => {
+    onChange(memos.filter(x => x.id !== m.id))
+    try {
+      await api.dismissMemo(slug, m.id, true)
+      toast('noted.', { label: 'undo', run: () => api.dismissMemo(slug, m.id, false).then(r => { onChange(r.memos); toast('back on the record.') }).catch(() => {}) })
+    } catch (e) { onChange(memos); toast((e as Error).message) }
+  }
+  return (
+    <div className="memos">
+      <div className="ph-sec"><span>memos from the chair</span><button className="lnk" onClick={() => go(`/b/${slug}/meeting`)}>the daily bored meeting →</button></div>
+      {memos.map(m => <MemoRow key={m.id} m={m} game={m.game ? games[m.game] : undefined} onDismiss={() => dismiss(m)} />)}
     </div>
   )
 }

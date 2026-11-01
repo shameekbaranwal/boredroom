@@ -191,3 +191,31 @@ class ThrottleHit(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     key: Mapped[str] = mapped_column(String(120))
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Memo(Base):
+    """A memo from the chair, stored the first time it's seen (see memos.py). Its facts
+    stay fixed; its text is rendered when read."""
+    __tablename__ = "memo"
+    __table_args__ = (UniqueConstraint("board_id", "key"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    board_id: Mapped[int] = mapped_column(ForeignKey("board.id", ondelete="CASCADE"), index=True)
+    key: Mapped[str] = mapped_column(String(200))  # "record:maptap:2026-10-31"
+    kind: Mapped[str] = mapped_column(String(20))
+    day: Mapped[date] = mapped_column(Date, index=True)  # the meeting that reports it
+    subjects: Mapped[list[int]] = mapped_column(ARRAY(Integer), default=list)  # who it's about
+    game_id: Mapped[str | None] = mapped_column(String(40))
+    result_id: Mapped[int | None] = mapped_column(ForeignKey("result.id", ondelete="CASCADE"))
+    facts: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    interest: Mapped[int] = mapped_column(Integer, default=50)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class MemoDismissal(Base):
+    """A memo someone waved off the agenda. It stays in the meeting."""
+    __tablename__ = "memo_dismissal"
+
+    person_id: Mapped[int] = mapped_column(ForeignKey("person.id", ondelete="CASCADE"), primary_key=True)
+    memo_id: Mapped[int] = mapped_column(ForeignKey("memo.id", ondelete="CASCADE"), primary_key=True)
+    dismissed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

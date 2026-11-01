@@ -5,6 +5,7 @@ import { AppCtx, Loading, Toast, type Ctx } from './ui'
 import Agenda from './screens/Agenda'
 import Desk from './screens/Desk'
 import Join from './screens/Join'
+import Meeting from './screens/Meeting'
 import Minutes from './screens/Minutes'
 import Review from './screens/Review'
 import NoBoardReview from './screens/NoBoardReview'
@@ -81,6 +82,10 @@ function Route({ path, me }: { path: string; me: Me }) {
   if (match('/desk', path)) return <Desk />
   if (match('/me', path)) return <MeScreen />
   if (match('/me/close', path)) return <MeScreen page="close" />
+  if (match('/meeting', path)) {  // the meeting tab from a screen with no board: your last board's
+    const slug = lastBoard() && onBoard(lastBoard()!) ? lastBoard()! : me.boards[0]?.slug
+    return <Redirect to={slug ? `/b/${slug}/meeting` : '/desk'} />
+  }
   if (match('/review', path)) {  // the review tab from a screen with no board: your last board's, else the empty one
     const slug = lastBoard() && onBoard(lastBoard()!) ? lastBoard()! : me.boards[0]?.slug
     return slug ? <Redirect to={`/b/${slug}/review`} /> : <NoBoardReview />
@@ -96,6 +101,7 @@ function Route({ path, me }: { path: string; me: Me }) {
   if ((m = match('/b/:slug/you', path)) && onBoard(m.slug)) return <You key={m.slug} slug={m.slug} />
   if ((m = match('/b/:slug/you/:page', path)) && onBoard(m.slug)) return <You key={`${m.slug}/${m.page}`} slug={m.slug} page={m.page} />
   if ((m = match('/b/:slug/you/:page/:arg', path)) && onBoard(m.slug)) return <You key={`${m.slug}/${m.page}/${m.arg}`} slug={m.slug} page={m.page} arg={m.arg} />
+  if ((m = match('/b/:slug/meeting', path)) && onBoard(m.slug)) return <Meeting key={m.slug} slug={m.slug} day={query(path).get('day') ?? undefined} />
   if ((m = match('/b/:slug/review', path)) && onBoard(m.slug)) return <Review key={m.slug} slug={m.slug} />
   if ((m = match('/b/:slug/m/:game', path)) && onBoard(m.slug)) return <Minutes slug={m.slug} game={m.game} />
   if ((m = match('/b/:slug/m/:game/:day', path)) && onBoard(m.slug)) return <Minutes slug={m.slug} game={m.game} day={m.day} />

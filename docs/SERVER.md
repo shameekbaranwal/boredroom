@@ -91,6 +91,7 @@ JSON under `/api/v1`. The client sends a bearer token (one per seat).
 | GET | `/boards/{slug}/review?period=today\|all\|week\|month` | daily wins and per-game rows |
 | GET | `/boards/{slug}/games/{game}` | one game: stats, ranking by average, head-to-head |
 | GET | `/boards/{slug}/meeting?day=` | all memos for a day |
+| POST, DELETE | `/boards/{slug}/memos/{id}/dismiss` | wave a memo off your agenda (it stays in the meeting); DELETE undoes it |
 | POST | `/boards` · `/boards/{slug}/join` · `/boards/{slug}/invite` | create, join, invite link |
 | PUT | `/boards/{slug}/agenda/{game}` · DELETE likewise | your games |
 | PATCH | `/boards/{slug}/me` | nickname |

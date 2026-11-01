@@ -10,7 +10,7 @@ from typing import Any
 from flask import Blueprint, current_app, g, jsonify, request
 from sqlalchemy import func, select
 
-from . import admin, boards, claims, filing, invites, names, reads, throttle
+from . import admin, boards, claims, filing, invites, memos, names, reads, throttle
 from . import auth
 from .auth import auth_required, create_guest, valid_tz, USERNAME
 from .errors import fail
@@ -27,6 +27,11 @@ def body() -> dict[str, Any]:
     if not isinstance(data, dict):
         fail(400, "send a json object")
     return data
+
+
+def clock():
+    """The time memos are read at: now, unless a test set the app's CLOCK."""
+    return current_app.config.get("CLOCK", lambda: None)()
 
 
 def me_json(p: Person) -> dict[str, Any]:
@@ -267,7 +272,45 @@ def board_me(slug):
 @auth_required
 def board_today(slug):
     board, _ = boards.get_board(g.db, slug, g.person)
-    return jsonify(reads.today(g.db, board, g.person))
+    memos.refresh(g.db, board, g.person, clock())
+    out = reads.today(g.db, board, g.person) | {"memos": memos.agenda(g.db, board, g.person, clock())}
+    g.db.commit()
+    return jsonify(out)
+
+
+@api.get("/boards/<slug>/meeting")
+@auth_required
+def board_meeting(slug):
+    """?day=YYYY-MM-DD: the daily bored meeting, every memo reported that day (default today)."""
+    board, _ = boards.get_board(g.db, slug, g.person)
+    day = request.args.get("day")
+    try:
+        day = date.fromisoformat(day) if day else None
+    except ValueError:
+        fail(400, "day is YYYY-MM-DD")
+    memos.refresh(g.db, board, g.person, clock())
+    out = memos.meeting(g.db, board, g.person, day, clock())
+    g.db.commit()
+    return jsonify(out)
+
+
+@api.post("/boards/<slug>/memos/<int:memo_id>/dismiss")
+@auth_required
+def dismiss_memo(slug, memo_id):
+    """Waves a memo off your agenda, on every device. It stays in the meeting."""
+    board, _ = boards.get_board(g.db, slug, g.person)
+    memos.dismiss(g.db, board, g.person, memo_id, True)
+    g.db.commit()
+    return jsonify({"memos": memos.agenda(g.db, board, g.person, clock())})
+
+
+@api.delete("/boards/<slug>/memos/<int:memo_id>/dismiss")
+@auth_required
+def undismiss_memo(slug, memo_id):
+    board, _ = boards.get_board(g.db, slug, g.person)
+    memos.dismiss(g.db, board, g.person, memo_id, False)
+    g.db.commit()
+    return jsonify({"memos": memos.agenda(g.db, board, g.person, clock())})
 
 
 @api.get("/boards/<slug>/review")
