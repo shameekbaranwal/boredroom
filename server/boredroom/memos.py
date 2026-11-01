@@ -517,10 +517,11 @@ def rivalries(b: Ledger) -> Iterator[Candidate]:
 
 
 def _value(b: Ledger, g: str):
-    """The metric a game's average is over, if an average of it means something."""
+    """The metric a game's average is over, if an average of it means something: not a
+    ratio, where one 195,288,089× swamps a week."""
     key = reads._key(g)
     m = next((m for m in REGISTRY[g].metrics if m.name == key), None)
-    return m if m and not m.optional and m.kind in ("points", "count", "ratio", "duration", "distance") else None
+    return m if m and not m.optional and m.kind in ("points", "count", "duration", "distance") else None
 
 
 @rule
