@@ -40,7 +40,7 @@ cd web && npm install && npm run dev   # app at http://localhost:5173 (proxies /
 Google sign-in in development needs `GOOGLE_OAUTH_CLIENT_ID` in the Flask server's
 environment, and `http://localhost:5173` as an authorized JavaScript origin.
 
-**Deploy (homeserver):** features are built in their own worktrees (`build/feature.sh new NAME`) and go to stage first (stage-boredroom.shmk.dev). Once approved they land on master, and `build/deploy.sh promote` puts the tested image in production. Hotfixes are committed on master in the main checkout and take the same path. See build/README.md. Production: `bea build boredroom` builds `boredroom:latest` via
+**Deploy (homeserver):** production only runs master. Every change is a feature branch in its own worktree (`build/feature.sh new NAME`). It's rebased onto master and goes to stage first (stage-boredroom.shmk.dev). Once approved, `build/feature.sh promote NAME` merges it into master and puts master on production and stage. See build/README.md. Production: `bea build boredroom` builds `boredroom:latest` via
 `build/build-docker-image.sh`. It runs as the `boredroom` service in yams on port 5077
 (172.60.0.60), public at boredroom.shmk.dev through the Cloudflare tunnel, with its
 Postgres as `boredroom-db` (172.60.0.61). The image serves the API and the built web app,
