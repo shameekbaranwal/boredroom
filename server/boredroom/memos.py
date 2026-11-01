@@ -15,10 +15,12 @@ Only the last two days are ever looked at, so the imported history never arrives
 three hundred memos at once."""
 from __future__ import annotations
 
+import statistics
 import time
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from typing import Any, Callable, Iterator
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
@@ -42,7 +44,8 @@ LOW, LOW_A_DAY = 35, 3  # memos this interesting or less: at most three a day, s
 GLYPH = {"takeover": "▲", "pip": "▼", "record": "♛", "pb": "★", "highlight": "✦", "tenure": "◆",
          "ended": "◇", "photo": "≈", "comeback": "↗", "missed": "✗", "precedent": "§", "run": "⇈",
          "coup": "↯", "jinx": "∥", "unanimous": "⊜", "sweep": "◉", "rumour": "◌", "buzzer": "◷",
-         "night": "☾", "milestone": "№", "quorum": "⊞", "usual": "↻", "commendation": "✪"}
+         "night": "☾", "milestone": "№", "quorum": "⊞", "usual": "↻", "commendation": "✪", "rivalry": "⇄",
+         "earnings": "∆"}
 # the agenda only carries the big news; everything is in the meeting
 ON_AGENDA = {"takeover", "record", "pb", "highlight", "tenure", "ended", "precedent", "run", "coup", "sweep",
              "rumour", "milestone", "commendation"}
@@ -477,10 +480,87 @@ def member_of_the_month(b: Ledger) -> Iterator[Candidate]:
                         facts={"on": start.isoformat(), "pct": round(top * 100)})
 
 
-def _recent(b: Ledger, kind: str, who: set[int], day: date, days: int) -> bool:
-    """Was this kind of memo about these people posted in the last `days` days?"""
-    return any(set(m.subjects) == who for m in b.s.scalars(select(Memo).where(
-        Memo.board_id == b.board.id, Memo.kind == kind, Memo.day > day - timedelta(days=days), Memo.day <= day)))
+
+@rule
+def rivalries(b: Ledger) -> Iterator[Candidate]:
+    """On mondays, the closest head-to-heads of the last thirty days: ten puzzles or more
+    filed by both, eight decided, two apart at most. The two most played, nobody in both."""
+    for _, day in _closed_days(b):
+        if day.weekday() != 0:
+            continue
+        pairs = []
+        for g in b.games:
+            if not b.ranked(g):
+                continue
+            players = sorted(b.players[g])
+            for i, a in enumerate(players):
+                for c in players[i + 1:]:
+                    shared = wa = wc = 0
+                    for k in range(1, 31):
+                        rs = {r.person_id: r for r in b.by.get((g, day - timedelta(days=k)), [])}
+                        if a in rs and c in rs:
+                            shared += 1
+                            wa += b.better(rs[a], rs[c])
+                            wc += b.better(rs[c], rs[a])
+                    if shared >= 10 and wa + wc >= 8 and abs(wa - wc) <= 2:
+                        lead, trail = (a, c) if wa >= wc else (c, a)
+                        pairs.append((shared, g, lead, trail, max(wa, wc), min(wa, wc)))
+        taken: set[int] = set()
+        for shared, g, lead, trail, w, l in sorted(pairs, key=lambda x: (-x[0], x[1])):
+            if {lead, trail} & taken:
+                continue
+            taken |= {lead, trail}
+            yield Candidate(f"rivalry:{day}:{g}:{min(lead, trail)}:{max(lead, trail)}", "rivalry", day, [lead, trail], 55, g,
+                            facts={"on": (day - timedelta(days=1)).isoformat(), "w": w, "l": l, "n": shared})
+            if len(taken) == 4:
+                break
+
+
+def _value(b: Ledger, g: str):
+    """The metric a game's average is over, if an average of it means something."""
+    key = reads._key(g)
+    m = next((m for m in REGISTRY[g].metrics if m.name == key), None)
+    return m if m and not m.optional and m.kind in ("points", "count", "ratio", "duration", "distance") else None
+
+
+@rule
+def earnings(b: Ledger) -> Iterator[Candidate]:
+    """A strong quarter: your average over the last week beats the week before by three
+    quarters of the board's spread or more, five puzzles each. Only ever upward; one a day
+    for the board, and a fortnight between two about the same person and game."""
+    best: dict[date, tuple[float, Candidate]] = {}
+    for g, d in b.closed():
+        m = _value(b, g)
+        everyone = [r.metrics[m.name] for r in b.history[g] if m and r.outcome != "failed" and m.name in r.metrics]
+        if not m or len(everyone) < 30 or statistics.pstdev(everyone) == 0:
+            continue
+        sd = statistics.pstdev(everyone)
+        for pid in b.players[g]:
+            def over(lo: int, hi: int) -> list[float]:
+                return [r.metrics[m.name] for k in range(lo, hi + 1) for r in b.by.get((g, d - timedelta(days=k)), [])
+                        if r.person_id == pid and r.outcome != "failed" and m.name in r.metrics]
+            cur, prev = over(0, 6), over(7, 13)
+            if len(cur) < 5 or len(prev) < 5:
+                continue
+            was, now = statistics.mean(prev), statistics.mean(cur)
+            gain = (now - was if m.better == "high" else was - now) / sd
+            report = d + timedelta(days=1)
+            if gain >= 0.75 and gain > best.get(report, (0, None))[0] and not _recent(b, "earnings", {pid}, report, 14, g):
+                best[report] = (gain, Candidate(f"earnings:{g}:{pid}:{d}", "earnings", report, [pid], 45, g,
+                                                facts={"on": d.isoformat(), "was": was, "now": now, "kind": m.kind}))
+    for report, (_, c) in sorted(best.items()):  # posted one by one, so the fortnight holds within a run too
+        if not _recent(b, "earnings", set(c.subjects), report, 14, c.game) and not b.s.scalar(select(Memo.id).where(
+                Memo.board_id == b.board.id, Memo.kind == "earnings", Memo.day == report).limit(1)):
+            yield c
+
+
+def _recent(b: Ledger, kind: str, who: set[int], day: date, days: int, game: str | None = None) -> bool:
+    """Was this kind of memo about these people (on this game) posted in the last `days` days?"""
+    q = select(Memo).where(Memo.board_id == b.board.id, Memo.kind == kind,
+                           Memo.day > day - timedelta(days=days), Memo.day <= day)
+    if game:
+        q = q.where(Memo.game_id == game)
+    return any(set(m.subjects) == who for m in b.s.scalars(q))
 
 
 _ran: dict[tuple[int, float], float] = {}
@@ -610,7 +690,28 @@ def text(m: Memo, nick: dict[int, str], me: int | None) -> str:
             names = sorted((n(x) for x in m.subjects), key=lambda x: (x == "you", x))
             return f"joint board members of the month for {month}: {_names(names)}. the parking space will be shared."
         return f"board member of the month for {month}: {n(p)}, with a {f['pct']}% win rate. a parking space has been reserved."
+    if k == "rivalry":
+        lead, trail = m.subjects
+        tail = "over the month. it's personal."
+        if f["w"] == f["l"]:
+            names = sorted((n(x) for x in m.subjects), key=lambda x: (x == "you", x))
+            return f"rivalry of the week, {game}: {_names(names)}, level at {f['w']}–{f['l']} {tail}"
+        verb = "lead" if lead == me else "leads"
+        return f"rivalry of the week, {game}: {n(lead)} {verb} {n(trail)} {f['w']}–{f['l']} {tail}"
+    if k == "earnings":
+        return (f"strong quarter: {pos(p)} {game} average went from {_fmt(f['kind'], f['was'])} to "
+                f"{_fmt(f['kind'], f['now'])} this week. analysts are upgrading.")
     return k
+
+
+def _fmt(kind: str, v: float) -> str:
+    if kind == "duration":
+        return f"{int(v) // 60}:{int(v) % 60:02d}"
+    if kind == "ratio":
+        return f"{v:.2f}×"
+    if kind == "distance":
+        return f"{v / 1000:.1f}km" if v >= 1000 else f"{v:.0f}m"
+    return f"{v:.1f}" if kind == "count" else f"{v:.0f}"
 
 
 def _days(n: int) -> str:
@@ -632,7 +733,8 @@ def _number(m: Memo) -> str:
             "sweep": lambda: f"{f['n']}/{f['n']}", "rumour": lambda: f"{f['wins']}–{f['lead']}",
             "buzzer": lambda: f"{f['s']}s" if f["s"] < 60 else f"{f['s'] // 60}m", "night": lambda: _clock(f["at"]),
             "milestone": lambda: f"#{f['n']:,}", "quorum": lambda: f"{f['n']}/{f['n']}", "usual": lambda: f"{f['n']}d",
-            "commendation": lambda: f"{f['pct']}%"}.get(m.kind, lambda: "")()
+            "commendation": lambda: f"{f['pct']}%", "rivalry": lambda: f"{f['w']}–{f['l']}",
+            "earnings": lambda: f"{_fmt(f['kind'], f['was'])}→{_fmt(f['kind'], f['now'])}"}.get(m.kind, lambda: "")()
 
 
 def _link(m: Memo, slug: str) -> str:
@@ -640,9 +742,17 @@ def _link(m: Memo, slug: str) -> str:
         return f"/b/{slug}/review?period=week"
     if m.kind == "commendation":
         return f"/b/{slug}/review?period=all"
+    if m.kind == "rivalry":
+        return f"/b/{slug}/review?period=month&game={m.game_id}"
     if m.kind == "record":
         return f"/b/{slug}/review?period=all&game={m.game_id}"
     return f"/b/{slug}/m/{m.game_id}/{m.facts['on']}"
+
+
+def _vs(m: Memo, nick: dict[int, str], me: Person) -> str:
+    """A rivalry you're in opens the review head to head with the other side."""
+    other = [p for p in m.subjects if p != me.id]
+    return f"&vs={quote(nick[other[0]])}" if m.kind == "rivalry" and me.id in m.subjects and other[0] in nick else ""
 
 
 def memo_json(m: Memo, board: Board, nick: dict[int, str], me: Person, dismissed: set[int]) -> dict[str, Any]:
@@ -651,7 +761,7 @@ def memo_json(m: Memo, board: Board, nick: dict[int, str], me: Person, dismissed
         "id": m.id, "kind": m.kind, "glyph": GLYPH.get(m.kind, "·"), "day": m.day.isoformat(), "game": m.game_id,
         "text": text(m, nick, me.id), "plain": text(m, nick, None),
         "number": _number(m), "score": {"metrics": m.facts["metrics"], "outcome": m.facts["outcome"]} if scored else None,
-        "link": _link(m, board.slug), "about": [nick[p] for p in m.subjects if p in nick],
+        "link": _link(m, board.slug) + _vs(m, nick, me), "about": [nick[p] for p in m.subjects if p in nick],
         "me": me.id in m.subjects, "dismissed": m.id in dismissed,
     }
 

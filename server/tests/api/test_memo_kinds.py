@@ -188,3 +188,32 @@ def test_small_talk_is_capped_at_three_a_day(db, seat):
     filing.file_paste(db, p["judy"], wordle(OCT30, 4), now=datetime(2026, 10, 30, 3, 12, tzinfo=IST))
     db.commit()
     assert not [k for k in run(db, b, p["judy"], OCT30) if k.startswith("night")]
+
+
+def test_rivalry_of_the_week_on_mondays(db, seat, app):
+    nov2 = date(2026, 11, 2)  # a monday
+    app.config["CLOCK"] = lambda: noon(nov2)
+    (trent, judy, mallory), p, b = board(db, seat, "trent", "judy", "mallory", games=("krillion",))
+    for k in range(1, 13):  # twelve puzzles: trent 6, judy 5, one tie
+        d = nov2 - timedelta(days=k)
+        t, j = (400, 300) if k % 2 else (300, 400)
+        file(db, p["trent"], krillion(d, 350 if k == 12 else t), d)
+        file(db, p["judy"], krillion(d, 350 if k == 12 else j), d)
+    got = run(db, b, p["trent"], nov2)
+    assert got[f"rivalry:{nov2}:krillion:{p['trent'].id}:{p['judy'].id}"].facts == {
+        "on": "2026-11-01", "w": 6, "l": 5, "n": 12}
+    m = next(m for m in trent.get("/boards/soup/meeting?day=2026-11-02").json["memos"] if m["kind"] == "rivalry")
+    assert m["text"] == "rivalry of the week, krillion: you lead judy 6–5 over the month. it's personal."
+    assert m["link"] == "/b/soup/review?period=month&game=krillion&vs=judy"
+    assert "rivalry of the week, krillion: trent leads you 6–5 over the month. it's personal." in texts(judy, nov2)
+    assert "rivalry of the week, krillion: trent leads judy 6–5 over the month. it's personal." in texts(mallory, nov2)
+
+
+def test_a_strong_quarter_and_never_a_weak_one(db, seat):
+    (trent, judy), p, b = board(db, seat, "trent", "judy", games=("wordle",))
+    for k in range(15, 0, -1):
+        file(db, p["judy"], wordle(ago(k), 5 if k >= 8 else 3), ago(k))  # judy improves
+        file(db, p["trent"], wordle(ago(k), 3 if k >= 8 else 5), ago(k))  # trent doesn't: no memo
+    got = run(db, b, p["trent"], OCT30)
+    assert [k for k in got if k.startswith("earnings")] == [f"earnings:wordle:{p['judy'].id}:{ago(2)}"]  # once a fortnight
+    assert "strong quarter: judy's wordle average went from 5.0 to 3.3 this week. analysts are upgrading." in texts(trent, ago(1))

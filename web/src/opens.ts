@@ -1,7 +1,6 @@
 export const standalone = () =>
   matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true
 export const ios = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-export const android = () => /android/i.test(navigator.userAgent)
 
 // Where a game's play link opens from the installed app on an iphone: inside the app (the
 // default), or handed to safari, where you may already be signed in to the game. Android has

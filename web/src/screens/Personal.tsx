@@ -4,7 +4,7 @@ import { Av, Fx, FxEdit, Header, Nav, goBack, useApp } from '../ui'
 import { setPref, useTheme, type Pref } from '../theme'
 import { GoogleButton } from './SignIn'
 import { useInstall } from '../install'
-import { android, canChooseOpens, opensIn, setOpensIn, standalone, type Opens } from '../opens'
+import { canChooseOpens, opensIn, setOpensIn, standalone, type Opens } from '../opens'
 import { useUsernameCheck } from '../username'
 import { go } from '../router'
 
@@ -91,10 +91,6 @@ export function YourFile({ onEditName, closeTo }: { onEditName: () => void; clos
           : <span className="chip">{how === 'ios' ? 'two taps' : 'in the browser'}</span>}
     </div>
     {canChooseOpens() && <OpensIn />}
-    {standalone() && android() && <div className="cell">
-      <span className="k">games open<small className="muted">inside boredroom. on android, ⋮ → open in chrome moves a game to a tab</small></span>
-      <span className="chip">in the app</span>
-    </div>}
     <div className="cell">
       <span className="k">sign out<small className="muted">{me.kind === 'guest' ? 'a guest seat is lost for good' : 'sign in again with google any time'}</small></span>
       <HoldToSign label="sign out" hint="hold to sign out" tone="ghost" busy={false} ready onDone={signOut} />
