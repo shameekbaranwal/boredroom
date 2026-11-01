@@ -2,7 +2,8 @@ import type { Item } from './api'
 
 // How the agenda orders its games, picked in the formula bar: =agenda(…, sort:"resets",
 // order:"soonest first"). It orders within each tab, so "to do" still means what's left.
-// The choice is this device's: kept in the browser, never a setting.
+// The choice goes with your account (me.agenda_sort, "resets:first"), so every device
+// you sign in on orders it the same way.
 
 export type SortBy = 'usual' | 'resets' | 'mine' | 'popular' | 'busy' | 'tenure' | 'name'
 export type Order = 'first' | 'last'  // the sort's natural way round, or the other
@@ -35,14 +36,9 @@ export function sorted(items: Item[], { by, order }: Sort): Item[] {
   })
 }
 
-const KEY = 'boredroom.agenda.sort'
-export function readSort(): Sort {
-  try {
-    const s = JSON.parse(localStorage.getItem(KEY) ?? 'null') as Sort | null
-    if (s && s.by in SORTS && (s.order === 'first' || s.order === 'last')) return s
-  } catch { /* private window */ }
-  return { by: 'usual', order: 'first' }
+/** The account's "by:order", or the usual when it's missing or from a newer app. */
+export function readSort(v: string | null | undefined): Sort {
+  const [by, order] = (v ?? '').split(':')
+  return by in SORTS && (order === 'first' || order === 'last') ? { by: by as SortBy, order } : { by: 'usual', order: 'first' }
 }
-export function writeSort(s: Sort) {
-  try { localStorage.setItem(KEY, JSON.stringify(s)) } catch { /* private window */ }
-}
+export const writeSort = (s: Sort) => `${s.by}:${s.order}`

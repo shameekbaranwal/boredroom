@@ -229,6 +229,7 @@ about one person's miss.
 The agenda sorts in its formula bar, the way the review filters: =agenda(board, sort,
 order). The usual (yours most filed, then the soonest reset), resets, my results,
 popularity (the board's results over 30 days), busy today, my tenure and a–z, each either
-way round. It sorts within each tab, so "to do" stays what's left. The choice is this
-device's, kept in the browser: a preference, not a setting. A row says what it's sorted
+way round. It sorts within each tab, so "to do" stays what's left. The choice goes with
+your account (me.agenda_sort), so every device you sign in on orders it the same way; it's
+picked where it's used, never on a settings screen. A row says what it's sorted
 by when it doesn't already.

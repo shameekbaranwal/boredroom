@@ -1,7 +1,7 @@
 import re
 def test_guest_gets_a_token_and_me_needs_it(client, seat):
     a = seat("ivan")
-    assert a.get("/me").json == {"username": "ivan", "kind": "guest", "tz": "Asia/Kolkata", "email": None, "boards": []}
+    assert a.get("/me").json == {"username": "ivan", "kind": "guest", "tz": "Asia/Kolkata", "email": None, "agenda_sort": None, "boards": []}
     assert client.get("/api/v1/me").status_code == 401
     assert client.get("/api/v1/me", headers={"Authorization": "Bearer nope"}).status_code == 401
 
@@ -76,3 +76,15 @@ def test_members_carry_what_they_have_on_file(seat):
     ms = {m["nickname"]: m for m in chair.get("/boards/soup").json["members"]}
     assert (ms["ivan"]["results"], ms["shmk"]["results"]) == (1, 0)
     assert ms["shmk"]["joined_at"] <= ms["ivan"]["joined_at"]
+
+
+def test_the_agenda_sort_goes_with_you(client, seat):
+    a = seat("trent")
+    assert a.get("/me").json["agenda_sort"] is None
+    assert a.patch("/me", {"agenda_sort": "resets:last"}).json["agenda_sort"] == "resets:last"
+    # another device: nothing in common but the seat
+    assert client.application.test_client().get("/api/v1/me", headers=a.headers).json["agenda_sort"] == "resets:last"
+    assert a.patch("/me", {"agenda_sort": "usual:first"}).json["agenda_sort"] is None  # the usual is no setting
+    for bad in ("shoe size:first", "resets:sideways", 7):
+        assert a.patch("/me", {"agenda_sort": bad}).status_code == 400
+    assert a.patch("/me", {"agenda_sort": None}).json["agenda_sort"] is None

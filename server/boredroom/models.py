@@ -33,6 +33,7 @@ class Person(Base):
     tz: Mapped[str] = mapped_column(String(64), default="Asia/Kolkata")
     google_sub: Mapped[str | None] = mapped_column(String(255), unique=True)
     email: Mapped[str | None] = mapped_column(String(320))
+    agenda_sort: Mapped[str | None] = mapped_column(String(20))  # "resets:first"; none is the usual
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     memberships: Mapped[list["Membership"]] = relationship(back_populates="person")

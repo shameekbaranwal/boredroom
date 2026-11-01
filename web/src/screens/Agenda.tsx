@@ -18,15 +18,22 @@ const readAway = (): Away | null => { try { return JSON.parse(sessionStorage.get
 const writeAway = (a: Away | null) => { try { if (a) sessionStorage.setItem(AWAY, JSON.stringify(a)); else sessionStorage.removeItem(AWAY) } catch { /* private window */ } }
 
 export default function Agenda({ slug, shared }: { slug: string; shared?: string }) {
-  const { games, toast, me } = useApp()
+  const { games, toast, me, refreshMe } = useApp()
   const [today, setToday] = useState<Today | null>(null)
   const [board, setBoard] = useState<Board | null>(null)
   const [err, setErr] = useState('')
   const [picker, setPicker] = useState(false)
   const [pickTab, setTab] = useState<'open' | 'filed' | null>(null)
   const [all, setAll] = useState(false)
-  const [sort, setSortState] = useState<Sort>(readSort)  // this device's, see sort.ts
-  const setSort = (x: Sort) => { writeSort(x); setSortState(x); setAll(false) }
+  // your account's order (see sort.ts); a pick shows at once and holds until the account has it
+  const [picked, setPicked] = useState<Sort | null>(null)
+  const sort = picked ?? readSort(me.agenda_sort)
+  const setSort = (x: Sort) => {
+    setPicked(x)
+    setAll(false)
+    api.updateMe({ agenda_sort: writeSort(x) }).then(refreshMe).then(() => setPicked(null))
+      .catch(() => toast("the order didn't save. it holds here for now."))
+  }
   const [fresh, setFresh] = useState<Set<string>>(new Set())  // just filed: the rows flash once
   const [peek, setPeek] = useState<string | null>(null)  // the row opened in place
   const [away, setAwayState] = useState<Away | null>(readAway)

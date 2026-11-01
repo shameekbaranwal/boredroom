@@ -34,10 +34,13 @@ def clock():
     return current_app.config.get("CLOCK", lambda: None)()
 
 
+AGENDA_SORTS = {"usual", "resets", "mine", "popular", "busy", "tenure", "name"}  # web/src/sort.ts
+
+
 def me_json(p: Person) -> dict[str, Any]:
     live = [m for m in p.memberships if m.left_at is None]
     return {
-        "username": p.username, "kind": p.kind, "tz": p.tz, "email": p.email,
+        "username": p.username, "kind": p.kind, "tz": p.tz, "email": p.email, "agenda_sort": p.agenda_sort,
         "boards": [{"slug": m.board.slug, "name": m.board.name, "nickname": m.nickname, "role": m.role}
                    for m in sorted(live, key=lambda m: m.board.name)],
     }
@@ -135,6 +138,12 @@ def update_me():
         if name != g.person.username and g.db.scalar(select(Person.id).where(Person.username == name)):
             fail(409, "that username is taken")
         g.person.username = name
+    if "agenda_sort" in b:  # how your agenda is ordered, on every device
+        v = b["agenda_sort"]
+        by, _, order = v.partition(":") if isinstance(v, str) else ("", "", "")
+        if v is not None and (by not in AGENDA_SORTS or order not in ("first", "last")):
+            fail(400, f"agenda_sort is one of {', '.join(sorted(AGENDA_SORTS))}, then :first or :last")
+        g.person.agenda_sort = None if v is None or v == "usual:first" else v
     g.db.commit()
     return jsonify(me_json(g.person))
 

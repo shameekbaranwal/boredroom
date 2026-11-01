@@ -3,7 +3,7 @@
 
 export type Kind = 'guest' | 'account' | 'placeholder'
 export type BoardRef = { slug: string; name: string; nickname: string; role: string }
-export type Me = { username: string; kind: Kind; tz: string; email: string | null; boards: BoardRef[] }
+export type Me = { username: string; kind: Kind; tz: string; email: string | null; agenda_sort: string | null; boards: BoardRef[] }
 export type Metric = { name: string; kind: string; better: 'high' | 'low'; max: number | null; unit: string | null }
 export type Game = { id: string; name: string; key: string; ranked: boolean; links: string[]; play: string | null; ranker: string[]; metrics: Metric[] }
 export type Field = { name: string; value: unknown; visibility: 'public' | 'detail' | 'spoiler' }
@@ -105,7 +105,7 @@ export const api = {
   config: () => call<{ google_client_id: string | null; environment: string }>('GET', '/config'),
   games: () => call<Game[]>('GET', '/games'),
   me: () => call<Me>('GET', '/me'),
-  updateMe: (b: Partial<{ tz: string; username: string }>) => call<Me>('PATCH', '/me', b),
+  updateMe: (b: Partial<{ tz: string; username: string; agenda_sort: string | null }>) => call<Me>('PATCH', '/me', b),
   guest: (username?: string) => call<{ token: string; me: Me }>('POST', '/guests', { username, tz: tz() }),
   google: (credential: string) => call<{ token: string; created: boolean; me: Me }>('POST', '/auth/google', { credential, tz: tz() }),
   signOut: () => call<{ signed_out: boolean }>('POST', '/auth/signout'),

@@ -41,7 +41,7 @@ def test_new_account_then_signing_in_again(app, client):
     assert first.status_code == 201 and first.json["created"]
     assert first.json["me"] | {"boards": []} == {
         "username": "ivan.k", "kind": "account", "tz": "Asia/Singapore",
-        "email": "ivan.k@gmail.com", "boards": []}
+        "email": "ivan.k@gmail.com", "agenda_sort": None, "boards": []}
     again = sign_in(client, "good:0")
     assert again.status_code == 200 and not again.json["created"]
     assert again.json["token"] != first.json["token"]  # one token per device
