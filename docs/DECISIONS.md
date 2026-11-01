@@ -160,7 +160,7 @@ See docs/UX-NOTES.md for the functional requirements that came with this.
 - **Three tabs: agenda · review · you.** Minutes, a single game, and the daily bored
   meeting open as one temporary tab from whatever you tapped (a row, a memo, a record).
   The library ("your games") and the chair's board settings live under "you".
-- **Home = agenda:** open games by time to reset, then the top three memos, then what
+- **Home = agenda:** open games by time to reset, then the top memos (two, since 2026-11-01), then what
   you've filed with your place on each.
 - **Memos are sheet rows:** a glyph for the kind, who, one line, the number that matters.
 - **Review shows today and all time only.** Week and month stay reachable as values of
@@ -199,3 +199,9 @@ See docs/UX-NOTES.md for the functional requirements that came with this.
   (self-hosted now; Firebase or AWS possible). Guest tokens until the OAuth client
   exists.
 - Soup's history is seeded by hand from the export, under placeholder members.
+
+## 2026-11-01 — Fewer memos up front
+
+The agenda carries at most two memos, the games stay the point of the page. The daily
+bored meeting shows its six biggest first, and the rest behind "N more on the record".
+Sending the meeting to the chat still sends every item.

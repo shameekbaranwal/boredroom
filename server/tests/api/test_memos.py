@@ -204,3 +204,13 @@ def test_a_highlight_says_how_often_lately(db, seat):
     run(db, b, p["judy"], OCT30)
     texts = [m["text"] for m in trent.get("/boards/soup/meeting").json["memos"]]
     assert any(t.startswith("connections: ") and t.endswith("from judy. that's 2 in a week.") for t in texts), texts
+
+
+def test_the_agenda_carries_two_at_most(db, seat):
+    (trent, judy, mallory), p, b = board(db, seat, "trent", "judy", "mallory")
+    for n, kind in (("trent", "record"), ("judy", "pb"), ("mallory", "tenure")):
+        db.add(Memo(board_id=b.id, key=f"{kind}:test", kind=kind, day=OCT30, subjects=[p[n].id], game_id="krillion",
+                    facts={"on": str(OCT30), "n": 7, "metrics": {"score": 400}, "outcome": "solved"}, created_at=noon(OCT30)))
+    db.commit()
+    assert len(trent.get("/boards/soup/today").json["memos"]) == 2
+    assert len(trent.get("/boards/soup/meeting").json["memos"]) == 3  # the meeting has them all

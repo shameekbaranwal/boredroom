@@ -5,13 +5,16 @@ import { go } from '../router'
 import { Fx, Ghost, Header, Nav, sendOn, useApp, useFresh } from '../ui'
 import { MemoRow, meetingText } from '../memos'
 
+const UPFRONT = 6  // memos shown before "more"
+
 /** The daily bored meeting: every memo the board had that day, the biggest news first. */
 export default function Meeting({ slug, day }: { slug: string; day?: string }) {
   const { me, games, toast } = useApp()
   const [m, setM] = useState<M | null>(null)
   const [err, setErr] = useState('')
+  const [all, setAll] = useState(false)
   const load = useCallback(() => { api.meeting(slug, day).then(setM).catch(e => setErr(e.message)) }, [slug, day])
-  useEffect(() => { setM(null); load() }, [load])
+  useEffect(() => { setM(null); setAll(false); load() }, [load])
   useFresh(load)
   const boardName = me.boards.find(b => b.slug === slug)?.name ?? slug
   const at = (d: string) => go(`/b/${slug}/meeting${m && d !== m.today ? `?day=${d}` : ''}`, true)
@@ -35,7 +38,8 @@ export default function Meeting({ slug, day }: { slug: string; day?: string }) {
           <button disabled={current} onClick={() => at(next)}>{current ? '·' : `${dayLabel(next, m.today)} ›`}</button>
         </div>
         <div className="ph-sec"><span>the daily bored meeting · {long}</span>{m.memos.length > 0 && <span>{m.memos.length} item{m.memos.length > 1 ? 's' : ''}</span>}</div>
-        {m.memos.map(x => <MemoRow key={x.id} m={x} game={x.game ? games[x.game] : undefined} />)}
+        {(all ? m.memos : m.memos.slice(0, UPFRONT)).map(x => <MemoRow key={x.id} m={x} game={x.game ? games[x.game] : undefined} />)}
+        {!all && m.memos.length > UPFRONT && <button className="more" onClick={() => setAll(true)}>{m.memos.length - UPFRONT} more on the record →</button>}
         {m.memos.length === 0 && <>
           <div className="sub wrap">no memos {m.day === m.today ? 'today' : 'that day'}. the board had a quiet one.</div>
           {m.earlier && m.earlier < m.day && <button className="more" onClick={() => at(m.earlier!)}>the last meeting, {dayLabel(m.earlier, m.today)} →</button>}

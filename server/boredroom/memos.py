@@ -33,7 +33,7 @@ from .parser import REGISTRY
 from .parser.rank import compare
 
 WEEK = 7  # the rolling week: the review's, the takeover's and the pip's
-AGENDA = 3  # memos on the agenda, at most
+AGENDA = 2  # memos on the agenda, at most
 EVERY = 60  # seconds between two runs of one board's rules
 MILESTONES = (7, 30, 50, 100)  # then every 100
 GLYPH = {"takeover": "▲", "pip": "▼", "record": "♛", "pb": "★", "highlight": "✦", "tenure": "◆",
