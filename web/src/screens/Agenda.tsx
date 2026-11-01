@@ -139,7 +139,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   )
 }
 
-/** Memos from the chair: the day's big news, three at most; the rest is in the meeting. */
+/** Memos from the chair: the day's big news, two at most; the rest is in the memos tab. */
 function Memos({ slug, memos, onChange }: { slug: string; memos: Memo[]; onChange: (m: Memo[]) => void }) {
   const { games, toast } = useApp()
   if (!memos.length) return null

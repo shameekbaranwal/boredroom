@@ -20,7 +20,7 @@ export default function Meeting({ slug, day }: { slug: string; day?: string }) {
   const at = (d: string) => go(`/b/${slug}/meeting${m && d !== m.today ? `?day=${d}` : ''}`, true)
   const label = m ? dayLabel(m.day, m.today) : day ?? 'today'
   const head = <>
-    <Header title={`${boardName}.xlsx`} meta="meeting" />
+    <Header title={`${boardName}.xlsx`} meta="memos" />
     <Fx fn="meeting" args={[['board', boardName], ['day', label]]} />
   </>
   if (err) return <div className="app">{head}<div className="center err">{err}</div><Nav slug={slug} on="meeting" /></div>
