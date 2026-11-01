@@ -315,7 +315,7 @@ def text(m: Memo, nick: dict[int, str], me: int | None) -> str:
         return f"{n(p)} set a personal best on {game}."
     if k == "highlight":
         again = f" that's {f['n']} in a week." if f["n"] > 1 else ""
-        return f"{n(p)} on {game}: {f['h']}.{again}"
+        return f"{game}: {f['h']} from {n(p)}.{again}"
     if k == "tenure":
         return f"{pos(p)} {f['n']}-day tenure on {game}. the board notes the commitment."
     if k == "ended":

@@ -192,3 +192,15 @@ def test_a_pip_goes_to_the_week_s_last_once(db, seat):
     m = seats[3].get(f"/boards/soup/meeting?day={OCT30 - timedelta(days=1)}").json["memos"]
     assert "you're on a pip. the board believes in you, mostly." in [x["text"] for x in m]
     assert not [x for x in seats[3].get("/boards/soup/today").json["memos"] if x["kind"] == "pip"]  # never on the agenda
+
+
+def test_a_highlight_says_how_often_lately(db, seat):
+    (trent, judy), p, b = board(db, seat, "trent", "judy", games=("wordle",))
+    for k in (3, 0):
+        d = OCT30 - timedelta(days=k)
+        file(db, p["judy"], "Connections\nPuzzle #{}\n🟪🟪🟪🟪\n🟦🟦🟦🟦\n🟩🟩🟩🟩\n🟨🟨🟨🟨".format(1237 + (d - OCT30).days), d)
+    trent.put("/boards/soup/agenda/connections")
+    judy.put("/boards/soup/agenda/connections")
+    run(db, b, p["judy"], OCT30)
+    texts = [m["text"] for m in trent.get("/boards/soup/meeting").json["memos"]]
+    assert any(t.startswith("connections: ") and t.endswith("from judy. that's 2 in a week.") for t in texts), texts
