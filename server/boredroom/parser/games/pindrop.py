@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date
 
 from ..core import Game, Metric, Reset
 from ..text import emoji_cells, number
@@ -10,7 +10,7 @@ class PinDrop(Game):
     header = r"^(?:📍\s*)?PlayPinDrop Day #\d+"
     links = ("playpindrop.app",)
     anchor = (241, date(2026, 10, 30))
-    reset = Reset("UTC", time(0, 0))
+    reset = Reset()  # the player's own midnight: the chat posts the new date and number from 00:00 IST
     metrics = (Metric("score", "points", "high", max=1000),)
     ranker = ("score",)
 

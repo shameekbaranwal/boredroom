@@ -61,6 +61,11 @@ def test_reset_is_per_game():
     early = datetime(2026, 10, 30, 3, 30, tzinfo=timezone.utc)
     assert REGISTRY["krillion"].current(early, "Asia/Kolkata") == 106
     assert REGISTRY["maptap"].current(early, "Asia/Kolkata") == date(2026, 10, 30)
+    # 3:00 IST on 31 Oct, before utc midnight: maptap and pindrop are already on the 31st's
+    night = datetime(2026, 10, 30, 21, 30, tzinfo=timezone.utc)
+    assert REGISTRY["maptap"].current(night, "Asia/Kolkata") == date(2026, 10, 31)
+    assert REGISTRY["pindrop"].current(night, "Asia/Kolkata") == 242
+    assert REGISTRY["fermi"].current(night, "Asia/Kolkata") == REGISTRY["fermi"].current(early, "Asia/Kolkata")
 
 
 def test_out_of_range_is_partial(p):

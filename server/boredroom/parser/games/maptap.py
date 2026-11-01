@@ -1,5 +1,3 @@
-from datetime import date, time
-
 from ..core import Game, Metric, Reset
 from ..text import month, nearest_year, number
 
@@ -10,7 +8,7 @@ class MapTap(Game):
     header = r"^(?:https?://)?(?:www\.)?maptap\.gg [A-Za-z]+ \d{1,2}$"
     links = ("maptap.gg",)
     key = "date"
-    reset = Reset("UTC", time(0, 0))
+    reset = Reset()  # the player's own midnight: the chat posts the new date and number from 00:00 IST
     metrics = (Metric("score", "points", "high", max=1000),)
     ranker = ("score",)
 

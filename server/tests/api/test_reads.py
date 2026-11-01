@@ -55,8 +55,8 @@ def test_today_sorts_open_first_and_places(db, seat):
     assert [(i["game"], i["filed"], i["place"]) for i in t["items"]] == [("wiki", False, ""), ("maptap", True, "1")]
     mt = t["items"][1]
     assert (mt["present"], mt["players"], mt["leader"]["nickname"]) == (1, 1, "ivan")
-    # maptap resets at utc midnight: 05:30 ist on the 31st
-    assert mt["resets_at"] == "2026-10-31T00:00:00+00:00"
+    # maptap resets at the player's midnight
+    assert mt["resets_at"] == "2026-10-31T00:00:00+05:30"
 
 
 def test_endpoints(seat):
