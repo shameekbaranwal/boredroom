@@ -1,5 +1,5 @@
 // The service worker: makes boredroom installable and quick to open. Pages come from the
-// network when it's there and from the last copy when it isn't; built assets have hashed
+// network when it's there and from the last copy when it isn't (or the server isn't answering); built assets have hashed
 // names, so a cached one never goes stale. The API is never cached: scores are live.
 // Google Fonts are kept too, so text doesn't swap fonts or shift on a slow or offline open.
 const CACHE = 'boredroom-v2'
@@ -33,8 +33,10 @@ self.addEventListener('fetch', e => {
 
   if (req.mode === 'navigate') {
     // the app routes itself, so any page can fall back to the shell
+    // and so can a server that isn't answering: the tunnel's error page (502…) never replaces the app
     e.respondWith(fetch(req).then(res => {
       if (res.ok && url.pathname === '/') { const copy = res.clone(); caches.open(CACHE).then(c => c.put('/', copy)) }
+      if (res.status >= 500) return caches.match('/').then(hit => hit || res)
       return res
     }).catch(() => caches.match('/')))
     return
