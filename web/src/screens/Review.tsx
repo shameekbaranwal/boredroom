@@ -187,7 +187,7 @@ export default function Review({ slug }: { slug: string }) {
             </div>
           ))}
         </>}
-        {r.game && <button className="more" onClick={() => go(`/b/${slug}/m/${r.game}`)}>today's {name(r.game)} minutes →</button>}
+        {r.game && <button className="more" onClick={() => go(`/b/${slug}/m/${r.game}`)}>{wk ? "this week's" : "today's"} {name(r.game)} minutes →</button>}
       </div>
       <Nav slug={slug} on="review" temp={r.game ? name(r.game) : undefined} />
       {picker && <Boards current={slug} onClose={() => setPicker(false)} />}
