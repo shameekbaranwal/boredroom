@@ -8,6 +8,7 @@ import re
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
+from . import memos
 from .errors import fail
 from .models import Agenda, Board, GameRequest, Membership, Paste, Person, Result
 
@@ -84,6 +85,7 @@ def claim(s: Session, board: Board, claimer: Person, username: str) -> int:
             Membership.person_id.not_in([claimer.id, seat.id])).order_by(Membership.joined_at))
         heir = heir or s.get(Membership, (b.id, claimer.id))
         b.chair_id, heir.role = heir.person_id, "chair"
+    memos.move(s, seat.id, claimer.id)
     s.flush()
     s.delete(seat)
     s.flush()

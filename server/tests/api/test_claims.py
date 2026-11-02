@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from boredroom import invites
-from boredroom.models import Board, Person, Result
+from boredroom.models import Board, Memo, Person, Result
 from boredroom.seed import seed
 
 IST = ZoneInfo("Asia/Kolkata")
@@ -86,3 +86,57 @@ def test_join_and_claim_in_one_step(db, seat, client):
     assert (you["nickname"], you["role"], you["agenda"]) == ("tara", "chair", ["krillion"])
     assert len(client.get(f"/api/v1/invites/{code}").json["seats"]) == 2
     assert seat("bo").post("/boards/join", {"code": code, "claim": "nobody"}).status_code == 404
+
+
+def ended(board, pid, gap="2026-10-20"):
+    return Memo(board_id=board.id, key=f"ended:krillion:{pid}:2026-10-19", kind="ended", day=date(2026, 10, 21),
+                subjects=[pid], game_id="krillion", facts={"on": "2026-10-19", "gap": gap, "n": 8}, interest=60)
+
+
+def me(db):
+    return db.query(Person).filter_by(username="tara.k").one().id
+
+
+def silences(a):
+    return [m["text"] for m in a.get("/boards/soup/meeting?day=2026-10-21").json["memos"] if "silence" in m["text"]]
+
+
+def test_a_claim_takes_the_seats_memos_along(db, seat):
+    seed(db, "soup", HISTORY)
+    db.commit()
+    board = db.query(Board).one()
+    tara = db.query(Person).filter_by(username="tara").one()
+    db.add(ended(board, tara.id))
+    db.commit()
+    a = seat("tara.k")
+    a.post("/boards/join", {"code": invites.current(db, board).code})
+    assert silences(a) == ["tara's 8-day krillion tenure ended. a moment of silence."]
+    a.post("/boards/soup/claim", {"username": "tara"})
+    assert silences(a) == ["your 8-day krillion tenure ended. a moment of silence."]
+    db.expire_all()
+    assert db.query(Memo).one().key == f"ended:krillion:{me(db)}:2026-10-19"
+
+
+def test_a_memo_the_claimer_already_has_is_said_once(db, seat):
+    seed(db, "soup", HISTORY)
+    db.commit()
+    board = db.query(Board).one()
+    a = seat("tara.k")
+    a.post("/boards/join", {"code": invites.current(db, board).code})
+    db.add_all([ended(board, db.query(Person).filter_by(username="tara").one().id), ended(board, me(db))])
+    db.commit()
+    a.post("/boards/soup/claim", {"username": "tara"})
+    assert silences(a) == ["your 8-day krillion tenure ended. a moment of silence."]
+
+
+def test_a_seat_claimed_before_memos_moved_is_not_said_twice(db, seat):
+    seed(db, "soup", HISTORY)
+    db.commit()
+    board = db.query(Board).one()
+    a = seat("tara.k")
+    a.post("/boards/join", {"code": invites.current(db, board).code})
+    a.post("/boards/soup/claim", {"username": "tara"})
+    gone = db.query(Person.id).order_by(Person.id.desc()).first()[0] + 100  # the seat, deleted long ago
+    db.add_all([ended(board, gone), ended(board, me(db))])
+    db.commit()
+    assert silences(a) == ["your 8-day krillion tenure ended. a moment of silence."]

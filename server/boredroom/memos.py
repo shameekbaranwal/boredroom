@@ -15,6 +15,7 @@ Only the last two days are ever looked at, so the imported history never arrives
 three hundred memos at once."""
 from __future__ import annotations
 
+import re
 import statistics
 import time
 from dataclasses import dataclass, field
@@ -869,12 +870,47 @@ def memo_json(m: Memo, board: Board, nick: dict[int, str], me: Person, dismissed
     }
 
 
+PAIRS = {"takeover", "rumour", "coup", "rivalry"}  # memos about two different people
+
+
+def rekey(m: Memo, old: int, new: int) -> str:
+    """The memo's key with `new` in `old`'s place, as the rules would have keyed it."""
+    if m.kind == "milestone":
+        return m.key  # its number is the board's count, not a person
+    parts = [str(new) if p == str(old) else p for p in re.split(r"([:>])", m.key)]
+    if m.kind == "rivalry":
+        parts[-3], parts[-1] = sorted((parts[-3], parts[-1]), key=int)
+    if m.kind == "jinx":
+        parts[-1] = str(min(new if x == old else x for x in m.subjects))
+    return "".join(parts)
+
+
+def move(s: Session, old: int, new: int) -> None:
+    """A claimed seat's memos become the claimer's. Where the claimer already has the same
+    memo (the rules saw both of them), theirs stays and the seat's goes."""
+    for m in s.scalars(select(Memo).where(Memo.subjects.any_() == old)).all():
+        key = rekey(m, old, new)
+        subjects = list(dict.fromkeys(new if x == old else x for x in m.subjects))
+        if (m.kind in PAIRS and len(subjects) < 2) or s.scalar(select(Memo.id).where(
+                Memo.board_id == m.board_id, Memo.key == key, Memo.id != m.id)):
+            s.delete(m)
+            continue
+        m.key, m.subjects = key, subjects
+    for m in s.scalars(select(Memo).where(Memo.kind == "record", Memo.facts["was"].as_integer() == old)).all():
+        m.facts = {**m.facts, "was": new}
+
+
 def _visible(s: Session, board: Board, q) -> tuple[list[Memo], dict[int, str]]:
     """Memos as they stand: one whose result was withdrawn is hidden, and so is a tenure
     that only looked ended until the missing day was filed late."""
     rows = list(s.scalars(q))
     gone = {i for (i,) in s.execute(select(Result.id).where(
         Result.id.in_([m.result_id for m in rows if m.result_id]), Result.withdrawn_at.is_not(None)))}
+    # memos still about a seat claimed before claims moved them (claims are the only way a person goes)
+    ids = {x for m in rows for x in m.subjects}
+    orphans = ids - set(s.scalars(select(Person.id).where(Person.id.in_(ids)))) if ids else set()
+    claimers = set(board.settings.get("claimed", {}).values())
+    twins = set(s.scalars(select(Memo.key).where(Memo.board_id == board.id))) if orphans and claimers else set()
     out = []
     for m in rows:
         if m.result_id in gone:
@@ -885,6 +921,8 @@ def _visible(s: Session, board: Board, q) -> tuple[list[Memo], dict[int, str]]:
                 Result.person_id == m.subjects[0], Result.game_id == m.game_id,
                 Result.puzzle_day == date.fromisoformat(m.facts["gap"]), Result.withdrawn_at.is_(None)).limit(1)):
             continue
+        if any(rekey(m, o, c) in twins for o in set(m.subjects) & orphans for c in claimers):
+            continue  # a claimed seat's, from before claims moved memos; the claimer's own says it
         out.append(m)
     nick = {ms.person_id: ms.nickname for ms in board.memberships}
     return out, nick
