@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api, type Board, type Member } from '../api'
 import { left } from '../format'
 import { go, query, usePath } from '../router'
-import { Av, Fx, FxEdit, Ghost, Header, Nav, Tile, Trouble, Weekly, goBack, sendOn, useApp, useFresh, useNow } from '../ui'
+import { Av, Fx, FxEdit, Ghost, Header, Nav, Tile, Trouble, Weekly, Who, goBack, sendOn, useApp, useFresh, useNow } from '../ui'
 import Boards from './Boards'
 import { CloseAccount, Motion, YourFile, useUsernameEdit } from './Personal'
 
@@ -314,7 +314,7 @@ function CapTable({ b, limit, sortable = false }: { b: Board; limit?: number; so
     <div className="ct ct-h"><span>member</span>{head('seat', 'seat')}{head('share', 'share of the minutes')}</div>
     {rows.map(m => (
       <div key={m.username} className={`ct${m.username === me.username ? ' me' : ''}`}>
-        <span className="who"><Av name={m.nickname} /><span className="nmx">{m.nickname}</span>{m.role === 'chair' && <span className="chip badge">chair</span>}{m.kind === 'guest' && <span className="chip">guest</span>}</span>
+        <span className="who"><Who slug={b.slug} name={m.nickname} av><span className="nmx">{m.nickname}</span></Who>{m.role === 'chair' && <span className="chip badge">chair</span>}{m.kind === 'guest' && <span className="chip">guest</span>}</span>
         <span className="n">{s(m)}</span>
         <span className="share"><span className={`bar${grow ? ' grow' : ''}`}><i style={{ width: `${pct(m)}%` }} /></span><b>{pct(m)}%</b></span>
       </div>

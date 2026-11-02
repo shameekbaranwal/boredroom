@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState } from 'react'
 import { api, type Period, type Review as R, type ReviewItem, type ReviewQuery, type Standing } from '../api'
 import { dayLabel, fmtMetric, headline, weekLabel } from '../format'
 import { go, query, usePath } from '../router'
-import { Av, FxQuery, Ghost, Header, Nav, Tile, Trouble, sendOn, useApp, useFresh, type Token } from '../ui'
+import { Av, FxQuery, Ghost, Header, Nav, Tile, Trouble, Who, sendOn, useApp, useFresh, type Token } from '../ui'
 import Boards from './Boards'
 
 const PERIOD: Record<Period, string> = { today: 'today', week: 'this week', month: 'this month', all: 'all time' }
@@ -100,7 +100,7 @@ export default function Review({ slug }: { slug: string }) {
         <div className="g">
           <div className="nm">{g.name}</div>
           <div className="sub">
-            {ld ? <>{ld.nickname ?? `${ld.tied} tied`} <b>{headline(games[g.game], ld.metrics)}</b></>
+            {ld ? <>{ld.nickname ? <Who slug={slug} name={ld.nickname} /> : `${ld.tied} tied`} <b>{headline(games[g.game], ld.metrics)}</b></>
               : g.present ? (g.ranked ? '—' : 'for fun') : 'no one yet'}
             <span> · {g.present}/{g.players} present</span>
           </div>
@@ -125,11 +125,11 @@ export default function Review({ slug }: { slug: string }) {
           <div><b>{avg(rows[mine]?.average)}</b><small>your average</small></div>
           <div><b>{rows[mine]?.tenure ?? 0}{wk ? 'w' : 'd'}</b><small>your tenure{rows[mine]?.at_risk ? ' · at risk' : rows[mine]?.longest ? ` · best ${rows[mine].longest}${wk ? 'w' : 'd'}` : ''}</small></div>
           <div><b>{rows[mine]?.best ? headline(games[r.game], rows[mine].best!) : '—'}</b><small>your best</small></div>
-          <div><b>{r.record ? headline(games[r.game], r.record.metrics) : '—'}</b><small>record{r.record ? ` · ${r.record.me ? 'you' : r.record.nickname}, ${when(r.game, r.record.day, today)}` : ''}</small></div>
+          <div><b>{r.record ? headline(games[r.game], r.record.metrics) : '—'}</b><small>record{r.record && <> · <Who slug={slug} name={r.record.nickname}>{r.record.me ? 'you' : r.record.nickname}</Who>, {when(r.game, r.record.day, today)}</>}</small></div>
         </div>}
 
         {h && <>
-          <div className="sec rv-sec"><span>you vs {r.vs} · {r.game ? name(r.game) : 'every game'} · {per(q.period)}</span><button className="lnk" onClick={() => set({ vs: null })}>clear</button></div>
+          <div className="sec rv-sec"><span>you vs <Who slug={slug} name={r.vs!} /> · {r.game ? name(r.game) : 'every game'} · {per(q.period)}</span><button className="lnk" onClick={() => set({ vs: null })}>clear</button></div>
           <div className="h2h">
             <b className="score">{h.you}–{h.them}</b>
             <span>{h.you + h.them + h.level === 0 ? 'never met' : h.you === h.them ? 'level' : h.you > h.them ? 'you lead' : `${r.vs} leads`}{h.level ? ` · ${h.level} level` : ''}</span>
@@ -187,7 +187,7 @@ export default function Review({ slug }: { slug: string }) {
               <Tile game={x.game} name={x.name} />
               <div className="g">
                 <div className="nm">{x.name}</div>
-                <div className="sub"><span className="who-s"><Av name={x.nickname} />{x.me ? 'you' : x.nickname}</span> · {when(x.game, x.day, today)}</div>
+                <div className="sub"><Who slug={slug} name={x.nickname} av>{x.me ? 'you' : x.nickname}</Who> · {when(x.game, x.day, today)}</div>
               </div>
               <b className="rec">{headline(games[x.game], x.metrics)}</b>
             </div>

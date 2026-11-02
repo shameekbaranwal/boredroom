@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api, type Board, type Minutes as M, type Row } from '../api'
 import { dayLabel, fieldText, headline, isGrid, left, shiftDay, weekLabel } from '../format'
 import { go } from '../router'
-import { Av, FxQuery, Ghost, Header, Nav, Trouble, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
+import { FxQuery, Ghost, Header, Nav, Trouble, Who, Whos, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
 
 export default function Minutes({ slug, game, day }: { slug: string; game: string; day?: string }) {
   const { me, games, toast } = useApp()
@@ -63,7 +63,7 @@ export default function Minutes({ slug, game, day }: { slug: string; game: strin
         <div className={`lock${nudge ? ' err' : ''}`}>{lock}</div>
         {m.rows.map((r, i) => <MinuteRow key={i} r={r} open={m.open} onNudge={() => setNudge(true)} />)}
         {m.rows.length === 0 && <div className="sub wrap">no one has filed this puzzle.</div>}
-        {m.not_in.length > 0 && <div className="absent">not in yet: {m.not_in.join(', ')}</div>}
+        {m.not_in.length > 0 && <div className="absent">not in yet: <Whos slug={slug} names={m.not_in} /></div>}
         {mine && (
           <div className="row-a">
             {mine.forward && <button className="btn" onClick={() => sendOn(mine.forward!, toast)}>send on</button>}
@@ -86,7 +86,7 @@ export default function Minutes({ slug, game, day }: { slug: string; game: strin
       <div className="mr">
         <div className="mrow">
           <span className={`who${r.me ? ' me' : ''}`}>
-            <span className="rn">{r.place || '·'}</span><button className="who-l" onClick={() => go(`/b/${slug}/p/${encodeURIComponent(r.nickname)}`)}><Av name={r.nickname} />{r.nickname}</button>
+            <span className="rn">{r.place || '·'}</span><Who slug={slug} name={r.nickname} av />
             {r.highlights.map(h => <span key={h} className="chip badge">{h}</span>)}
             {(r.tenure ?? 0) >= 3 && <span className="chip ten" title={`${r.tenure} ${G?.weekly ? 'weeks' : 'days'} in a row`}>{r.tenure}{G?.weekly ? 'w' : 'd'}</span>}
             {r.late && <span className="stamp">late</span>}

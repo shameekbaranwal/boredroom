@@ -3,7 +3,7 @@ import { api, ApiError, type Board, type Filing, type Item, type Memo, type Minu
 import { hold, unhold, type Held } from '../outbox'
 import { headline, left } from '../format'
 import { go } from '../router'
-import { Av, Clip, Fx, FxQuery, Ghost, Header, Nav, Overlay, Tile, Trouble, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
+import { Av, Clip, Fx, FxQuery, Ghost, Header, Nav, Overlay, Tile, Trouble, Who, Whos, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
 import Boards from './Boards'
 import { InstallMemo } from '../install'
 import { playLink } from '../opens'
@@ -271,7 +271,7 @@ function OpenRow({ i, slug, now, lit, open, onToggle, playing, onPlay, by, onSki
             {i.present === 0 ? <>no one yet · be first<By i={i} by={by} /></> : <>
               <span className="stack">{i.filed_by.slice(0, 4).map(n => <Av key={n} name={n} />)}</span>
               {i.present}/{i.players} present
-              {i.leader && <> · {i.leader.nickname ?? `${i.leader.tied} tied`} {headline(games[i.game], i.leader.metrics)}</>}
+              {i.leader && <> · {i.leader.nickname ? <Who slug={slug} name={i.leader.nickname} /> : `${i.leader.tied} tied`} {headline(games[i.game], i.leader.metrics)}</>}
               <By i={i} by={by} />
             </>}
           </div>
@@ -313,14 +313,14 @@ function Peek({ slug, i, onSkip }: { slug: string; i: Item; onSkip?: () => void 
           {[...top, ...(showMe ? [me] : [])].map((r, k) => (
             <div key={r.id ?? `${r.nickname}${k}`} className={`peek-r${r.me ? ' me' : ''}${showMe && r === me ? ' gap' : ''}`} role="row">
               <span className="peek-p">{m.ranked && r.place ? r.place : '·'}</span>
-              <span className="peek-n"><Av name={r.nickname} />{r.nickname}{r.me && <em>you</em>}</span>
+              <span className="peek-n"><Who slug={slug} name={r.nickname} av />{r.me && <em>you</em>}</span>
               <span className="peek-s">{headline(games[i.game], r.metrics, r.outcome)}</span>
             </div>
           ))}
         </div>
       )}
       <div className="peek-f">
-        {m && m.not_in.length > 0 && <span className="sub">not in yet: {m.not_in.slice(0, 4).join(', ')}{m.not_in.length > 4 ? ` +${m.not_in.length - 4}` : ''}</span>}
+        {m && m.not_in.length > 0 && <span className="sub">not in yet: <Whos slug={slug} names={m.not_in.slice(0, 4)} />{m.not_in.length > 4 ? ` +${m.not_in.length - 4}` : ''}</span>}
         <span className="peek-b">
           {onSkip && <button className="lnk" onClick={onSkip}>skip till reset</button>}
           <button className="more" onClick={() => go(`/b/${slug}/m/${i.game}`)}>the full minutes →</button>

@@ -141,6 +141,22 @@ export function Av({ name }: { name: string }) {
   return <span className="av" style={{ ['--h' as string]: hue(name) }}>{name.slice(0, 1)}</span>
 }
 
+/** A member's name that opens their page on the board. It's a link inside whatever row
+ *  it sits in (a row that opens the minutes, a memo), so tapping the name wins. */
+export function Who({ slug, name, av = false, children }: { slug: string; name: string; av?: boolean; children?: ReactNode }) {
+  const open = (e: { stopPropagation: () => void; preventDefault: () => void }) => { e.stopPropagation(); e.preventDefault(); go(`/b/${slug}/p/${encodeURIComponent(name)}`) }
+  return (
+    <span className="who-l" role="link" tabIndex={0} title={`${name}'s activity`} onClick={open} onKeyDown={e => e.key === 'Enter' && open(e)}>
+      {av && <Av name={name} />}{children ?? name}
+    </span>
+  )
+}
+
+/** Names in a list, each one a link: "a, b, c". */
+export function Whos({ slug, names }: { slug: string; names: string[] }) {
+  return <>{names.map((n, k) => <span key={n}>{k > 0 && ', '}<Who slug={slug} name={n} /></span>)}</>
+}
+
 export function Tile({ game, name }: { game: string; name: string }) {
   return <span className="ic" style={{ ['--h' as string]: hue(game) }}>{name.slice(0, 1)}</span>
 }

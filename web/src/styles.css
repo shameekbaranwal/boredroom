@@ -847,5 +847,6 @@ html { overscroll-behavior-y: contain; }
 .mb-h .nm { font-size: 20px; font-weight: 700; }
 .mb-h .sub, .it .nm .sub { white-space: normal; display: inline; }
 .mb-v { font: 600 14px var(--f-num); white-space: nowrap; }
-.who-l { display: inline-flex; align-items: center; gap: inherit; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
-.who-l:hover { text-decoration: underline; }
+.who-l { display: inline-flex; align-items: center; gap: .4em; color: inherit; cursor: pointer; min-width: 0;
+  text-decoration: underline dotted var(--muted); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.who-l:hover, .who-l:focus-visible { text-decoration: underline solid var(--accent); color: var(--accent); }
