@@ -7,6 +7,7 @@ import Agenda from './screens/Agenda'
 import Desk from './screens/Desk'
 import Join from './screens/Join'
 import Meeting from './screens/Meeting'
+import Member from './screens/Member'
 import Minutes from './screens/Minutes'
 import Review from './screens/Review'
 import NoBoardReview from './screens/NoBoardReview'
@@ -133,6 +134,7 @@ function Route({ path, me }: { path: string; me: Me }) {
   if ((m = match('/b/:slug/you/:page/:arg', path)) && onBoard(m.slug)) return <You key={`${m.slug}/${m.page}/${m.arg}`} slug={m.slug} page={m.page} arg={m.arg} />
   if ((m = match('/b/:slug/meeting', path)) && onBoard(m.slug)) return <Meeting key={m.slug} slug={m.slug} day={query(path).get('day') ?? undefined} />
   if ((m = match('/b/:slug/review', path)) && onBoard(m.slug)) return <Review key={m.slug} slug={m.slug} />
+  if ((m = match('/b/:slug/p/:nickname', path)) && onBoard(m.slug)) return <Member key={`${m.slug}/${m.nickname}`} slug={m.slug} nickname={decodeURIComponent(m.nickname)} />
   if ((m = match('/b/:slug/m/:game', path)) && onBoard(m.slug)) return <Minutes slug={m.slug} game={m.game} />
   if ((m = match('/b/:slug/m/:game/:day', path)) && onBoard(m.slug)) return <Minutes slug={m.slug} game={m.game} day={m.day} />
   // home: the last board you used, else your first, else your desk

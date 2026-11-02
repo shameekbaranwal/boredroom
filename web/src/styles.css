@@ -839,3 +839,13 @@ html { overscroll-behavior-y: contain; }
 .memo-n { font: 700 13px "IBM Plex Mono", ui-monospace, monospace; white-space: nowrap; }
 .memo-x { background: none; border: 0; color: var(--muted); font-size: 16px; padding: 0 2px; cursor: pointer; }
 .memos { display: grid; margin-top: 6px; }
+
+/* ---- a member's page ---- */
+.bd > .mb-h { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.mb-h .av { width: 40px; height: 40px; font-size: 18px; }
+.mb-h .g { flex: 1; min-width: 12em; }
+.mb-h .nm { font-size: 20px; font-weight: 700; }
+.mb-h .sub, .it .nm .sub { white-space: normal; display: inline; }
+.mb-v { font: 600 14px var(--f-num); white-space: nowrap; }
+.who-l { display: inline-flex; align-items: center; gap: inherit; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.who-l:hover { text-decoration: underline; }

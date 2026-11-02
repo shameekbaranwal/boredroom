@@ -10,7 +10,7 @@ from typing import Any
 from flask import Blueprint, current_app, g, jsonify, request
 from sqlalchemy import func, select
 
-from . import admin, boards, claims, filing, invites, memos, names, reads, throttle
+from . import admin, boards, claims, filing, invites, memos, names, people, reads, throttle
 from . import auth
 from .auth import auth_required, create_guest, valid_tz, USERNAME
 from .errors import fail
@@ -349,6 +349,14 @@ def board_review(slug):
     a = request.args
     return jsonify(reads.review(g.db, board, g.person, a.get("period", "today"), a.get("game") or None,
                                 a.get("stat") or None, a.get("vs") or None))
+
+
+@api.get("/boards/<slug>/members/<nickname>")
+@auth_required
+def board_member(slug, nickname):
+    """One member's activity on the board (people.member)."""
+    board, _ = boards.get_board(g.db, slug, g.person)
+    return jsonify(people.member(g.db, board, g.person, nickname, clock()))
 
 
 @api.get("/boards/<slug>/minutes/<game>")

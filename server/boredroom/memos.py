@@ -977,6 +977,15 @@ def meeting(s: Session, board: Board, viewer: Person, day: date | None, now: dat
             "memos": [memo_json(m, board, nick, viewer, dismissed) for m in rows]}
 
 
+def about(s: Session, board: Board, viewer: Person, pid: int, n: int) -> list[dict[str, Any]]:
+    """The latest memos about one person, newest first: the member page's."""
+    rows, nick = _visible(s, board, select(Memo).where(Memo.board_id == board.id, Memo.subjects.any_() == pid)
+                          .order_by(Memo.day.desc(), Memo.interest.desc()).limit(n * 2))
+    rows = rows[:n]
+    dismissed = _dismissed(s, viewer, [m.id for m in rows])
+    return [memo_json(m, board, nick, viewer, dismissed) for m in rows]
+
+
 def dismiss(s: Session, board: Board, viewer: Person, memo_id: int, on: bool) -> None:
     m = s.get(Memo, memo_id)
     if m is None or m.board_id != board.id:

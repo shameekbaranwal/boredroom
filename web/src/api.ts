@@ -62,6 +62,13 @@ export type ReviewItem = {
   game: string; name: string; ranked: boolean; day: string; present: number; players: number; plays: boolean
   place: string | null; filed: boolean; leader: { nickname: string | null; tied: number; metrics: Record<string, number> } | null
 }
+/** One member's activity on a board (=member(board, who)). Scores only: details stay in the minutes. */
+export type MemberGame = { game: string; name: string; ranked: boolean; weekly: boolean; results: number; played: number; wins: number
+  tenure: number; longest: number; at_risk: boolean; average: number | null; best: Record<string, number> | null; last: string | null; today: string }
+export type MemberResult = { game: string; name: string; weekly: boolean; day: string; puzzle: string; outcome: 'solved' | 'failed' | 'played'
+  metrics: Record<string, number>; highlights: string[]; late: boolean; place: string; of: number; filed_at: string }
+export type MemberPage = { nickname: string; me: boolean; role: string; joined_at: string; today: string; games: MemberGame[]
+  daily: number; strip: number[]; present: number; wins: number; recent: MemberResult[]; memos: Memo[] }
 export type ReviewQuery = { period: Period; game?: string | null; stat?: string | null; vs?: string | null }
 export type Event = {
   kind: 'filed' | 'merged' | 'duplicate' | 'conflict' | 'not_out_yet'
@@ -181,6 +188,7 @@ export const api = {
   claim: (slug: string, username: string) => call<{ moved: number; board: Board }>('POST', `/boards/${encodeURIComponent(slug)}/claim`, { username }),
   review: (slug: string, q: ReviewQuery) => call<Review>('GET', `/boards/${encodeURIComponent(slug)}/review?${new URLSearchParams(
     Object.entries(q).filter(([, v]) => v) as [string, string][])}`),
+  member: (slug: string, nickname: string) => call<MemberPage>('GET', `/boards/${encodeURIComponent(slug)}/members/${encodeURIComponent(nickname)}`),
   today: (slug: string) => call<Today>('GET', `/boards/${encodeURIComponent(slug)}/today`),
   skip: (slug: string, game: string, on: boolean) => call<Today>(on ? 'PUT' : 'DELETE', `/boards/${encodeURIComponent(slug)}/skips/${encodeURIComponent(game)}`),
   minutes: (slug: string, game: string, day?: string) =>

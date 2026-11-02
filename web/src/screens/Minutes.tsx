@@ -86,7 +86,7 @@ export default function Minutes({ slug, game, day }: { slug: string; game: strin
       <div className="mr">
         <div className="mrow">
           <span className={`who${r.me ? ' me' : ''}`}>
-            <span className="rn">{r.place || '·'}</span><Av name={r.nickname} />{r.nickname}
+            <span className="rn">{r.place || '·'}</span><button className="who-l" onClick={() => go(`/b/${slug}/p/${encodeURIComponent(r.nickname)}`)}><Av name={r.nickname} />{r.nickname}</button>
             {r.highlights.map(h => <span key={h} className="chip badge">{h}</span>)}
             {(r.tenure ?? 0) >= 3 && <span className="chip ten" title={`${r.tenure} ${G?.weekly ? 'weeks' : 'days'} in a row`}>{r.tenure}{G?.weekly ? 'w' : 'd'}</span>}
             {r.late && <span className="stamp">late</span>}

@@ -144,8 +144,8 @@ export default function Review({ slug }: { slug: string }) {
             <Fragment key={s.nickname}>
               {!all && k === TOP && <div className="gap">⋯</div>}
               <button className={`wr${s.me ? ' me' : ''}${r.vs === s.nickname ? ' cmp' : ''}${s.qualified === false ? ' dim' : ''}`}
-                onClick={() => set({ vs: s.me || r.vs === s.nickname ? null : s.nickname })}
-                title={s.me ? undefined : `you vs ${s.nickname}`}>
+                onClick={() => go(`/b/${slug}/p/${encodeURIComponent(s.nickname)}`)}
+                title={`${s.me ? 'your' : `${s.nickname}'s`} activity`}>
                 <span className="n">{placeLabel(rows, s)}</span>
                 <Av name={s.nickname} />
                 <span className="who">{s.nickname}</span>
@@ -158,7 +158,7 @@ export default function Review({ slug }: { slug: string }) {
         {rows.length > TOP && <button className="more" onClick={() => setAll(v => !v)}>{all ? `show top ${TOP}` : `all ${rows.length} →`}</button>}
         <div className="sub wrap rv-note">
           {r.stat === 'tenure' || r.stat === 'longest' ? `tenure is ${wk ? 'weeks' : 'days'} in a row with this game filed, over all time. it survives until the reset after a missed ${wk ? 'week' : 'day'}. ` : r.stat === 'average' ? `ranked by average once you have ${r.min_plays}+ plays ${per(q.period)}. ` : r.stat === 'wins' || r.stat === 'rate' ? `a ${wk ? 'weekly' : 'daily'} win is first place in a puzzle at least two of you filed; ties all count. ` : ''}
-          tap a name for a head-to-head.
+          tap a name for their activity and a head-to-head.
         </div>
 
         <div className="sec">{h ? `last 30 ${wk ? 'weeks' : 'days'} · you vs ${r.vs}` : `your last 30 ${wk ? 'weeks' : 'days'}${r.game ? ` · ${name(r.game)}` : ''}`}</div>
