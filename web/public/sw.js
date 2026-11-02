@@ -35,7 +35,8 @@ self.addEventListener('fetch', e => {
     // the app routes itself, so any page can fall back to the shell
     // and so can a server that isn't answering: the tunnel's error page (502…) never replaces the app
     e.respondWith(fetch(req).then(res => {
-      if (res.ok && url.pathname === '/') { const copy = res.clone(); caches.open(CACHE).then(c => c.put('/', copy)) }
+      // every page is the same shell, so any of them keeps the copy current (not only '/')
+      if (res.ok && (res.headers.get('content-type') ?? '').includes('text/html')) { const copy = res.clone(); caches.open(CACHE).then(c => c.put('/', copy)) }
       if (res.status >= 500) return caches.match('/').then(hit => hit || res)
       return res
     }).catch(() => caches.match('/')))
