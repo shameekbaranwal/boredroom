@@ -23,7 +23,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   const [board, setBoard] = useState<Board | null>(null)
   const [err, setErr] = useState('')
   const [picker, setPicker] = useState(false)
-  const [pickTab, setTab] = useState<'open' | 'filed' | 'skipped' | null>(null)
+  const [pickTab, setTab] = useState<'open' | 'filed' | null>(null)
   const [all, setAll] = useState(false)
   // your account's order (see sort.ts); a pick shows at once and holds until the account has it
   const [picked, setPicked] = useState<Sort | null>(null)
@@ -36,7 +36,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   }
   const [fresh, setFresh] = useState<Set<string>>(new Set())  // just filed: the rows flash once
   const [peek, setPeek] = useState<string | null>(null)  // the row opened in place
-  const [asked, setAsked] = useState<Item | null>(null)  // a skipped game, tapped: what now?
+  const [hidden, setHidden] = useState(false)  // the skipped games, opened from their strip
   const [away, setAwayState] = useState<Away | null>(readAway)
   const [back, setBack] = useState(() => !!readAway())  // came back from playing: the pasteboard asks for the result
   const now = useNow()
@@ -84,7 +84,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
 
   const items = sorted(today.items, sort)
   const open = items.filter(i => !i.filed && !i.skipped), filed = items.filter(i => i.filed), skipped = items.filter(i => i.skipped)
-  const tab = pickTab === 'skipped' && !skipped.length ? 'open' : pickTab ?? (open.length || !filed.length ? 'open' : 'filed')
+  const tab = pickTab ?? (open.length || !filed.length || skipped.length ? 'open' : 'filed')
   const extra = board.library.filter(g => !board.you.agenda.includes(g.game)).length
   const placeholders = board.members.filter(m => m.kind === 'placeholder')
   const toggle = (g: string) => setPeek(p => (p === g ? null : g))
@@ -115,7 +115,6 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
           <div className="tabs" role="tablist" aria-label="today">
             <button role="tab" aria-selected={tab === 'open'} className={tab === 'open' ? 'on' : ''} onClick={() => setTab('open')}>to do <b>{open.length}</b></button>
             <button role="tab" aria-selected={tab === 'filed'} className={tab === 'filed' ? 'on' : ''} onClick={() => setTab('filed')}>filed <b>{filed.length}</b></button>
-            {skipped.length > 0 && <button role="tab" aria-selected={tab === 'skipped'} className={tab === 'skipped' ? 'on' : ''} onClick={() => setTab('skipped')}>skipped <b>{skipped.length}</b></button>}
             <button className="tab-lib" onClick={() => go(`/b/${slug}/you#games`)}>{extra ? `${extra} more on ${board.name} →` : 'your agenda →'}</button>
           </div>
         )}
@@ -128,6 +127,12 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
             playing={away?.game === i.game} onPlay={() => setAway({ game: i.game, name: i.name, at: Date.now() })} by={sort.by}
             onSkip={() => skip(i, true)} />)}
           {!all && open.length > TODO + 1 && <button className="more" onClick={() => setAll(true)}>{open.length - TODO} more to do ↓</button>}
+          {skipped.length > 0 && (
+            // like a spreadsheet's hidden rows: the numbers jump, and a thin strip says what's tucked away
+            <button className="hid" style={{ counterIncrement: `r ${skipped.length}` }} aria-haspopup="dialog" onClick={() => setHidden(true)}>
+              <span>{skipped.length} skipped till reset · {skipped.map(i => i.name).join(', ')}</span><span className="hid-a">show</span>
+            </button>
+          )}
         </>}
         {tab === 'filed' && <>
           {filed.length === 0 && <div className="sub wrap">nothing filed yet today. paste a result above.</div>}
@@ -156,33 +161,14 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
             </div>
           ))}
         </>}
-        {tab === 'skipped' && <>
-          <div className="sub wrap">sat out till each one resets, on all your boards. they come back on their own. tap one to bring it back sooner.</div>
-          {skipped.map(i => (
-            <div key={i.game} className="row">
-              <div className="it skipped" role="button" tabIndex={0} aria-haspopup="dialog"
-                onClick={() => setAsked(i)} onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setAsked(i))}>
-                <Tile game={i.game} name={i.name} />
-                <div className="g">
-                  <div className="nm">{i.name} {i.puzzle && <span className="muted" style={{ fontWeight: 400, fontSize: 13 }}>{i.puzzle}</span>}</div>
-                  <div className="sub">{i.present}/{i.players} present{i.tenure.at_risk && i.tenure.days >= 2 && <span className="tenure">· {i.tenure.days}-day tenure lapses</span>}</div>
-                </div>
-                <div className="pr">
-                  <span className="pill skip">skipped</span>
-                  <span className="rs">back in {left(i.resets_at, now)}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </>}
         <Memos slug={slug} memos={today.memos} onChange={memos => setToday(t => t && { ...t, memos })} />
         {today.items.length === 0 && <div className="sub wrap">nothing on your agenda yet. pick your games, or just paste a result: its game joins your agenda.</div>}
         {today.items.length === 0 && <button className="more" onClick={() => go(`/b/${slug}/you#games`)}>{extra ? `${extra} of ${board.name}'s games aren't on your agenda →` : 'your agenda →'}</button>}
       </div>
       <Nav slug={slug} on="agenda" />
       {picker && <Boards current={slug} onClose={() => setPicker(false)} />}
-      {asked && <Skipped i={asked} now={now} onClose={() => setAsked(null)}
-        onBack={() => { setAsked(null); skip(asked, false) }} onPlay={() => setAway({ game: asked.game, name: asked.name, at: Date.now() })} />}
+      {hidden && skipped.length > 0 && <Skipped items={skipped} now={now} onClose={() => setHidden(false)}
+        onBack={i => { if (skipped.length === 1) setHidden(false); skip(i, false) }} onPlay={i => setAway({ game: i.game, name: i.name, at: Date.now() })} />}
     </div>
   )
 }
@@ -223,21 +209,33 @@ function By({ i, by }: { i: Item; by: SortBy }) {
   return t ? <span className="by"> · {t}</span> : null
 }
 
-/** A skipped game, tapped: when it comes back, and the ways to have it sooner. */
-function Skipped({ i, now, onClose, onBack, onPlay }: { i: Item; now: number; onClose: () => void; onBack: () => void; onPlay: () => void }) {
-  const link = i.play ? playLink(i.play) : null
+/** The skipped games, from their strip: when each comes back, and the ways to have it sooner. */
+function Skipped({ items, now, onClose, onBack, onPlay }:
+  { items: Item[]; now: number; onClose: () => void; onBack: (i: Item) => void; onPlay: (i: Item) => void }) {
   return (
-    <Overlay title={`${i.name} is skipped`} onClose={onClose}>
+    <Overlay title="skipped till reset" onClose={onClose}>
       <div className="skip-m">
-        <p>it's off your agenda on every board until it resets, in <b>{left(i.resets_at, now)}</b>. then it's back as usual. nothing for you to do.</p>
-        {i.tenure.at_risk && i.tenure.days >= 2 && <p className="risk-l">skipping doesn't hold your {i.tenure.days}-day tenure. it lapses at reset unless you file.</p>}
-        <p className="sub">changed your mind? put it back, or just play it: filing a result ends the skip.</p>
-        <div className="row-a">
-          <button className="btn" onClick={onBack}>put it back on the agenda</button>
-          {link && <a className="btn ghost" href={link.href} target={link.newTab ? '_blank' : undefined} rel="noreferrer" onClick={onPlay}>play it anyway ↗</a>}
-          <button className="lnk" onClick={onClose}>leave it skipped</button>
-        </div>
+        <p>these are off your agenda on every board until each one resets, then they're back as usual. nothing for you to do.</p>
+        <p className="sub">changed your mind? put one back, or just play it: filing a result ends the skip.</p>
       </div>
+      {items.map(i => {
+        const link = i.play ? playLink(i.play) : null
+        return (
+          <div key={i.game} className="skip-r">
+            <Tile game={i.game} name={i.name} />
+            <div className="g">
+              <div className="nm">{i.name}</div>
+              <div className="sub">back in {left(i.resets_at, now)}</div>
+              {i.tenure.at_risk && i.tenure.days >= 2 && <div className="risk-l">your {i.tenure.days}-day tenure still lapses at reset</div>}
+            </div>
+            <div className="row-a">
+              {link && <a className="lnk" href={link.href} target={link.newTab ? '_blank' : undefined} rel="noreferrer" onClick={() => onPlay(i)}>play ↗</a>}
+              <button className="btn" onClick={() => onBack(i)}>put back</button>
+            </div>
+          </div>
+        )
+      })}
+      <div className="skip-m"><button className="lnk" onClick={onClose}>leave them skipped</button></div>
     </Overlay>
   )
 }

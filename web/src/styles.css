@@ -166,9 +166,14 @@ a { color: var(--accent); }
 .peek-f .more { width: auto; margin-left: auto; font-size: 13px; }
 .peek-b { display: flex; gap: 14px; align-items: center; margin-left: auto; }
 .peek-b .lnk { font-size: 13px; }
-.it.skipped .nm, .it.skipped .ic { opacity: .6; }
-.skip-m a.btn { text-decoration: none; }
-.pill.skip { background: var(--line); color: var(--muted); }
+.bd > .hid.hid { display: flex; justify-content: space-between; gap: 10px; align-items: center; width: 100%; padding-top: 5px; padding-bottom: 5px;
+  background: var(--gut); border: 0; border-top: 3px double var(--line); border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; text-align: left; cursor: pointer; }
+.bd > .hid::before { content: "⋯"; }
+.bd > .hid > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hid-a { color: var(--accent); font-weight: 700; flex: none; }
+.skip-r { display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--line); }
+.skip-r .g { flex: 1; min-width: 0; }
+.skip-r .row-a { flex: none; gap: 14px; }
 .skip-m { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .skip-m p { margin: 0; line-height: 1.45; }
 

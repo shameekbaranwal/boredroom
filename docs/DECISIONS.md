@@ -239,6 +239,7 @@ by when it doesn't already.
 Any open game can be sat out for today: open its row, "skip till reset". It leaves "to do"
 on every board you play it on, and comes back by itself when the game resets, because a skip
 is kept against the game day (person, game, day), not as a flag to remember to clear. A
-toast offers undo; skipped games get their own tab, shown only when there are some, and
-tapping one says when it's back with three ways out: put it back, play it anyway, leave it.
+toast offers undo. Skipped games fold away like a spreadsheet's hidden rows: one thin strip
+at the foot of "to do" (the row numbers jump past them), and tapping it lists each with when
+it's back and the ways out: put it back, play it anyway, or leave them be.
 Filing a result wins over a skip. A skip doesn't hold a tenure: it still lapses at reset.
