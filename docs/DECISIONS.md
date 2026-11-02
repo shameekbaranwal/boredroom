@@ -233,3 +233,12 @@ way round. It sorts within each tab, so "to do" stays what's left. The choice go
 your account (me.agenda_sort), so every device you sign in on orders it the same way; it's
 picked where it's used, never on a settings screen. A row says what it's sorted
 by when it doesn't already.
+
+## 2026-11-02 — Skipping a game till it resets
+
+Any open game can be sat out for today: open its row, "skip till reset". It leaves "to do"
+on every board you play it on, and comes back by itself when the game resets, because a skip
+is kept against the game day (person, game, day), not as a flag to remember to clear. A
+toast offers undo; skipped games get their own tab, shown only when there are some, and
+tapping one says when it's back with three ways out: put it back, play it anyway, leave it.
+Filing a result wins over a skip. A skip doesn't hold a tenure: it still lapses at reset.
