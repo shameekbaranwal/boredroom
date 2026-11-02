@@ -7,10 +7,14 @@ import { Av, Fx, Ghost, Header, Nav, Tile, Trouble, useApp, useFresh } from '../
 
 /** A member's page: what they play on this board and how it's going. Their name in the
  *  review, the minutes or a memo opens it; the head-to-head is one tap further. */
+const GAMES = 6, RECENT = 8  // shown before "all"
+
 export default function Member({ slug, nickname }: { slug: string; nickname: string }) {
   const { me, games } = useApp()
   const [p, setP] = useState<MemberPage | null>(null)
   const [err, setErr] = useState('')
+  const [allGames, setAllGames] = useState(false)
+  const [allRecent, setAllRecent] = useState(false)
   const load = () => api.member(slug, nickname).then(x => { setP(x); setErr('') }).catch(e => setErr(e.message))
   useEffect(() => { setP(null); load() }, [slug, nickname])  // eslint-disable-line react-hooks/exhaustive-deps
   useFresh(load)
@@ -32,7 +36,11 @@ export default function Member({ slug, nickname }: { slug: string; nickname: str
     const th = n % 100 >= 11 && n % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[n % 10] ?? 'th'
     return `${place.startsWith('=') ? 'joint ' : ''}${n}${th}`
   }
-  const cell = (c: number) => (!c ? '' : c >= p.daily ? 'on' : 'ls')
+  // the busiest games first; the rest wait behind "all"
+  const byUse = [...p.games].sort((a, b) => b.played - a.played || a.name.localeCompare(b.name))
+  const shownGames = allGames ? byUse : byUse.slice(0, GAMES)
+  const shownRecent = allRecent ? p.recent : p.recent.slice(0, RECENT)
+  const running = p.games.filter(g => !g.weekly).sort((a, b) => b.tenure - a.tenure)[0]
 
   return (
     <div className="app">
@@ -50,18 +58,20 @@ export default function Member({ slug, nickname }: { slug: string; nickname: str
         <div className="stat-row">
           <div><b>{p.present}/7</b><small>days in, this week</small></div>
           <div><b>{p.wins}</b><small>wins, last 30 puzzles</small></div>
-          <div><b>{p.games.reduce((n, g) => Math.max(n, g.weekly ? 0 : g.tenure), 0)}d</b><small>longest running tenure</small></div>
+          <div><b>{running?.tenure ? `${running.tenure}d` : '—'}</b><small>{running?.tenure ? `tenure on ${running.name}, the longest running` : 'no tenure running'}</small></div>
         </div>
 
         <div className="sec">last 30 days</div>
         <div className="strip-row">
-          <div className="strip solo" aria-label="last 30 days">{p.strip.map((c, i) => <i key={i} className={cell(c)} title={`${c} filed`} />)}</div>
-          <div className="key solo"><span><i className="on" />every daily game</span><span><i className="ls" />some</span></div>
+          <div className="strip solo" aria-label="last 30 days">
+            {p.strip.map((c, i) => <i key={i} className={c ? 'on' : ''} style={c ? { opacity: 0.3 + 0.7 * Math.min(1, c / Math.max(1, p.daily)) } : undefined} title={`${c} filed`} />)}
+          </div>
+          <div className="key solo"><span><i className="on" />darker: more of their {p.daily} daily games filed</span></div>
         </div>
 
         <div className="sec">game by game</div>
         {p.games.length === 0 && <div className="sub wrap">nothing on {who === 'you' ? 'your' : `${who}'s`} agenda here yet.</div>}
-        {p.games.map(g => (
+        {shownGames.map(g => (
           <div key={g.game} className="it" role="button" tabIndex={0} onClick={() => go(`/b/${slug}/m/${g.game}`)}>
             <Tile game={g.game} name={g.name} />
             <div className="g">
@@ -80,9 +90,11 @@ export default function Member({ slug, nickname }: { slug: string; nickname: str
           </div>
         ))}
 
+        {byUse.length > GAMES && <button className="more" onClick={() => setAllGames(v => !v)}>{allGames ? `the busiest ${GAMES}` : `all ${byUse.length} games →`}</button>}
+
         <div className="sec">lately</div>
         {p.recent.length === 0 && <div className="sub wrap">nothing filed in the last 30 days.</div>}
-        {p.recent.map((r, i) => (
+        {shownRecent.map((r, i) => (
           <div key={i} className="it" role="button" tabIndex={0} onClick={() => go(`/b/${slug}/m/${r.game}/${r.day}`)}>
             <Tile game={r.game} name={r.name} />
             <div className="g">
@@ -96,6 +108,8 @@ export default function Member({ slug, nickname }: { slug: string; nickname: str
             <b className="mb-v">{headline(games[r.game], r.metrics, r.outcome)}</b>
           </div>
         ))}
+
+        {p.recent.length > RECENT && <button className="more" onClick={() => setAllRecent(v => !v)}>{allRecent ? 'fewer' : `the last ${p.recent.length} →`}</button>}
 
         {p.memos.length > 0 && <>
           <div className="sec">memos about {who}</div>
