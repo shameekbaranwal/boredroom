@@ -58,7 +58,7 @@ a { color: var(--accent); }
 @media (max-width: 560px) { .app { border: 0; } }
 
 /* header: the sheet title, then the formula bar */
-.hd { position: sticky; top: var(--net-h); z-index: 5; background: var(--hd); color: var(--hd-ink);
+.hd { position: sticky; top: calc(var(--net-h) / var(--z, 1)); z-index: 5; background: var(--hd); color: var(--hd-ink);
   padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px; display: flex; align-items: baseline; gap: 10px; }
 .hd .t { font-weight: 700; font-size: 20px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hd .m { margin-left: auto; font: 13px var(--f-num); color: var(--hd-m); white-space: nowrap; }
@@ -245,7 +245,8 @@ a { color: var(--accent); }
 @keyframes drop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
 .toast { --tx: -50%; }
-/* the message bar: offline, reconnecting or sending; the page moves down by its height (--net-h) */
+/* the message bar: offline, reconnecting or sending; the page moves down by its height (--net-h),
+   and sticky things inside the app divide it by the app's zoom on big screens (--z) */
 :root { --net-h: 0px; }
 body { padding-top: var(--net-h); }
 .netbar { position: fixed; top: 0; left: 0; right: 0; z-index: 40; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px;
@@ -364,7 +365,7 @@ body { padding-top: var(--net-h); }
     max-width: 1320px; border: 0; background: transparent; }
   .app > * { grid-column: 2; }
   .app > .fx, .app > .bd { background: var(--bg); border-right: 1px solid var(--line); }
-  .app > .hd { padding: 18px 28px; position: sticky; top: var(--net-h); }
+  .app > .hd { padding: 18px 28px; position: sticky; top: calc(var(--net-h) / var(--z, 1)); }
   .app > .hd .t { font-size: 24px; }
   .app > .fx { padding: 8px 28px; font-size: 14px; }
   .app:has(> .sheets) { grid-template-rows: auto auto auto 1fr; }
@@ -372,7 +373,7 @@ body { padding-top: var(--net-h); }
   .bd > *:not(.plain) { padding: 12px 28px 12px 64px; }
   .bd > *:not(.plain)::before { width: 44px; font-size: 12px; }
   .bd { padding-bottom: 40px; min-height: calc(100dvh - 110px); align-self: stretch; }
-  .app > .nav { grid-column: 1; grid-row: 1 / -1; position: sticky; top: var(--net-h); height: calc(100dvh - var(--net-h)); left: auto; transform: none; width: auto;
+  .app > .nav { grid-column: 1; grid-row: 1 / -1; position: sticky; top: calc(var(--net-h) / var(--z, 1)); height: calc(100dvh - var(--net-h)); left: auto; transform: none; width: auto;
     flex-direction: column; border-top: 0; border-right: 1px solid var(--rule); padding: 20px 14px; gap: 2px; overflow-y: auto; }
   .nav button, .nav a { border-right: 0; text-align: left; padding: 10px 14px; border-radius: 4px; font-size: 15px; }
   .nav .on { box-shadow: inset 3px 0 var(--accent); }
@@ -392,13 +393,13 @@ body { padding-top: var(--net-h); }
 }
 /* big monitors: everything a notch larger rather than a strip in the middle */
 @media (min-width: 1700px) {
-  .app { zoom: 1.2; }
-  .app > .nav { height: calc(100dvh / 1.2); }
+  .app { zoom: 1.2; --z: 1.2; }
+  .app > .nav { height: calc((100dvh - var(--net-h)) / 1.2); }
   .bd { min-height: calc(100dvh / 1.2 - 110px); }
 }
 @media (min-width: 2300px) {
-  .app { zoom: 1.45; }
-  .app > .nav { height: calc(100dvh / 1.45); }
+  .app { zoom: 1.45; --z: 1.45; }
+  .app > .nav { height: calc((100dvh - var(--net-h)) / 1.45); }
   .bd { min-height: calc(100dvh / 1.45 - 110px); }
 }
 
@@ -565,7 +566,7 @@ body { padding-top: var(--net-h); }
 .field small { font-size: 12.5px; }
 
 /* the "you" page: two sheets, like a workbook's tabs */
-.sheets { display: flex; gap: 2px; background: var(--gut); border-bottom: 1px solid var(--line); padding: 0 12px; position: sticky; top: var(--net-h); z-index: 4; }
+.sheets { display: flex; gap: 2px; background: var(--gut); border-bottom: 1px solid var(--line); padding: 0 12px; position: sticky; top: calc(var(--net-h) / var(--z, 1)); z-index: 4; }
 .sheets button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 9px 14px 7px; color: var(--muted); font: 700 13px var(--f-ui); cursor: pointer; }
 .sheets button.on { background: var(--bg); color: var(--accent); border-bottom-color: var(--accent); }
 .sec b { color: var(--ink); font-family: var(--f-num); }
