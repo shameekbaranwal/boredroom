@@ -205,11 +205,14 @@ export function Overlay({ title, children, onClose }: { title: string; children:
   )
 }
 
-/** Hand a text to WhatsApp (or anything else) via the share sheet, else the clipboard. */
+/** Hand a text to WhatsApp (or anything else) via the share sheet, else the clipboard.
+ *  A spoiler always goes by the clipboard: the share sheet cuts its padding short, and
+ *  the spoiler with it. */
 export async function sendOn(text: string, toast: Ctx['toast']) {
-  if (navigator.share) {
+  const spoiler = text.includes('​')
+  if (navigator.share && !spoiler) {
     try { await navigator.share({ text }); return } catch (e) { if ((e as Error).name === 'AbortError') return }
   }
-  try { await navigator.clipboard.writeText(text); toast('copied. paste it in the group.') }
+  try { await navigator.clipboard.writeText(text); toast(spoiler ? 'copied, spoiler folded. paste it in the group.' : 'copied. paste it in the group.') }
   catch { toast("couldn't copy that") }
 }
