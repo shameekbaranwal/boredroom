@@ -180,21 +180,35 @@ export function Ghost({ what, rows = 5 }: { what: string; rows?: number }) {
   )
 }
 
-/** The strip at the top while the server can't be reached, or results wait to be sent.
- *  A tap knocks again. */
+/** The message bar across the top while the server can't be reached, or results wait to
+ *  be sent: a spreadsheet's "protected view" bar. The page moves down to make room for it. */
 export function NetBar() {
   const n = useNet()
-  if (!n.away && !n.waiting) return null
-  const at = n.stale && new Date(n.stale).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-  const parts = [
-    n.away === 'offline' ? 'offline' : n.away ? "can't reach boredroom" : 'sending',
-    at && `showing ${at}'s copy`,
-    n.waiting && `${n.waiting} result${n.waiting > 1 ? 's' : ''} waiting to send`,
-  ].filter(Boolean)
+  const el = useRef<HTMLDivElement>(null)
+  const on = !!(n.away || n.waiting)
+  useEffect(() => {
+    const root = document.documentElement
+    if (!on || !el.current) { root.style.removeProperty('--net-h'); return }
+    const fit = () => root.style.setProperty('--net-h', `${el.current!.offsetHeight}px`)
+    const ro = new ResizeObserver(fit)
+    ro.observe(el.current)
+    fit()
+    return () => { ro.disconnect(); root.style.removeProperty('--net-h') }
+  }, [on])
+  if (!on) return null
+  const at = n.stale && new Date(n.stale).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })
+  const label = n.away === 'offline' ? 'offline' : n.away ? 'reconnecting' : 'sending'
+  const says = [
+    n.away === 'offline' ? "you're not connected." : n.away ? "boredroom isn't answering, most likely a quick restart." : null,
+    at && `you're looking at your copy from ${at}.`,
+    n.waiting && `${n.waiting} result${n.waiting > 1 ? 's' : ''} held on this phone${n.away ? ", sent once it's back" : ''}.`,
+  ].filter(Boolean).join(' ')
   return (
-    <button className={`netbar${n.away ? ' away' : ''}`} role="status" onClick={knock} aria-label={`${parts.join(', ')}. tap to try again`}>
-      <span className="dot" aria-hidden="true" />{parts.join(' · ')}{n.away && <u>try again</u>}
-    </button>
+    <div ref={el} className={`netbar ${n.away ? 'away' : 'busy'}`} role="status">
+      <b><span className="dot" aria-hidden="true" />{label}</b>
+      <span className="says">{says}</span>
+      {n.away && <button onClick={knock}>try again</button>}
+    </div>
   )
 }
 
