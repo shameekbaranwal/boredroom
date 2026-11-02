@@ -367,20 +367,24 @@ def review(s: Session, board: Board, viewer: Person, period: str = "today", game
         out["record"] = {"nickname": nick[rec[0].person_id], "me": rec[0].person_id == viewer.id,
                          "metrics": rec[0].metrics, "day": rec[1].isoformat()} if rec else None
     elif period == "today":
-        out["games"] = []
-        for g in games:
-            rs = rows.get((g, current[g]), [])
+        def item(g: str, day: date, rs: list[Result]) -> dict[str, Any]:
             placed = _placed(rs)
             top = [r for p, r in placed if p == 1]
             mine = next(((p, r) for p, r in placed if r.person_id == viewer.id), None)
-            out["games"].append({
-                "game": g, "name": REGISTRY[g].name, "ranked": REGISTRY[g].ranked(), "day": current[g].isoformat(),
+            return {
+                "game": g, "name": REGISTRY[g].name, "ranked": REGISTRY[g].ranked(), "day": day.isoformat(),
                 "present": len(rs), "players": len(agendas.get(g, ())),
                 "plays": viewer.id in agendas.get(g, ()),
                 "place": _place_label(placed, mine[0]) if mine else None, "filed": mine is not None,
                 "leader": ({"nickname": nick[top[0].person_id] if len(top) == 1 else None, "tied": len(top),
                             "metrics": top[0].metrics} if top and REGISTRY[g].ranked() else None),
-            })
+            }
+        out["games"] = [item(g, current[g], rows.get((g, current[g]), [])) for g in games]
+        # weekly games sit today out, so they get a line of their own: this week's puzzle so far
+        out["weeklies"] = []
+        for g in sorted((g for g in lib if REGISTRY[g].weekly()), key=lambda g: REGISTRY[g].name):
+            day = game_day(g, viewer, now)
+            out["weeklies"].append(item(g, day, _results(s, g, day, list(agendas.get(g, set())))))
     else:
         out["records"] = [{"game": g, "name": REGISTRY[g].name, "nickname": nick[r.person_id], "me": r.person_id == viewer.id,
                            "metrics": r.metrics, "day": d.isoformat()}

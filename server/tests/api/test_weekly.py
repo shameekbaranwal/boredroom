@@ -52,6 +52,9 @@ def test_reviews_have_no_today_for_it(db, seat):
     wed = noon(MON + timedelta(days=2))
     today = reads.review(db, b, p["trent"], "today", now=wed)
     assert all(x["filed"] == 0 for x in today["standings"])  # the weekly game sits "today" out
+    assert [g["game"] for g in today["games"]] == ["wordle"]
+    wk = today["weeklies"][0]  # ...and has its own line: this week's so far
+    assert (wk["game"], wk["present"], wk["leader"]["nickname"], wk["place"]) == ("travle_challenge", 2, "trent", "1")
     week = reads.review(db, b, p["trent"], "week", now=wed)
     assert {x["nickname"]: x["wins"] for x in week["standings"]} == {"trent": 1, "judy": 0}
     alone = reads.review(db, b, p["trent"], "today", game="travle_challenge", now=wed)

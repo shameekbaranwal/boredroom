@@ -53,9 +53,13 @@ export type Review = {
   standings: Standing[]; members: string[]; ranked_games: string[]; strip: ('' | 'on' | 'ls' | 'lv')[]
   h2h?: { you: number; them: number; level: number }
   min_plays?: number; metric?: string; record?: { nickname: string; me: boolean; metrics: Record<string, number>; day: string } | null
-  games?: { game: string; name: string; ranked: boolean; day: string; present: number; players: number; plays: boolean
-    place: string | null; filed: boolean; leader: { nickname: string | null; tied: number; metrics: Record<string, number> } | null }[]
+  games?: ReviewItem[]
+  weeklies?: ReviewItem[]  // on "today": weekly games, this week's puzzle so far
   records?: { game: string; name: string; nickname: string; me: boolean; metrics: Record<string, number>; day: string }[]
+}
+export type ReviewItem = {
+  game: string; name: string; ranked: boolean; day: string; present: number; players: number; plays: boolean
+  place: string | null; filed: boolean; leader: { nickname: string | null; tied: number; metrics: Record<string, number> } | null
 }
 export type ReviewQuery = { period: Period; game?: string | null; stat?: string | null; vs?: string | null }
 export type Event = {

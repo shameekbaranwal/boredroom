@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
-import { api, type Period, type Review as R, type ReviewQuery, type Standing } from '../api'
+import { api, type Period, type Review as R, type ReviewItem, type ReviewQuery, type Standing } from '../api'
 import { dayLabel, fmtMetric, headline, weekLabel } from '../format'
 import { go, query, usePath } from '../router'
 import { Av, FxQuery, Ghost, Header, Nav, Tile, sendOn, useApp, useFresh, type Token } from '../ui'
@@ -52,7 +52,7 @@ export default function Review({ slug }: { slug: string }) {
   const tokens: Token[] = [
     { key: 'board', value: slug, options: me.boards.map(b => [b.slug, b.name]), onPick: s => go(url({ period: q.period }, s), true) },
     { key: 'period', value: q.period, options: (Object.keys(PERIOD) as Period[]).filter(p => !(wk && p === 'week')).map(p => [p, per(p)]), onPick: p => set({ period: p as Period }) },
-    { key: 'game', value: q.game ?? '', options: [['', 'all games'], ...(r?.ranked_games ?? (q.game ? [q.game] : [])).map(g => [g, name(g)] as [string, string])], onPick: g => set({ game: g || null }) },
+    { key: 'game', value: q.game ?? '', options: [['', 'all games'], ...(r?.ranked_games ?? (q.game ? [q.game] : [])).map(g => [g, games[g]?.weekly ? `${name(g)} · weekly` : name(g)] as [string, string])], onPick: g => set({ game: g || null }) },
     { key: 'stat', value: r?.stat ?? q.stat ?? '', options: r ? r.stats.map(s => [s, STAT[s]]) : [[q.stat ?? '', q.stat ?? '…']], onPick: s => set({ stat: s }) },
     { key: 'vs', value: q.vs ?? '', options: [['', 'no one'], ...(r?.members ?? (q.vs ? [q.vs] : [])).map(m => [m, m] as [string, string])], onPick: v => set({ vs: v || null }) },
   ]
@@ -89,6 +89,25 @@ export default function Review({ slug }: { slug: string }) {
     const lines = top.length ? top.map(s => `${placeLabel(rows, s)}. ${s.nickname} · ${value(s).join(' ')}`) : ['nothing to report. the board is watching.']
     const vs = h ? `\n\n${board.nickname} vs ${r.vs}: ${h.you}–${h.them}${h.level ? ` (${h.level} level)` : ''}` : ''
     sendOn(`${board.name} · ${title}\n\n${lines.join('\n')}${vs}\n\n${location.origin}${url(q)}`, toast)
+  }
+
+  const item = (g: ReviewItem, open: () => void) => {
+    const ld = g.leader
+    const tag = !g.plays ? '' : !g.filed ? 'open' : g.ranked && g.place ? `#${g.place}` : '✓'
+    return (
+      <div key={g.game} className="it" onClick={open} role="button" tabIndex={0}>
+        <Tile game={g.game} name={g.name} />
+        <div className="g">
+          <div className="nm">{g.name}</div>
+          <div className="sub">
+            {ld ? <>{ld.nickname ?? `${ld.tied} tied`} <b>{headline(games[g.game], ld.metrics)}</b></>
+              : g.present ? (g.ranked ? '—' : 'for fun') : 'no one yet'}
+            <span> · {g.present}/{g.players} present</span>
+          </div>
+        </div>
+        {tag && <span className={`pill ${tag === 'open' ? 'todo' : 'done'}`}>{tag}</span>}
+      </div>
+    )
   }
 
   return (
@@ -153,24 +172,11 @@ export default function Review({ slug }: { slug: string }) {
 
         {r.games && <>
           <div className="sec">item by item</div>
-          {[...r.games].sort((a, b) => b.present - a.present).map(g => {
-            const ld = g.leader
-            const tag = !g.plays ? '' : !g.filed ? 'open' : g.ranked && g.place ? `#${g.place}` : '✓'
-            return (
-              <div key={g.game} className="it" onClick={() => go(`/b/${slug}/m/${g.game}`)} role="button" tabIndex={0}>
-                <Tile game={g.game} name={g.name} />
-                <div className="g">
-                  <div className="nm">{g.name}</div>
-                  <div className="sub">
-                    {ld ? <>{ld.nickname ?? `${ld.tied} tied`} <b>{headline(games[g.game], ld.metrics)}</b></>
-                      : g.present ? (g.ranked ? '—' : 'for fun') : 'no one yet'}
-                    <span> · {g.present}/{g.players} present</span>
-                  </div>
-                </div>
-                {tag && <span className={`pill ${tag === 'open' ? 'todo' : 'done'}`}>{tag}</span>}
-              </div>
-            )
-          })}
+          {[...r.games].sort((a, b) => b.present - a.present).map(g => item(g, () => go(`/b/${slug}/m/${g.game}`)))}
+        </>}
+        {r.weeklies && r.weeklies.length > 0 && <>
+          <div className="sec">this week <span className="sec-n">· weekly games · tap one for its review</span></div>
+          {r.weeklies.map(g => item(g, () => set({ game: g.game, period: 'today' })))}
         </>}
 
         {r.records && <>
