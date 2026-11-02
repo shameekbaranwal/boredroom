@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { api, type Meeting as M } from '../api'
 import { dayLabel, shiftDay } from '../format'
 import { go } from '../router'
-import { Fx, Ghost, Header, Nav, sendOn, useApp, useFresh } from '../ui'
+import { Fx, Ghost, Header, Nav, Trouble, sendOn, useApp, useFresh } from '../ui'
 import { MemoRow, meetingText } from '../memos'
 
 const UPFRONT = 8  // memos shown before "more"
@@ -13,7 +13,7 @@ export default function Meeting({ slug, day }: { slug: string; day?: string }) {
   const [m, setM] = useState<M | null>(null)
   const [err, setErr] = useState('')
   const [all, setAll] = useState(false)
-  const load = useCallback(() => { api.meeting(slug, day).then(setM).catch(e => setErr(e.message)) }, [slug, day])
+  const load = useCallback(() => { api.meeting(slug, day).then(x => { setM(x); setErr('') }).catch(e => setErr(e.message)) }, [slug, day])
   useEffect(() => { setM(null); setAll(false); load() }, [load])
   useFresh(load)
   const boardName = me.boards.find(b => b.slug === slug)?.name ?? slug
@@ -23,7 +23,7 @@ export default function Meeting({ slug, day }: { slug: string; day?: string }) {
     <Header title={`${boardName}.xlsx`} meta="memos" />
     <Fx fn="meeting" args={[['board', boardName], ['day', label]]} />
   </>
-  if (err) return <div className="app">{head}<div className="center err">{err}</div><Nav slug={slug} on="meeting" /></div>
+  if (err) return <div className="app">{head}<Trouble err={err} retry={load} /><Nav slug={slug} on="meeting" /></div>
   if (!m) return <div className="app">{head}<Ghost what="the meeting" /><Nav slug={slug} on="meeting" /></div>
 
   const prev = shiftDay(m.day, -1), next = shiftDay(m.day, 1), current = m.day >= m.today

@@ -39,7 +39,7 @@ export default function Desk({ shared }: { shared?: string }) {
     if (b) go(`/b/${b.slug}/m/${r.game}${r.day ? `/${r.day}` : ''}`)
     else toast(me.boards.length ? `none of your boards plays ${r.name} yet` : `join a board to see how others did on ${r.name}`)
   }
-  const load = useCallback(() => { api.results().then(setMine).catch(() => setMine([])) }, [])
+  const load = useCallback(() => { api.results().then(setMine).catch(e => { if (!e.away) setMine([]) }) }, [])
   useEffect(load, [load])
   const filed = (mine ?? []).filter(r => !r.withdrawn)
 

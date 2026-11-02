@@ -4,7 +4,7 @@ Handlers commit; services (filing, boards) only flush.
 """
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from flask import Blueprint, current_app, g, jsonify, request
@@ -14,7 +14,7 @@ from . import admin, boards, claims, filing, invites, memos, names, reads, throt
 from . import auth
 from .auth import auth_required, create_guest, valid_tz, USERNAME
 from .errors import fail
-from .models import Board, Membership, Person, Result
+from .models import Board, Membership, Person, Result, utcnow
 from .parser import REGISTRY
 
 api = Blueprint("api", __name__, url_prefix="/api/v1")
@@ -440,12 +440,26 @@ def _paste_text() -> str:
     return text
 
 
+HELD = timedelta(days=1)  # how far back a result held on a phone may say it was pasted
+
+
+def _pasted_at(now: datetime) -> datetime:
+    """When a result held on a phone (offline, or the server restarting) was pasted, so
+    one held across a reset isn't filed late. Anything odd, or older than a day, is now."""
+    v = body().get("pasted_at")
+    try:
+        at = datetime.fromisoformat(v.replace("Z", "+00:00")) if isinstance(v, str) else None
+    except ValueError:
+        return now
+    return at if at and at.tzinfo and now - HELD <= at <= now else now
+
+
 @api.post("/pastes")
 @auth_required
 def paste():
     text = _paste_text()
     source = "share" if body().get("source") == "share" else "paste"  # "import" is internal
-    f = filing.file_paste(g.db, g.person, text, source=source)
+    f = filing.file_paste(g.db, g.person, text, now=_pasted_at(clock() or utcnow()), source=source)
     g.db.commit()
     return jsonify(f.to_dict()), 201
 

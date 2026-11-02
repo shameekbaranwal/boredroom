@@ -245,6 +245,14 @@ a { color: var(--accent); }
 @keyframes drop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
 .toast { --tx: -50%; }
+.netbar { position: fixed; top: calc(6px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); z-index: 11;
+  max-width: calc(100% - 24px); display: flex; gap: 8px; align-items: center; padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface); color: var(--muted); font: 12px var(--f-num); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  animation: drop .2s ease-out both; }
+.netbar .dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.netbar.away .dot { background: var(--bad); }
+.netbar u { color: var(--ink); }
+.trouble { display: flex; flex-direction: column; gap: 10px; align-items: center; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
 
 /* ---- brand ---- */

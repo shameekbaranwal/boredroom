@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api, type Board, type Member } from '../api'
 import { left } from '../format'
 import { go, query, usePath } from '../router'
-import { Av, Fx, FxEdit, Ghost, Header, Nav, Tile, Weekly, goBack, sendOn, useApp, useFresh, useNow } from '../ui'
+import { Av, Fx, FxEdit, Ghost, Header, Nav, Tile, Trouble, Weekly, goBack, sendOn, useApp, useFresh, useNow } from '../ui'
 import Boards from './Boards'
 import { CloseAccount, Motion, YourFile, useUsernameEdit } from './Personal'
 
@@ -94,13 +94,13 @@ export default function You({ slug, page, arg }: { slug: string; page?: string; 
   const { me } = useApp()
   const [b, setB] = useState<Board | null>(null)
   const [err, setErr] = useState('')
-  const load = () => api.board(slug).then(setB).catch(e => setErr(e.message))
+  const load = () => api.board(slug).then(x => { setB(x); setErr('') }).catch(e => setErr(e.message))
   useEffect(() => { load() }, [slug])  // eslint-disable-line react-hooks/exhaustive-deps
   useFresh(load)
 
   const pg = (page && page in TITLES ? page : null) as Page | null
   const home = `/b/${slug}/you`
-  if (err) return <div className="app"><Header title="you.xlsx" /><div className="center err">{err}</div><Nav slug={slug} on="you" /></div>
+  if (err) return <div className="app"><Header title="you.xlsx" /><Trouble err={err} retry={load} /><Nav slug={slug} on="you" /></div>
   if (!b) return (
     <div className="app">
       <Header title={`${me.boards.find(x => x.slug === slug)?.name ?? slug}.xlsx`} meta={pg ? TITLES[pg] : 'you'} back={pg ? home : undefined} />

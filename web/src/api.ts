@@ -1,5 +1,6 @@
 // The JSON API (/api/v1, docs/SERVER.md part 5). One bearer token per seat, kept in
 // localStorage; the server is always same-origin (Vite proxies it in development).
+import { lost, net, reached, set, type Away } from './net'
 
 export type Kind = 'guest' | 'account' | 'placeholder'
 export type BoardRef = { slug: string; name: string; nickname: string; role: string }
@@ -81,26 +82,76 @@ export function token(): string | null {
 }
 export function setToken(t: string | null) {
   try { if (t) localStorage.setItem(TOKEN, t); else localStorage.removeItem(TOKEN) } catch { /* private mode */ }
+  forget()  // another seat's copies aren't yours
 }
 
 export class ApiError extends Error {
   status: number
-  constructor(status: number, message: string) { super(message); this.status = status }
+  away: boolean  // never reached the server: offline, or it's restarting
+  constructor(status: number, message: string, away = false) { super(message); this.status = status; this.away = away }
 }
+
+// What each screen last loaded, kept on this device: offline, or while the server restarts,
+// the screen shows that copy (the strip says how old) instead of nothing.
+const COPY = 'boredroom.copy:', COPIES = 'boredroom.copies', KEEP = 40
+type Copy = { at: number; data: unknown }
+function keep(path: string, data: unknown) {
+  const put = () => {
+    localStorage.setItem(COPY + path, JSON.stringify({ at: Date.now(), data }))
+    const paths = [path, ...(JSON.parse(localStorage.getItem(COPIES) ?? '[]') as string[]).filter(p => p !== path)]
+    for (const p of paths.slice(KEEP)) localStorage.removeItem(COPY + p)
+    localStorage.setItem(COPIES, JSON.stringify(paths.slice(0, KEEP)))
+  }
+  try { put() } catch { try { forget(); put() } catch { /* no room: no copy */ } }
+}
+function copy(path: string): Copy | null {
+  try { return JSON.parse(localStorage.getItem(COPY + path) ?? 'null') } catch { return null }
+}
+function forget() {
+  try {
+    for (const p of JSON.parse(localStorage.getItem(COPIES) ?? '[]') as string[]) localStorage.removeItem(COPY + p)
+    localStorage.removeItem(COPIES)
+  } catch { /* fine */ }
+}
+
+const WAIT = 15000  // a call that hasn't answered by now isn't going to
+const AGAIN = [500, 1000, 2000, 3000, 4000]  // a load tries again for ~10s: a deploy restarts the server in ~4
+const AWAY = new Set([502, 503, 504, 520, 521, 522, 523, 524, 530])  // the tunnel couldn't reach the server
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+export const awayText = (why: Away) => why === 'offline'
+  ? "you're offline. it'll catch up when you're back."
+  : "boredroom isn't answering. probably a quick restart; it'll catch up."
 
 async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = {}
   const t = token()
   if (t) headers.Authorization = `Bearer ${t}`
   if (body !== undefined) headers['Content-Type'] = 'application/json'
-  const r = await fetch(`/api/v1${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
-  const data = await r.json().catch(() => ({}))
-  if (r.status === 401 && t) {  // the seat is gone (signed out elsewhere, or the database was reset): back to the door
-    setToken(null)
-    window.dispatchEvent(new Event('boredroom:signedout'))
+  const load = method === 'GET'
+  for (let n = 0; ; n++) {
+    let r: Response | null = null
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), WAIT)
+    try { r = await fetch(`/api/v1${path}`, { method, headers, signal: ctl.signal, body: body === undefined ? undefined : JSON.stringify(body) }) }
+    catch { /* offline, or no answer in time */ } finally { clearTimeout(timer) }
+    if (r && !AWAY.has(r.status)) {
+      reached()
+      const data = await r.json().catch(() => ({}))
+      if (r.status === 401 && t) {  // the seat is gone (signed out elsewhere, or the database was reset): back to the door
+        setToken(null)
+        window.dispatchEvent(new Event('boredroom:signedout'))
+      }
+      if (!r.ok) throw new ApiError(r.status, data.error ?? `the server said ${r.status}`)
+      if (load) keep(path, data)
+      return data as T
+    }
+    const why: Away = r || navigator.onLine ? 'down' : 'offline'
+    lost(why)
+    const kept = load ? copy(path) : null
+    if (kept) { set({ stale: Math.min(net().stale ?? kept.at, kept.at) }); return kept.data as T }
+    // a load tries again for a while; a change never does, so nothing is filed twice
+    if (!load || why === 'offline' || n >= AGAIN.length) throw new ApiError(r?.status ?? 0, awayText(why), true)
+    await sleep(AGAIN[n])
   }
-  if (!r.ok) throw new ApiError(r.status, data.error ?? `the server said ${r.status}`)
-  return data as T
 }
 
 const tz = () => Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -136,7 +187,7 @@ export const api = {
     call<Minutes>('GET', `/boards/${encodeURIComponent(slug)}/minutes/${encodeURIComponent(game)}${day ? `?day=${encodeURIComponent(day)}` : ''}`),
   meeting: (slug: string, day?: string) => call<Meeting>('GET', `/boards/${encodeURIComponent(slug)}/meeting${day ? `?day=${encodeURIComponent(day)}` : ''}`),
   dismissMemo: (slug: string, id: number, on: boolean) => call<{ memos: Memo[] }>(on ? 'POST' : 'DELETE', `/boards/${encodeURIComponent(slug)}/memos/${id}/dismiss`),
-  paste: (text: string, source: 'paste' | 'share' = 'paste') => call<Filing>('POST', '/pastes', { text, source }),
+  paste: (text: string, source: 'paste' | 'share' = 'paste', pasted_at?: string) => call<Filing>('POST', '/pastes', { text, source, pasted_at }),
   preview: (text: string) => call<Filing>('POST', '/pastes/preview', { text }),
   replace: (id: number, paste_id: number) => call<unknown>('POST', `/results/${id}/replace`, { paste_id }),
   results: () => call<MyResult[]>('GET', '/results'),

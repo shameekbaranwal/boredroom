@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import type { Game, Me } from './api'
 import { hue } from './format'
 import { go } from './router'
+import { knock, useNet } from './net'
 import { TableMark, ThemeToggle, Wordmark } from './brand'
 
 export type Ctx = {
@@ -40,9 +41,14 @@ export function useFresh(load: () => void) {
   f.current = load
   useEffect(() => {
     const on = () => { if (document.visibilityState === 'visible') f.current() }
+    const back = () => f.current()
     document.addEventListener('visibilitychange', on)
     window.addEventListener('online', on)
-    return () => { document.removeEventListener('visibilitychange', on); window.removeEventListener('online', on) }
+    window.addEventListener('boredroom:back', back)  // the server answers again (net.ts)
+    return () => {
+      document.removeEventListener('visibilitychange', on); window.removeEventListener('online', on)
+      window.removeEventListener('boredroom:back', back)
+    }
   }, [])
 }
 
@@ -172,6 +178,29 @@ export function Ghost({ what, rows = 5 }: { what: string; rows?: number }) {
       ))}
     </div>
   )
+}
+
+/** The strip at the top while the server can't be reached, or results wait to be sent.
+ *  A tap knocks again. */
+export function NetBar() {
+  const n = useNet()
+  if (!n.away && !n.waiting) return null
+  const at = n.stale && new Date(n.stale).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  const parts = [
+    n.away === 'offline' ? 'offline' : n.away ? "can't reach boredroom" : 'sending',
+    at && `showing ${at}'s copy`,
+    n.waiting && `${n.waiting} result${n.waiting > 1 ? 's' : ''} waiting to send`,
+  ].filter(Boolean)
+  return (
+    <button className={`netbar${n.away ? ' away' : ''}`} role="status" onClick={knock} aria-label={`${parts.join(', ')}. tap to try again`}>
+      <span className="dot" aria-hidden="true" />{parts.join(' · ')}{n.away && <u>try again</u>}
+    </button>
+  )
+}
+
+/** A screen that couldn't load: why, and a way to try again (it also tries by itself). */
+export function Trouble({ err, retry }: { err: string; retry: () => void }) {
+  return <div className="center trouble"><span className="err">{err}</span><button className="lnk" onClick={retry}>try again</button></div>
 }
 
 export function Toast({ msg, action, onDone }: { msg: string; action?: { label: string; run: () => void }; onDone: () => void }) {

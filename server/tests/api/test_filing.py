@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from boredroom import filing
 from boredroom.models import GameRequest, PuzzleDay, Result
@@ -113,3 +113,15 @@ def test_a_preview_shows_what_filing_would_do_and_keeps_nothing(db, seat):
     assert a.post("/pastes", {"text": WIKI}).status_code == 201
     assert a.post("/pastes/preview", {"text": WIKI}).json["events"][0]["kind"] == "duplicate"
     assert db.query(Result).count() == 1
+
+
+
+def test_a_result_held_on_a_phone_counts_from_when_it_was_pasted(app, seat):
+    app.config["CLOCK"] = lambda: NOW  # 11:30 on 30 Oct in Kolkata
+    a = seat("ivan")
+    a.post("/pastes", {"text": WIKI, "pasted_at": (NOW - timedelta(hours=20)).isoformat()})  # 29 Oct, evening
+    a.post("/pastes", {"text": WIKI.replace("Babe Ruth", "Ice"), "pasted_at": (NOW - timedelta(days=3)).isoformat()})  # too old
+    a.post("/pastes", {"text": WIKI.replace("Babe Ruth", "Soap"), "pasted_at": (NOW + timedelta(hours=1)).isoformat()})  # ahead
+    a.post("/pastes", {"text": WIKI.replace("Babe Ruth", "Tin"), "pasted_at": "soon"})
+    days = {r["puzzle"].split(" → ")[1]: r["day"] for r in a.get("/results").json}
+    assert days == {"babe ruth": "2026-10-29", "ice": "2026-10-30", "soap": "2026-10-30", "tin": "2026-10-30"}

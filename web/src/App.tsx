@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, ApiError, setToken, token, type Game, type Invite, type Me } from './api'
 import { go, match, query, usePath } from './router'
-import { AppCtx, Loading, Toast, type Ctx } from './ui'
+import { AppCtx, Loading, NetBar, Toast, Trouble, type Ctx } from './ui'
+import { send, type Sent } from './outbox'
 import Agenda from './screens/Agenda'
 import Desk from './screens/Desk'
 import Join from './screens/Join'
@@ -30,14 +31,14 @@ function EnvBadge() {
 }
 
 export default function App() {
-  return <><Shell /><EnvBadge /></>
+  return <><Shell /><EnvBadge /><NetBar /></>
 }
 
 function Shell() {
   const path = usePath()
   const [me, setMe] = useState<Me | null>(null)
   const [games, setGames] = useState<Record<string, Game>>({})
-  const [state, setState] = useState<'loading' | 'out' | 'in'>(token() ? 'loading' : 'out')
+  const [state, setState] = useState<'loading' | 'out' | 'in' | 'away'>(token() ? 'loading' : 'out')
   const [toast, setToastState] = useState<{ msg: string; action?: { label: string; run: () => void } } | null>(null)
   const [invite, setInvite] = useState<Invite | null>(null)
 
@@ -47,13 +48,41 @@ function Shell() {
   }, [])
 
   useEffect(() => { api.games().then(gs => setGames(Object.fromEntries(gs.map(g => [g.id, g])))).catch(() => {}) }, [])
-  useEffect(() => { if (state === 'loading') refreshMe().catch(() => setState('out')) }, [state, refreshMe])
+  // unreachable, with no copy of your seat yet: say so, and open by itself once it answers
+  useEffect(() => { if (state === 'loading') refreshMe().catch(() => setState('away')) }, [state, refreshMe])
 
   useEffect(() => {
     const out = () => { setMe(null); setState('out'); go('/', true) }
     window.addEventListener('boredroom:signedout', out)
     return () => window.removeEventListener('boredroom:signedout', out)
   }, [])
+
+  // the server's back: try your seat again
+  useEffect(() => {
+    if (state !== 'away') return
+    const back = () => setState('loading')
+    window.addEventListener('boredroom:back', back)
+    return () => window.removeEventListener('boredroom:back', back)
+  }, [state])
+
+  // results held on this device go out once you're in, and say how it went
+  useEffect(() => {
+    if (state !== 'in') return
+    const sent = (e: Event) => {
+      const { filed, conflicts, failed } = (e as CustomEvent<Sent>).detail
+      const c = conflicts[0]
+      if (c && c.result_id != null) {
+        const rid = c.result_id
+        setToastState({ msg: `${filed ? `filed ${filed} held result${filed > 1 ? 's' : ''}. ` : ''}${games[c.game]?.name ?? c.game} ${c.puzzle} was already filed, differently. kept the first.`,
+          action: { label: 'use the new one', run: () => { api.replace(rid, c.paste_id).catch(() => {}) } } })
+      } else if (failed.length) setToastState({ msg: `a held result couldn't be filed: ${failed[0]}` })
+      else setToastState({ msg: `filed ${filed} held result${filed > 1 ? 's' : ''}.` })
+      window.dispatchEvent(new Event('boredroom:back'))  // the screens load what was just filed
+    }
+    window.addEventListener('boredroom:sent', sent)
+    send()
+    return () => window.removeEventListener('boredroom:sent', sent)
+  }, [state, games])
 
   const joinCode = match('/join/:code', path)?.code
   useEffect(() => { if (joinCode && state === 'out') api.invite(joinCode).then(setInvite).catch(() => setInvite(null)) }, [joinCode, state])
@@ -63,6 +92,7 @@ function Shell() {
   }, [])
 
   if (state === 'out') return <SignIn invite={joinCode ? invite : null} onSignedIn={() => setState('loading')} />
+  if (state === 'away') return <div className="app"><Trouble err="can't reach boredroom right now. it'll open by itself once it can." retry={() => setState('loading')} /></div>
   if (!me) return <div className="app"><Loading what="your seat" /></div>
 
   const ctx: Ctx = { me, games, refreshMe, signOut, toast: (msg, action) => setToastState({ msg, action }) }

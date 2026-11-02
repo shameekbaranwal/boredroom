@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState } from 'react'
 import { api, type Period, type Review as R, type ReviewItem, type ReviewQuery, type Standing } from '../api'
 import { dayLabel, fmtMetric, headline, weekLabel } from '../format'
 import { go, query, usePath } from '../router'
-import { Av, FxQuery, Ghost, Header, Nav, Tile, sendOn, useApp, useFresh, type Token } from '../ui'
+import { Av, FxQuery, Ghost, Header, Nav, Tile, Trouble, sendOn, useApp, useFresh, type Token } from '../ui'
 import Boards from './Boards'
 
 const PERIOD: Record<Period, string> = { today: 'today', week: 'this week', month: 'this month', all: 'all time' }
@@ -27,7 +27,7 @@ export default function Review({ slug }: { slug: string }) {
   const board = me.boards.find(b => b.slug === slug)!
   const key = JSON.stringify(q)
   useEffect(() => { setErr(''); api.review(slug, q).then(setR).catch(e => setErr(e.message)) }, [slug, key])  // eslint-disable-line react-hooks/exhaustive-deps
-  useFresh(() => { api.review(slug, q).then(setR).catch(() => {}) })
+  useFresh(() => { api.review(slug, q).then(x => { setR(x); setErr('') }).catch(() => {}) })
 
   const url = (x: ReviewQuery, s = slug) => {
     const p = new URLSearchParams()
@@ -60,7 +60,7 @@ export default function Review({ slug }: { slug: string }) {
     <Header title={`${board.name}.xlsx`} meta={q.game ? name(q.game) : 'review'} onTitle={() => setPicker(true)} />
     <FxQuery fn="review" tokens={tokens} />
   </>
-  if (err) return <div className="app">{head}<div className="center err">{err}</div><Nav slug={slug} on="review" /></div>
+  if (err) return <div className="app">{head}<Trouble err={err} retry={() => api.review(slug, q).then(x => { setR(x); setErr('') }).catch(e => setErr(e.message))} /><Nav slug={slug} on="review" /></div>
   if (!r) return <div className="app">{head}<Ghost what="the review" /><Nav slug={slug} on="review" /></div>
 
   const rows = r.standings

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api, type Board, type Minutes as M, type Row } from '../api'
 import { dayLabel, fieldText, headline, isGrid, left, shiftDay, weekLabel } from '../format'
 import { go } from '../router'
-import { Av, FxQuery, Ghost, Header, Nav, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
+import { Av, FxQuery, Ghost, Header, Nav, Trouble, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
 
 export default function Minutes({ slug, game, day }: { slug: string; game: string; day?: string }) {
   const { me, games, toast } = useApp()
@@ -17,7 +17,7 @@ export default function Minutes({ slug, game, day }: { slug: string; game: strin
     api.minutes(slug, game, day).then(x => { setM(x); if (x.current) setToday(x.day) }).catch(e => setErr(e.message))
   }, [slug, game, day])
   useEffect(() => { if (!today) api.minutes(slug, game).then(x => setToday(x.day)).catch(() => {}) }, [slug, game, today])
-  useFresh(() => { api.minutes(slug, game, day).then(setM).catch(() => {}) })
+  useFresh(() => { api.minutes(slug, game, day).then(x => { setM(x); setErr('') }).catch(() => {}) })
   const [lib, setLib] = useState<Board['library']>([])
   useEffect(() => { api.board(slug).then(b => setLib(b.library)).catch(() => {}) }, [slug])
   const boardName = me.boards.find(b => b.slug === slug)?.name ?? slug
@@ -37,7 +37,7 @@ export default function Minutes({ slug, game, day }: { slug: string; game: strin
     { key: 'puzzle', value: shown, options: days.length ? days.map(d => [d, when(d)]) : [[shown, shown || '…']], onPick: d => go(at(game, d), true) },
   ]
   const head = (meta: string) => <><Header title={`${boardName}.xlsx`} meta={meta} back={`/b/${slug}`} /><FxQuery fn="minutes" tokens={tokens} /></>
-  if (err) return <div className="app">{head('minutes')}<div className="center err">{err}</div></div>
+  if (err) return <div className="app">{head('minutes')}<Trouble err={err} retry={() => api.minutes(slug, game, day).then(x => { setM(x); setErr('') }).catch(e => setErr(e.message))} /></div>
   if (!m) return <div className="app">{head('minutes')}<Ghost what="the minutes" /><Nav slug={slug} on={null} temp={title} /></div>
 
   const label = when(m.day)

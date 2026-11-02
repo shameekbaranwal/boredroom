@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { api, type Board, type Filing, type Item, type Memo, type Minutes, type Today } from '../api'
+import { api, ApiError, type Board, type Filing, type Item, type Memo, type Minutes, type Today } from '../api'
+import { hold, unhold, type Held } from '../outbox'
 import { headline, left } from '../format'
 import { go } from '../router'
-import { Av, Clip, Fx, FxQuery, Ghost, Header, Nav, Overlay, Tile, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
+import { Av, Clip, Fx, FxQuery, Ghost, Header, Nav, Overlay, Tile, Trouble, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
 import Boards from './Boards'
 import { InstallMemo } from '../install'
 import { playLink } from '../opens'
@@ -54,7 +55,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   }, [])
 
   const load = useCallback(() => {
-    api.today(slug).then(setToday).catch(e => setErr(e.message))
+    api.today(slug).then(t => { setToday(t); setErr('') }).catch(e => setErr(e.message))
     api.board(slug).then(setBoard).catch(() => {})
   }, [slug])
   useEffect(load, [load])
@@ -69,8 +70,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   if (err) return (
     <div className="app">
       <Header title="boredroom.xlsx" />
-      <div className="center err">{err}</div>
-      <div className="center"><button className="more" style={{ width: 'auto' }} onClick={() => go('/desk')}>to your desk →</button></div>
+      <Trouble err={err} retry={load} />
       <Nav slug={slug} on="agenda" />
     </div>
   )
@@ -341,19 +341,21 @@ export function Pasteboard({ board, shared, onFiled, back, onBackDone }:
   const [out, setOut] = useState<Filing | null>(null)
   const [err, setErr] = useState('')
   const [answered, setAnswered] = useState<Record<number, string>>({})
+  const [held, setHeld] = useState<Held | null>(null)  // pasted while the server was out of reach
   const [shake, setShake] = useState(false)  // nothing readable: the pasteboard shakes its head
   const ta = useRef<HTMLTextAreaElement>(null)
   const sharedDone = useRef(false)
 
   const read = useCallback(async (t: string, source: 'paste' | 'share' = 'paste') => {
     if (!t.trim()) return
-    setBusy(true); setErr(''); setOut(null); setAnswered({})
+    setBusy(true); setErr(''); setOut(null); setAnswered({}); setHeld(null)
     try {
       const r = await api.preview(t)
       setDraft({ text: t, source, read: r }); setText('')
       if (!r.events.length && !r.unknown.length) { setShake(true); navigator.vibrate?.([10, 40, 10]); setTimeout(() => setShake(false), 400) }
     }
-    catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
+    catch (e) { if (e instanceof ApiError && e.away) { setHeld(hold(t, source)); setText('') } else setErr((e as Error).message) }
+    finally { setBusy(false) }
   }, [])
 
   const save = async () => {
@@ -367,7 +369,9 @@ export function Pasteboard({ board, shared, onFiled, back, onBackDone }:
       for (const g of new Set(add)) await api.agenda(board!.slug, g, true).catch(() => {})
       if (add.length) refreshMe()
       onFiled(f.events.filter(e => e.kind === 'filed' || e.kind === 'merged').map(e => e.game))
-    } catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
+    } catch (e) {
+      if (e instanceof ApiError && e.away) { setHeld(hold(draft.text, draft.source)); setDraft(null) } else setErr((e as Error).message)
+    } finally { setBusy(false) }
   }
 
   useEffect(() => {
@@ -405,6 +409,16 @@ export function Pasteboard({ board, shared, onFiled, back, onBackDone }:
         )}
       </>}
       {err && <div className="err">{err}</div>}
+      {held && (
+        <div className="cards" style={{ marginTop: 8 }}>
+          <div className="card quiet">
+            <b>held on this phone</b>
+            <small>boredroom can't be reached right now. it'll be read and filed by itself once it can, timed from now.</small>
+            <div className="row-a"><button className="lnk" onClick={() => { unhold(held.id); setHeld(null) }}>don't send it</button>
+              <button className="lnk" onClick={() => setHeld(null)}>ok</button></div>
+          </div>
+        </div>
+      )}
 
       {draft && (
         <div className="cards">
