@@ -231,7 +231,7 @@ function Outbox({ onClose }: { onClose: () => void }) {
           {editing?.id === x.id
             ? <textarea className="keep" rows={Math.min(8, editing.text.split('\n').length + 1)} value={editing.text} spellCheck={false} autoFocus
                 aria-label="the held result" onChange={e => setEditing({ id: x.id, text: e.target.value })} />
-            : <pre>{x.text}</pre>}
+            : <pre className="keep">{x.text}</pre>}
           <div className="row-a">
             {editing?.id === x.id
               ? <><button className="btn" onClick={() => { edit(x.id, editing.text); setEditing(null) }}>save</button>
