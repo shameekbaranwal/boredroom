@@ -12,7 +12,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .filing import to_parsed
-from .models import Agenda, Board, Membership, Person, Result, utcnow
+from .models import Agenda, Board, Membership, Person, Result, Skip, utcnow
 from .parser import REGISTRY
 from .parser.forward import forward_text
 from .parser.rank import compare, rank
@@ -109,6 +109,7 @@ def today(s: Session, board: Board, viewer: Person, now: datetime | None = None)
     now = now or utcnow()
     games = list(s.scalars(select(Agenda.game_id).where(
         Agenda.board_id == board.id, Agenda.person_id == viewer.id)))
+    skips = set(s.execute(select(Skip.game_id, Skip.day).where(Skip.person_id == viewer.id)).all())
     items = []
     for g in games:
         game = REGISTRY[g]
@@ -131,6 +132,7 @@ def today(s: Session, board: Board, viewer: Person, now: datetime | None = None)
                                                        else current) if current is not None else None),
             "resets_at": next_reset(g, viewer, now).isoformat(),
             "filed": mine is not None,
+            "skipped": (g, day) in skips and mine is None,  # sitting it out till reset; filing wins
             "place": my_place,
             "present": len(rows), "players": len(players),
             "filed_by": sorted(nick[r.person_id] for r in rows),
@@ -152,6 +154,21 @@ def today(s: Session, board: Board, viewer: Person, now: datetime | None = None)
         i["board_month"] = month.get(i["game"], 0)
     items.sort(key=lambda i: (i["filed"], -i["results"], i["resets_at"]))
     return {"now": now.isoformat(), "items": items}
+
+
+def skip(s: Session, viewer: Person, game_id: str, on: bool, now: datetime | None = None) -> None:
+    """Sits a game out until it resets, or brings it back. Today's puzzle only: the skip
+    is kept against the game day, so tomorrow's agenda has the game again."""
+    if game_id not in REGISTRY:
+        fail(404, "no such game")
+    day = game_day(game_id, viewer, now or utcnow())
+    row = s.get(Skip, (viewer.id, game_id, day))
+    if on and row is None:
+        s.add(Skip(person_id=viewer.id, game_id=game_id, day=day))
+    elif not on and row is not None:
+        s.delete(row)
+    # yesterday's skips have run out; nothing reads them
+    s.execute(Skip.__table__.delete().where(Skip.person_id == viewer.id, Skip.day < day - timedelta(days=2)))
 
 
 def minutes(s: Session, board: Board, viewer: Person, game_id: str, day: date | None,

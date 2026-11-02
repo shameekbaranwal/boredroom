@@ -16,7 +16,7 @@ export type Row = {
 }
 export type Item = {
   game: string; name: string; ranked: boolean; links: string[]; play: string | null; day: string; puzzle: string | null
-  resets_at: string; filed: boolean; place: string; present: number; players: number; filed_by: string[]
+  resets_at: string; filed: boolean; skipped: boolean; place: string; present: number; players: number; filed_by: string[]
   leader: { nickname: string | null; tied: number; metrics: Record<string, number> } | null
   mine: Row | null; tenure: { days: number; at_risk: boolean }
   results: number; board_month: number  // filed by you ever; by the board in the last 30 days
@@ -127,6 +127,7 @@ export const api = {
   review: (slug: string, q: ReviewQuery) => call<Review>('GET', `/boards/${encodeURIComponent(slug)}/review?${new URLSearchParams(
     Object.entries(q).filter(([, v]) => v) as [string, string][])}`),
   today: (slug: string) => call<Today>('GET', `/boards/${encodeURIComponent(slug)}/today`),
+  skip: (slug: string, game: string, on: boolean) => call<Today>(on ? 'PUT' : 'DELETE', `/boards/${encodeURIComponent(slug)}/skips/${encodeURIComponent(game)}`),
   minutes: (slug: string, game: string, day?: string) =>
     call<Minutes>('GET', `/boards/${encodeURIComponent(slug)}/minutes/${encodeURIComponent(game)}${day ? `?day=${encodeURIComponent(day)}` : ''}`),
   meeting: (slug: string, day?: string) => call<Meeting>('GET', `/boards/${encodeURIComponent(slug)}/meeting${day ? `?day=${encodeURIComponent(day)}` : ''}`),

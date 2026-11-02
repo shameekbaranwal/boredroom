@@ -127,3 +127,30 @@ def test_every_response_carries_security_headers(seat):
     r = a.get("/me")
     assert r.headers["X-Content-Type-Options"] == "nosniff" and r.headers["X-Frame-Options"] == "DENY"
     assert r.headers["Cache-Control"] == "no-store"
+
+
+def test_a_skip_lasts_until_the_reset_and_undoes(db, seat):
+    a, b, c = board_of(seat)
+    a.post("/boards", {"name": "stew"})
+    a.put("/boards/stew/agenda/wiki")
+    skipped = lambda r: {i["game"]: i["skipped"] for i in r.json["items"]}  # noqa: E731
+    assert skipped(a.put("/boards/soup/skips/wiki")) == {"wiki": True, "maptap": False}
+    assert skipped(a.get("/boards/stew/today")) == {"wiki": True}  # sat out on every board
+    assert skipped(b.get("/boards/soup/today")) == {"wiki": False}  # and only by you
+    assert skipped(a.delete("/boards/soup/skips/wiki")) == {"wiki": False, "maptap": False}
+    assert a.put("/boards/soup/skips/nonsense").status_code == 404
+
+    # filing wins over a skip, and the next day brings the game back
+    from boredroom import filing
+    ivan = db.query(Person).filter_by(username="ivan").one()
+    board = db.query(Board).filter_by(slug="soup").one()
+    reads.skip(db, ivan, "maptap", True, now=NOW)
+    reads.skip(db, ivan, "wiki", True, now=NOW)
+    db.commit()
+    assert {i["game"]: i["skipped"] for i in reads.today(db, board, ivan, now=NOW)["items"]} == {"wiki": True, "maptap": True}
+    filing.file_paste(db, ivan, MAPTAP.format(900), now=NOW)
+    db.commit()
+    t = {i["game"]: (i["filed"], i["skipped"]) for i in reads.today(db, board, ivan, now=NOW)["items"]}
+    assert t == {"wiki": (False, True), "maptap": (True, False)}
+    tomorrow = reads.today(db, board, ivan, now=NOW + timedelta(days=1))
+    assert {i["skipped"] for i in tomorrow["items"]} == {False}

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, type Board, type Filing, type Item, type Memo, type Minutes, type Today } from '../api'
 import { headline, left } from '../format'
 import { go } from '../router'
-import { Av, Clip, Fx, FxQuery, Ghost, Header, Nav, Tile, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
+import { Av, Clip, Fx, FxQuery, Ghost, Header, Nav, Overlay, Tile, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
 import Boards from './Boards'
 import { InstallMemo } from '../install'
 import { playLink } from '../opens'
@@ -23,7 +23,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   const [board, setBoard] = useState<Board | null>(null)
   const [err, setErr] = useState('')
   const [picker, setPicker] = useState(false)
-  const [pickTab, setTab] = useState<'open' | 'filed' | null>(null)
+  const [pickTab, setTab] = useState<'open' | 'filed' | 'skipped' | null>(null)
   const [all, setAll] = useState(false)
   // your account's order (see sort.ts); a pick shows at once and holds until the account has it
   const [picked, setPicked] = useState<Sort | null>(null)
@@ -36,6 +36,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   }
   const [fresh, setFresh] = useState<Set<string>>(new Set())  // just filed: the rows flash once
   const [peek, setPeek] = useState<string | null>(null)  // the row opened in place
+  const [asked, setAsked] = useState<Item | null>(null)  // a skipped game, tapped: what now?
   const [away, setAwayState] = useState<Away | null>(readAway)
   const [back, setBack] = useState(() => !!readAway())  // came back from playing: the pasteboard asks for the result
   const now = useNow()
@@ -82,11 +83,21 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   )
 
   const items = sorted(today.items, sort)
-  const open = items.filter(i => !i.filed), filed = items.filter(i => i.filed)
-  const tab = pickTab ?? (open.length || !filed.length ? 'open' : 'filed')
+  const open = items.filter(i => !i.filed && !i.skipped), filed = items.filter(i => i.filed), skipped = items.filter(i => i.skipped)
+  const tab = pickTab === 'skipped' && !skipped.length ? 'open' : pickTab ?? (open.length || !filed.length ? 'open' : 'filed')
   const extra = board.library.filter(g => !board.you.agenda.includes(g.game)).length
   const placeholders = board.members.filter(m => m.kind === 'placeholder')
   const toggle = (g: string) => setPeek(p => (p === g ? null : g))
+  // sitting a game out: off the to-do list until it resets, on every board; undo puts it back
+  const skip = async (i: Item, on: boolean) => {
+    setPeek(null)
+    setToday(t => t && { ...t, items: t.items.map(x => x.game === i.game ? { ...x, skipped: on } : x) })
+    try {
+      setToday(await api.skip(slug, i.game, on))
+      if (on) toast(`skipped ${i.name} till it resets.`, { label: 'undo', run: () => skip(i, false) })
+      else toast(`${i.name} is back on the agenda.`)
+    } catch (e) { load(); toast((e as Error).message) }
+  }
 
   return (
     <div className="app">
@@ -104,14 +115,18 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
           <div className="tabs" role="tablist" aria-label="today">
             <button role="tab" aria-selected={tab === 'open'} className={tab === 'open' ? 'on' : ''} onClick={() => setTab('open')}>to do <b>{open.length}</b></button>
             <button role="tab" aria-selected={tab === 'filed'} className={tab === 'filed' ? 'on' : ''} onClick={() => setTab('filed')}>filed <b>{filed.length}</b></button>
+            {skipped.length > 0 && <button role="tab" aria-selected={tab === 'skipped'} className={tab === 'skipped' ? 'on' : ''} onClick={() => setTab('skipped')}>skipped <b>{skipped.length}</b></button>}
             <button className="tab-lib" onClick={() => go(`/b/${slug}/you#games`)}>{extra ? `${extra} more on ${board.name} →` : 'your agenda →'}</button>
           </div>
         )}
         {tab === 'open' && <>
-          {open.length === 0 && today.items.length > 0 && <div className="sub wrap">all {filed.length} filed. the board thanks you.</div>}
+          {open.length === 0 && today.items.length > 0 && <div className="sub wrap">
+            {skipped.length ? <>nothing left to do: {filed.length} filed, {skipped.length} skipped till reset.</> : <>all {filed.length} filed. the board thanks you.</>}
+          </div>}
           {(all || open.length <= TODO + 1 ? open : open.slice(0, TODO)).map(i => <OpenRow key={i.game} i={i} slug={slug} now={now} lit={fresh.has(i.game)}
             open={peek === i.game} onToggle={() => toggle(i.game)}
-            playing={away?.game === i.game} onPlay={() => setAway({ game: i.game, name: i.name, at: Date.now() })} by={sort.by} />)}
+            playing={away?.game === i.game} onPlay={() => setAway({ game: i.game, name: i.name, at: Date.now() })} by={sort.by}
+            onSkip={() => skip(i, true)} />)}
           {!all && open.length > TODO + 1 && <button className="more" onClick={() => setAll(true)}>{open.length - TODO} more to do ↓</button>}
         </>}
         {tab === 'filed' && <>
@@ -141,12 +156,33 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
             </div>
           ))}
         </>}
+        {tab === 'skipped' && <>
+          <div className="sub wrap">sat out till each one resets, on all your boards. they come back on their own. tap one to bring it back sooner.</div>
+          {skipped.map(i => (
+            <div key={i.game} className="row">
+              <div className="it skipped" role="button" tabIndex={0} aria-haspopup="dialog"
+                onClick={() => setAsked(i)} onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setAsked(i))}>
+                <Tile game={i.game} name={i.name} />
+                <div className="g">
+                  <div className="nm">{i.name} {i.puzzle && <span className="muted" style={{ fontWeight: 400, fontSize: 13 }}>{i.puzzle}</span>}</div>
+                  <div className="sub">{i.present}/{i.players} present{i.tenure.at_risk && i.tenure.days >= 2 && <span className="tenure">· {i.tenure.days}-day tenure lapses</span>}</div>
+                </div>
+                <div className="pr">
+                  <span className="pill skip">skipped</span>
+                  <span className="rs">back in {left(i.resets_at, now)}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </>}
         <Memos slug={slug} memos={today.memos} onChange={memos => setToday(t => t && { ...t, memos })} />
         {today.items.length === 0 && <div className="sub wrap">nothing on your agenda yet. pick your games, or just paste a result: its game joins your agenda.</div>}
         {today.items.length === 0 && <button className="more" onClick={() => go(`/b/${slug}/you#games`)}>{extra ? `${extra} of ${board.name}'s games aren't on your agenda →` : 'your agenda →'}</button>}
       </div>
       <Nav slug={slug} on="agenda" />
       {picker && <Boards current={slug} onClose={() => setPicker(false)} />}
+      {asked && <Skipped i={asked} now={now} onClose={() => setAsked(null)}
+        onBack={() => { setAsked(null); skip(asked, false) }} onPlay={() => setAway({ game: asked.game, name: asked.name, at: Date.now() })} />}
     </div>
   )
 }
@@ -187,8 +223,27 @@ function By({ i, by }: { i: Item; by: SortBy }) {
   return t ? <span className="by"> · {t}</span> : null
 }
 
-function OpenRow({ i, slug, now, lit, open, onToggle, playing, onPlay, by }:
-  { i: Item; slug: string; now: number; lit: boolean; open: boolean; onToggle: () => void; playing: boolean; onPlay: () => void; by: SortBy }) {
+/** A skipped game, tapped: when it comes back, and the ways to have it sooner. */
+function Skipped({ i, now, onClose, onBack, onPlay }: { i: Item; now: number; onClose: () => void; onBack: () => void; onPlay: () => void }) {
+  const link = i.play ? playLink(i.play) : null
+  return (
+    <Overlay title={`${i.name} is skipped`} onClose={onClose}>
+      <div className="skip-m">
+        <p>it's off your agenda on every board until it resets, in <b>{left(i.resets_at, now)}</b>. then it's back as usual. nothing for you to do.</p>
+        {i.tenure.at_risk && i.tenure.days >= 2 && <p className="risk-l">skipping doesn't hold your {i.tenure.days}-day tenure. it lapses at reset unless you file.</p>}
+        <p className="sub">changed your mind? put it back, or just play it: filing a result ends the skip.</p>
+        <div className="row-a">
+          <button className="btn" onClick={onBack}>put it back on the agenda</button>
+          {link && <a className="btn ghost" href={link.href} target={link.newTab ? '_blank' : undefined} rel="noreferrer" onClick={onPlay}>play it anyway ↗</a>}
+          <button className="lnk" onClick={onClose}>leave it skipped</button>
+        </div>
+      </div>
+    </Overlay>
+  )
+}
+
+function OpenRow({ i, slug, now, lit, open, onToggle, playing, onPlay, by, onSkip }:
+  { i: Item; slug: string; now: number; lit: boolean; open: boolean; onToggle: () => void; playing: boolean; onPlay: () => void; by: SortBy; onSkip: () => void }) {
   const { games } = useApp()
   const url = playUrl(i)
   const link = url ? playLink(url) : null
@@ -223,13 +278,13 @@ function OpenRow({ i, slug, now, lit, open, onToggle, playing, onPlay, by }:
           <span className={`rs${urg ? ' urg' : ''}`}>{left(i.resets_at, now)} left</span>
         </div>
       </div>
-      {open && <Peek slug={slug} i={i} />}
+      {open && <Peek slug={slug} i={i} onSkip={onSkip} />}
     </div>
   )
 }
 
 /** A row opened in place: today's standings at a glance, without leaving the agenda. */
-function Peek({ slug, i }: { slug: string; i: Item }) {
+function Peek({ slug, i, onSkip }: { slug: string; i: Item; onSkip?: () => void }) {
   const { games } = useApp()
   const [m, setM] = useState<Minutes | null>(null)
   const [err, setErr] = useState(false)
@@ -255,6 +310,7 @@ function Peek({ slug, i }: { slug: string; i: Item }) {
       )}
       <div className="peek-f">
         {m && m.not_in.length > 0 && <span className="sub">not in yet: {m.not_in.slice(0, 4).join(', ')}{m.not_in.length > 4 ? ` +${m.not_in.length - 4}` : ''}</span>}
+        {onSkip && <button className="lnk skip-l" onClick={onSkip}>skip till reset</button>}
         <button className="more" onClick={() => go(`/b/${slug}/m/${i.game}`)}>the full minutes →</button>
       </div>
     </div>

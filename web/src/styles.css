@@ -164,6 +164,12 @@ a { color: var(--accent); }
 .peek-r.ghost span { height: 10px; background: var(--line); border-radius: 2px; }
 .peek-f { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .peek-f .more { width: auto; margin-left: auto; font-size: 13px; }
+.peek-f .skip-l { font-size: 13px; }
+.it.skipped .nm, .it.skipped .ic { opacity: .6; }
+.skip-m a.btn { text-decoration: none; }
+.pill.skip { background: var(--line); color: var(--muted); }
+.skip-m { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.skip-m p { margin: 0; line-height: 1.45; }
 
 /* back from playing: the paste box asks for that game, one slim line under it */
 .pb.ask svg { color: var(--todo-ink); }

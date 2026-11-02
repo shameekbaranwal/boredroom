@@ -287,6 +287,25 @@ def board_today(slug):
     return jsonify(out)
 
 
+@api.put("/boards/<slug>/skips/<game>")
+@auth_required
+def skip_game(slug, game):
+    """Sits a game out until it resets, on every board. DELETE brings it back."""
+    board, _ = boards.get_board(g.db, slug, g.person)
+    reads.skip(g.db, g.person, game, True, clock())
+    g.db.commit()
+    return jsonify(reads.today(g.db, board, g.person, clock()) | {"memos": memos.agenda(g.db, board, g.person, clock())})
+
+
+@api.delete("/boards/<slug>/skips/<game>")
+@auth_required
+def unskip_game(slug, game):
+    board, _ = boards.get_board(g.db, slug, g.person)
+    reads.skip(g.db, g.person, game, False, clock())
+    g.db.commit()
+    return jsonify(reads.today(g.db, board, g.person, clock()) | {"memos": memos.agenda(g.db, board, g.person, clock())})
+
+
 @api.get("/boards/<slug>/meeting")
 @auth_required
 def board_meeting(slug):

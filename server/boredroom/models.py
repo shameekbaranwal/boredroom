@@ -220,3 +220,14 @@ class MemoDismissal(Base):
     person_id: Mapped[int] = mapped_column(ForeignKey("person.id", ondelete="CASCADE"), primary_key=True)
     memo_id: Mapped[int] = mapped_column(ForeignKey("memo.id", ondelete="CASCADE"), primary_key=True)
     dismissed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Skip(Base):
+    """A game someone is sitting out today: off their agenda, on every board, until it resets.
+    `day` is the game day it was skipped on, so the skip ends by itself when the day turns."""
+    __tablename__ = "skip"
+
+    person_id: Mapped[int] = mapped_column(ForeignKey("person.id", ondelete="CASCADE"), primary_key=True)
+    game_id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    day: Mapped[date] = mapped_column(Date, primary_key=True)
+    skipped_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
