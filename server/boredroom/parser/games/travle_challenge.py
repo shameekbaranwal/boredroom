@@ -14,6 +14,7 @@ class TravleChallenge(Game):
     reset = Reset(weekday=0)
     metrics = (Metric("over", "count", "low"),)  # guesses over the shortest route
     ranker = ("over",)
+    glossary = {"perfect": "the shortest route, not one country over"}
 
     def extract(self, b, r, ctx):
         m = b.find(r"#travle_challenge #(\d+) \+(\d+)(?: \((Perfect)\))?(?: \((\d+) hints?\))?")
