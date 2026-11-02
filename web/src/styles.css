@@ -127,6 +127,8 @@ a { color: var(--accent); }
 .pill.done { background: var(--ok); color: var(--ok-ink); }
 .pill.todo { background: var(--todo); color: var(--todo-ink); cursor: pointer; text-decoration: none; }
 .rs { font: 11px var(--f-num); color: var(--muted); white-space: nowrap; }
+.pr-a { display: flex; gap: 10px; align-items: baseline; }
+.pr-a .lnk { font-size: 12px; white-space: nowrap; }
 /* play: a cell-like button whose underline is the day left; it drains toward reset */
 .play { --left: 1; position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 7px;
   font: 700 13px var(--f-num); color: var(--todo-ink); background: var(--todo); text-decoration: none; white-space: nowrap;

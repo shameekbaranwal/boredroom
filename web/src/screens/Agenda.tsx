@@ -155,7 +155,10 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
               <div className="pr">
                 <span className="pill done">{i.ranked && i.place ? `#${i.place}` : '✓'}</span>
                 <span className="rs">resets in {left(i.resets_at, now)}</span>
-                {i.mine?.forward && <button className="lnk" style={{ fontSize: 12 }} onClick={e => { e.stopPropagation(); sendOn(i.mine!.forward!, toast) }}>send on</button>}
+                <span className="pr-a">
+                  {i.mine?.forward && <button className="lnk" onClick={e => { e.stopPropagation(); sendOn(i.mine!.forward!, toast) }}>send on</button>}
+                  {i.play && <SiteLink i={i} />}
+                </span>
               </div>
             </div>
             {peek === i.game && <Peek slug={slug} i={i} />}
@@ -208,6 +211,15 @@ function By({ i, by }: { i: Item; by: SortBy }) {
     : by === 'popular' ? (i.board_month ? `${i.board_month} this month` : 'quiet this month')
       : by === 'tenure' && i.tenure.days >= 2 && !i.filed && !i.tenure.at_risk ? `${i.tenure.days}-${unit(i)} tenure` : null
   return t ? <span className="by"> · {t}</span> : null
+}
+
+/** A filed game's own site, for its archive, stats or tomorrow's teaser. */
+function SiteLink({ i }: { i: Item }) {
+  const link = playLink(i.play!)
+  return (
+    <a className="lnk" href={link.href} target={link.newTab ? '_blank' : undefined} rel="noreferrer"
+      aria-label={`open ${i.name}'s site`} onClick={e => e.stopPropagation()}>site ↗</a>
+  )
 }
 
 /** The skipped games, from their strip: when each comes back, and the ways to have it sooner. */
