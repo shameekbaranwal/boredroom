@@ -85,7 +85,8 @@ def client_config():
 @api.post("/auth/google")
 def google_sign_in():
     """{credential: <google id token>, tz?}. Signed in as a guest, the seat becomes the
-    account (history kept); otherwise it signs in to, or creates, the google account."""
+    account (history kept), or folds into it if the account already exists; otherwise it
+    signs in to, or creates, the google account."""
     client_id = current_app.config["BOREDROOM"].google_client_id
     if not client_id:
         fail(503, "google sign-in isn't set up on this server")
@@ -100,10 +101,10 @@ def google_sign_in():
     who = verify(credential, client_id)
     row = auth.token_row(g.db, auth.bearer())
     tz = auth.browser_tz(b.get("tz"), current_app.config["BOREDROOM"].default_tz)
-    person, token, created = auth.sign_in_google(
+    person, token, created, merged = auth.sign_in_google(
         g.db, who, tz, row.person if row else None, request.headers.get("User-Agent", "")[:200])
     g.db.commit()
-    return jsonify({"token": token, "created": created, "me": me_json(person)}), 201 if created else 200
+    return jsonify({"token": token, "created": created, "merged": merged, "me": me_json(person)}), 201 if created else 200
 
 
 @api.post("/auth/signout")

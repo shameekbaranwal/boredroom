@@ -24,6 +24,10 @@ export function hold(text: string, source: 'paste' | 'share'): Held {
   return h
 }
 export function unhold(id: string) { write(read().filter(x => x.id !== id)) }
+/** The guest seat signed in: what it held goes out as the account. */
+export function reseat(from: string | null, to: string) {
+  if (from) write(read().map(x => x.seat === from.slice(0, 12) ? { ...x, seat: to.slice(0, 12) } : x))
+}
 /** What this seat has waiting, oldest first. */
 export const held = () => mine(read())
 /** A held result, corrected before it goes; emptied, it's dropped. */

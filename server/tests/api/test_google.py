@@ -63,13 +63,40 @@ def test_a_guest_seat_becomes_the_account_with_its_history(app, client, seat):
     assert a.get("/me").json["kind"] == "account"  # the guest token still works
 
 
-def test_an_existing_account_wins_over_the_guest_seat(app, client, seat):
+KRILL = "Krillion #{} 🦐\n{}\n\n🐟🐟🏮🦑🐟🦑🫧"
+
+
+def test_a_guest_folds_into_an_account_that_already_exists(app, client, seat):
     google(app, IVAN)
-    sign_in(client, "good:0")
-    g = seat("drifter")
-    me = sign_in(client, "good:0", token=g.headers["Authorization"][7:]).json["me"]
-    assert me["username"] == "ivan.k"
-    assert g.get("/me").json["kind"] == "guest"
+    acct = {"Authorization": f"Bearer {sign_in(client, 'good:0').json['token']}"}
+    client.post("/api/v1/pastes", json={"text": KRILL.format(107, 300)}, headers=acct)
+    tea = client.post("/api/v1/boards", json={"name": "tea"}, headers=acct).json
+
+    g = seat("drifter")  # on another device, as a guest: chairs soup, joins tea, files two krillions
+    g.post("/boards", {"name": "soup"})
+    g.put("/boards/soup/agenda/krillion")
+    g.post("/boards/join", {"code": tea["invite"]["code"]})
+    g.post("/pastes", {"text": KRILL.format(107, 250)})  # the account already has 107: the account's stays
+    g.post("/pastes", {"text": KRILL.format(106, 280)})
+    r = sign_in(client, "good:0", token=g.headers["Authorization"][7:])
+    assert r.status_code == 200 and r.json["merged"] == {"results": 1, "boards": 1}
+
+    me = r.json["me"]
+    assert (me["username"], sorted(b["slug"] for b in me["boards"])) == ("ivan.k", ["soup", "tea"])
+    after = {"Authorization": f"Bearer {r.json['token']}"}
+    kept = {x["puzzle"]: x["metrics"] for x in client.get("/api/v1/results", headers=after).json}
+    assert kept == {"107": {"score": 300}, "106": {"score": 280}}
+    soup = client.get("/api/v1/boards/soup", headers=after).json
+    assert (soup["you"]["role"], soup["you"]["agenda"]) == ("chair", ["krillion"])  # the chair comes along
+    assert len(client.get("/api/v1/boards/tea", headers=after).json["members"]) == 1  # one seat, not two
+    assert g.get("/me").json["username"] == "ivan.k"  # the guest's own token lands in the account
+
+
+def test_an_account_signs_in_to_another_account_as_itself(app, client):
+    google(app, IVAN, GoogleId("sub-other", "ivan.k@outlook.com", None))
+    first = sign_in(client, "good:0").json["token"]
+    r = sign_in(client, "good:1", token=first)  # only a guest folds in; an account is left alone
+    assert (r.json["me"]["username"], r.json["merged"]) == ("ivan.k2", None)
 
 
 def test_sign_out_revokes_the_token(seat):

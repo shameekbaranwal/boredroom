@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { api, setToken, type Leaving } from '../api'
+import { api, setToken, token, type Leaving } from '../api'
+import { reseat } from '../outbox'
 import { Av, Fx, FxEdit, Header, Nav, goBack, useApp } from '../ui'
 import { setPref, useTheme, type Pref } from '../theme'
 import { GoogleButton } from './SignIn'
@@ -124,7 +125,12 @@ export function GuestNote() {
     <div className="card guest-card">
       <b>you're a guest, as {me.username}, on this device only.</b>
       <small>sign in with google to keep your seat and scores on every device. nothing you've filed is lost.</small>
-      <GoogleButton onToken={t => { setToken(t); refreshMe(); toast('signed in. your guest seat is now your account.') }} onError={m => toast(m)} />
+      <GoogleButton onToken={(t, x) => {
+        reseat(token(), t); setToken(t); refreshMe()
+        const m = x.merged, n = (k: number, w: string) => `${k} ${w}${k === 1 ? '' : 's'}`
+        toast(!m ? 'signed in. your guest seat is now your account.'
+          : `signed in as ${x.me.username}. this seat folded into it${m.results || m.boards ? `: ${[m.results && n(m.results, 'result'), m.boards && n(m.boards, 'board')].filter(Boolean).join(' and ')} came along` : ''}.`)
+      }} onError={m => toast(m)} />
     </div>
   )
 }

@@ -278,3 +278,15 @@ replace them.
 
 "send on" for a spoiler result shows its score on the first line ("[wiki game spoiler]
 6 steps · 3:23 · read more for the route"); only the spoiler waits under "read more".
+
+## 2026-11-03 — A guest signing in to an existing account
+
+A guest who signed in with a google account that already existed used to leave the guest
+seat behind: its results and boards stayed with a seat nobody could reach again, and a
+board it chaired was left with a chair no one could sign in as. Now the guest folds into
+the account (`claims.merge_guest`), the way a claim folds in a placeholder. Unlike a claim
+it's the same person, proven by signing in on the guest's own device, so everything comes
+along, the chair included. Where both filed the same puzzle the account's result stays.
+On a board both were on, the account's seat stays (its nickname) and takes the guest's
+standing: the earlier joining date, and the chair if the guest held it. The guest's
+tokens move too, so its other devices land in the account.

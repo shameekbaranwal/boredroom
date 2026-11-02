@@ -69,6 +69,8 @@ export type MemberResult = { game: string; name: string; weekly: boolean; day: s
   metrics: Record<string, number>; highlights: string[]; late: boolean; place: string; of: number; filed_at: string }
 export type MemberPage = { nickname: string; me: boolean; role: string; joined_at: string; today: string; games: MemberGame[]
   daily: number; strip: number[]; present: number; wins: number; recent: MemberResult[]; memos: Memo[] }
+/** A google sign-in: `merged` says what a guest seat brought into an account that already existed. */
+export type SignedIn = { token: string; created: boolean; merged: { results: number; boards: number } | null; me: Me }
 export type ReviewQuery = { period: Period; game?: string | null; stat?: string | null; vs?: string | null }
 export type Event = {
   kind: 'filed' | 'merged' | 'duplicate' | 'conflict' | 'not_out_yet'
@@ -169,7 +171,7 @@ export const api = {
   me: () => call<Me>('GET', '/me'),
   updateMe: (b: Partial<{ tz: string; username: string; agenda_sort: string | null }>) => call<Me>('PATCH', '/me', b),
   guest: (username?: string) => call<{ token: string; me: Me }>('POST', '/guests', { username, tz: tz() }),
-  google: (credential: string) => call<{ token: string; created: boolean; me: Me }>('POST', '/auth/google', { credential, tz: tz() }),
+  google: (credential: string) => call<SignedIn>('POST', '/auth/google', { credential, tz: tz() }),
   signOut: () => call<{ signed_out: boolean }>('POST', '/auth/signout'),
   username: (name: string) => call<{ username: string; available: boolean; reason: string | null }>('GET', `/usernames/${encodeURIComponent(name)}`),
   closeAccount: (username: string) => call<{ deleted: boolean; boards_closed: string[] }>('DELETE', '/me', { username }),

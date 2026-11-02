@@ -1,6 +1,9 @@
 """Placeholder seats: members imported from a chat export, waiting for the real person to
 claim them (docs/SERVER.md choice 6). Claiming moves the placeholder's history, agendas
-and board seats onto the claimer, then deletes the placeholder."""
+and board seats onto the claimer, then deletes the placeholder.
+
+A guest seat signing in to a google account that already exists folds in the same way
+(`merge_guest`), so the guest's history and boards aren't left behind."""
 from __future__ import annotations
 
 import re
@@ -10,7 +13,8 @@ from sqlalchemy.orm import Session
 
 from . import memos
 from .errors import fail
-from .models import Agenda, Board, GameRequest, Membership, Paste, Person, Result
+from .models import (Agenda, AuthToken, Board, BoardGame, GameRequest, Invite, Membership, MemoDismissal, Paste,
+                     Person, Result, Skip)
 
 
 def placeholder_username(s: Session, name: str) -> str:
@@ -90,6 +94,65 @@ def claim(s: Session, board: Board, claimer: Person, username: str) -> int:
     s.delete(seat)
     s.flush()
     return moved
+
+
+def merge_guest(s: Session, guest: Person, account: Person) -> dict[str, int]:
+    """A guest signing in to a google account that already exists: the guest seat folds
+    into the account and is deleted. It's the same person, proven by signing in on the
+    guest's own device, so unlike a claim everything comes along: results (where both
+    filed the same puzzle, the account's stays, as in a claim), boards with their agendas
+    and nicknames, a chair, skips, dismissed memos, the memos about them, and the guest's
+    tokens, so the guest's other devices land in the account too. Returns what moved."""
+    if guest.kind != "guest" or account.kind != "account" or guest.id == account.id:
+        fail(400, "only a guest seat folds into an account")
+    have = set(s.execute(select(Result.game_id, Result.puzzle_key).where(Result.person_id == account.id)).all())
+    moved = 0
+    for r in s.scalars(select(Result).where(Result.person_id == guest.id)).all():
+        if (r.game_id, r.puzzle_key) in have:
+            s.delete(r)
+        else:
+            r.person_id, moved = account.id, moved + 1
+    for model, col in ((Paste, Paste.person_id), (GameRequest, GameRequest.person_id), (AuthToken, AuthToken.person_id),
+                       (Invite, Invite.created_by), (BoardGame, BoardGame.added_by)):
+        s.execute(update(model).where(col == guest.id).values({col.key: account.id}))
+    for x in s.scalars(select(Skip).where(Skip.person_id == guest.id)).all():
+        if s.get(Skip, (account.id, x.game_id, x.day)) is None:
+            s.add(Skip(person_id=account.id, game_id=x.game_id, day=x.day, skipped_at=x.skipped_at))
+    for x in s.scalars(select(MemoDismissal).where(MemoDismissal.person_id == guest.id)).all():
+        if s.get(MemoDismissal, (account.id, x.memo_id)) is None:
+            s.add(MemoDismissal(person_id=account.id, memo_id=x.memo_id, dismissed_at=x.dismissed_at))
+    s.flush()
+
+    boards = 0
+    for m in s.scalars(select(Membership).where(Membership.person_id == guest.id)).all():
+        b = s.get(Board, m.board_id)
+        own = s.get(Membership, (b.id, account.id))
+        if own is None:  # a board only the guest was on: the account takes the seat as it was
+            s.add(Membership(board_id=b.id, person_id=account.id, nickname=m.nickname, role=m.role,
+                             joined_at=m.joined_at, left_at=m.left_at))
+            boards += 1
+        else:  # both were on it: the account's seat stays, and keeps the guest's standing
+            own.joined_at = min(own.joined_at, m.joined_at)
+            if own.left_at is not None and m.left_at is None:
+                own.left_at = None
+            if m.role == "chair":
+                own.role = "chair"
+        s.flush()
+        if m.left_at is None:
+            for game in s.scalars(select(Agenda.game_id).where(Agenda.board_id == b.id, Agenda.person_id == guest.id)).all():
+                if s.get(Agenda, (b.id, account.id, game)) is None:
+                    s.add(Agenda(board_id=b.id, person_id=account.id, game_id=game))
+        if b.chair_id == guest.id:
+            b.chair_id = account.id
+        claimed = b.settings.get("claimed", {})
+        if guest.id in claimed.values():  # a chat name the guest claimed is the account's now
+            b.settings = {**b.settings, "claimed": {n: account.id if p == guest.id else p for n, p in claimed.items()}}
+        s.delete(m)  # its agenda rows go with it, by cascade
+    memos.move(s, guest.id, account.id)
+    s.flush()
+    s.delete(guest)
+    s.flush()
+    return {"results": moved, "boards": boards}
 
 
 def _copy(row, **changes):

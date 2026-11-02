@@ -1,6 +1,6 @@
 import { useUsernameCheck } from '../username'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { api, setToken, type Invite } from '../api'
+import { api, setToken, type Invite, type SignedIn } from '../api'
 import { TableMark, ThemeToggle, Wordmark } from '../brand'
 import { hue } from '../format'
 import { go } from '../router'
@@ -31,7 +31,7 @@ function loadGsi(): Promise<void> {
  *  Both of Google's styles are drawn up front and the stylesheet shows the one that matches
  *  the page, so a theme change never redraws Google's frames. Signed in as a guest,
  *  signing in turns the seat into the account. */
-export function GoogleButton({ onToken, onError }: { onToken: (t: string) => void; onError: (m: string) => void }) {
+export function GoogleButton({ onToken, onError }: { onToken: (t: string, signed: SignedIn) => void; onError: (m: string) => void }) {
   const el = useRef<HTMLDivElement>(null)
   const [clientId, setClientId] = useState<string | null | undefined>(undefined)
   const box = useRef<HTMLDivElement>(null)
@@ -56,7 +56,7 @@ export function GoogleButton({ onToken, onError }: { onToken: (t: string) => voi
       const gid = window.google.accounts.id
       gid.initialize({
         client_id: clientId,
-        callback: r => api.google(r.credential).then(x => cb.current.onToken(x.token)).catch(e => cb.current.onError(e.message)),
+        callback: r => api.google(r.credential).then(x => cb.current.onToken(x.token, x)).catch(e => cb.current.onError(e.message)),
       })
       // draw the new pair in a fresh layer on top, and drop the old one once google's
       // frames have loaded; clearing first made the button collapse and jump

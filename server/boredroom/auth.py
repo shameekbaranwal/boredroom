@@ -15,6 +15,7 @@ from flask import g, request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from .claims import merge_guest
 from .errors import fail
 from .models import AuthToken, Person, utcnow
 
@@ -163,11 +164,15 @@ def username_for(s: Session, email: str) -> str:
 
 
 def sign_in_google(s: Session, who: GoogleId, tz: str, seat: Person | None,
-                   device: str | None = None) -> tuple[Person, str, bool]:
+                   device: str | None = None) -> tuple[Person, str, bool, dict[str, int] | None]:
     """Finds the account for this google id, or makes one: from the guest seat if one is
-    signed in (keeping its history), else fresh. Returns (person, token, created)."""
+    signed in (keeping its history), else fresh. A guest signing in to an account that
+    already exists folds into it (claims.merge_guest). Returns (person, token, created,
+    what the merge moved, if there was one)."""
     person = s.scalar(select(Person).where(Person.google_sub == who.sub))
-    created = False
+    created, merged = False, None
+    if person is not None and seat is not None and seat.kind == "guest" and seat.id != person.id:
+        merged = merge_guest(s, seat, person)
     if person is None:
         if seat is not None and seat.kind == "guest":
             person = seat
@@ -178,4 +183,4 @@ def sign_in_google(s: Session, who: GoogleId, tz: str, seat: Person | None,
         person.kind, person.google_sub = "account", who.sub
     person.email = who.email
     s.flush()
-    return person, issue_token(s, person, device), created
+    return person, issue_token(s, person, device), created, merged
