@@ -11,9 +11,29 @@ from .core import REGISTRY, Result
 PADDING = "​" * 4000
 
 
+def _score(r: Result) -> str:
+    """The result in a few words, none of them a spoiler: "6 steps · 3:23"."""
+    out = []
+    for m in REGISTRY[r.game].metrics:
+        v = r.metrics.get(m.name)
+        if v is None:
+            continue
+        if m.kind == "duration":
+            out.append(f"{int(v) // 60}:{int(v) % 60:02d}")
+        elif m.kind == "count":
+            out.append(f"{v:g} {m.name[:-1] if v == 1 and m.name.endswith('s') else m.name}")
+        else:
+            out.append(f"{v:g} {m.name}")
+    return " · ".join(out) if r.outcome != "failed" else "failed"
+
+
 def forward_text(r: Result) -> str:
     text = r.raw
-    if any(f.visibility == "spoiler" for f in r.fields):
+    hidden = [f.name for f in r.fields if f.visibility == "spoiler"]
+    if hidden:
+        # the score shows; only the spoiler waits under "read more", so the message never looks empty
         name = REGISTRY[r.game].name
-        return f"[{name} spoiler]\n\n\n{PADDING}{text}"
+        score = _score(r)
+        line = " · ".join(x for x in (score, f"read more for the {hidden[0]}") if x)
+        return f"[{name} spoiler] {line}\n\n\n{PADDING}{text}"
     return text

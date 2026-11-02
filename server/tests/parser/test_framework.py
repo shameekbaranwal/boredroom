@@ -99,7 +99,8 @@ def test_rank_skips_metric_one_side_lacks(p):
 def test_forward_wraps_spoilers(p):
     wiki = one(p("A ➡️ B ⏰ 01:00 🦶2 (A ➡️ C ➡️ B) 🔗 https://www.thewikigamedaily.com"))
     out = forward_text(wiki)
-    assert out.startswith("[wiki game spoiler]") and "​" * 100 in out
+    assert out.startswith("[wiki game spoiler] 2 steps · 1:00 · read more for the route\n") and "​" * 100 in out
+    assert out.endswith("🔗 https://www.thewikigamedaily.com")  # the whole share, after the fold
     assert forward_text(one(p(KRILL.format(score=1)))) == KRILL.format(score=1)
 
 
