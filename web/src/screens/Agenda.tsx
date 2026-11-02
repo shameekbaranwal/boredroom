@@ -11,6 +11,7 @@ import { orderOptions, readSort, sortOptions, sorted, writeSort, type Sort, type
 
 const TODO = 8  // open games shown before "n more"
 const playUrl = (i: Item) => i.play
+const unit = (i: Item) => (i.weekly ? 'week' : 'day')  // a weekly game's tenure counts weeks
 const DAY = 86400000
 const AWAY = 'boredroom.away'  // the game you left to play, so the agenda can greet you when you're back
 type Away = { game: string; name: string; at: number }
@@ -147,7 +148,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
                   {i.mine && headline(games[i.game], i.mine.metrics, i.mine.outcome)}
                   {i.mine?.late && <span className="stamp">filed late</span>}
                   <span>· {i.present}/{i.players} present</span>
-                  {i.tenure.days >= 2 && <span className="tenure">· {i.tenure.days}-day tenure</span>}
+                  {i.tenure.days >= 2 && <span className="tenure">· {i.tenure.days}-{unit(i)} tenure</span>}
                   <By i={i} by={sort.by} />
                 </div>
               </div>
@@ -205,7 +206,7 @@ function tokens(slug: string, boards: { slug: string; name: string }[], sort: So
 function By({ i, by }: { i: Item; by: SortBy }) {
   const t = by === 'mine' ? (i.results ? `${i.results} filed by you` : 'new to you')
     : by === 'popular' ? (i.board_month ? `${i.board_month} this month` : 'quiet this month')
-      : by === 'tenure' && i.tenure.days >= 2 && !i.filed && !i.tenure.at_risk ? `${i.tenure.days}-day tenure` : null
+      : by === 'tenure' && i.tenure.days >= 2 && !i.filed && !i.tenure.at_risk ? `${i.tenure.days}-${unit(i)} tenure` : null
   return t ? <span className="by"> · {t}</span> : null
 }
 
@@ -226,7 +227,7 @@ function Skipped({ items, now, onClose, onBack, onPlay }:
             <div className="g">
               <div className="nm">{i.name}</div>
               <div className="sub">back in {left(i.resets_at, now)}</div>
-              {i.tenure.at_risk && i.tenure.days >= 2 && <div className="risk-l">your {i.tenure.days}-day tenure still lapses at reset</div>}
+              {i.tenure.at_risk && i.tenure.days >= 2 && <div className="risk-l">your {i.tenure.days}-{unit(i)} tenure still lapses at reset</div>}
             </div>
             <div className="row-a">
               {link && <a className="lnk" href={link.href} target={link.newTab ? '_blank' : undefined} rel="noreferrer" onClick={() => onPlay(i)}>play ↗</a>}
@@ -262,12 +263,12 @@ function OpenRow({ i, slug, now, lit, open, onToggle, playing, onPlay, by, onSki
               <By i={i} by={by} />
             </>}
           </div>
-          {i.tenure.at_risk && i.tenure.days >= 2 && <div className="risk-l">your {i.tenure.days}-day tenure lapses at reset</div>}
+          {i.tenure.at_risk && i.tenure.days >= 2 && <div className="risk-l">your {i.tenure.days}-{unit(i)} tenure lapses at reset</div>}
         </div>
         <div className="pr">
           {link
             ? <a className={`play${urg ? ' urg' : ''}${playing ? ' away' : ''}`} href={link.href} target={link.newTab ? '_blank' : undefined} rel="noreferrer"
-                style={{ ['--left' as string]: Math.max(0, Math.min(1, ms / DAY)) }}
+                style={{ ['--left' as string]: Math.max(0, Math.min(1, ms / (i.weekly ? 7 * DAY : DAY))) }}
                 aria-label={`play ${i.name}, ${left(i.resets_at, now)} left`}
                 onClick={e => { e.stopPropagation(); onPlay() }}>
                 <span className="play-i" aria-hidden="true">{playing ? '' : '▶'}</span>{playing ? 'playing' : 'play'}<span className="play-x" aria-hidden="true">↗</span>

@@ -32,15 +32,22 @@ class Metric:
 
 @dataclass(frozen=True)
 class Reset:
-    """When a new puzzle goes live. `tz=None` means the player's own midnight."""
+    """When a new puzzle goes live. `tz=None` means the player's own midnight. A weekly
+    game sets `weekday` (0 is Monday): its puzzle goes live that day and lasts the week."""
     tz: str | None = None
     at: time = time(0, 0)
+    weekday: int | None = None
+
+    @property
+    def every(self) -> int:
+        """Days between two puzzles."""
+        return 1 if self.weekday is None else 7
 
     def game_day(self, now: datetime, member_tz: str) -> date:
-        """The calendar day whose puzzle is current at `now`."""
+        """The day whose puzzle is current at `now`: for a weekly game, the day its week began."""
         local = now.astimezone(ZoneInfo(self.tz or member_tz))
-        shifted = local - timedelta(hours=self.at.hour, minutes=self.at.minute)
-        return shifted.date()
+        day = (local - timedelta(hours=self.at.hour, minutes=self.at.minute)).date()
+        return day if self.weekday is None else day - timedelta(days=(day.weekday() - self.weekday) % 7)
 
 
 @dataclass
@@ -222,6 +229,16 @@ class Game:
         return bool(cls.ranker)
 
     @classmethod
+    def weekly(cls) -> bool:
+        return cls.reset.weekday is not None
+
+    @classmethod
+    def week_of(cls, day: date) -> date:
+        """The game day a date belongs to: itself, or for a weekly game the day its week began."""
+        w = cls.reset.weekday
+        return day if w is None else day - timedelta(days=(day.weekday() - w) % 7)
+
+    @classmethod
     def puzzle_day(cls, puzzle: int | date | str | None) -> date | None:
         """The day a puzzle belongs to. None for page-pair keys (the wiki game),
         whose day is set by the first filing (see the server)."""
@@ -229,7 +246,7 @@ class Game:
             return puzzle
         if cls.key == "number" and cls.anchor and isinstance(puzzle, int):
             n, d = cls.anchor
-            return d + timedelta(days=puzzle - n)
+            return d + timedelta(days=(puzzle - n) * cls.reset.every)
         return None
 
     @classmethod
@@ -239,7 +256,7 @@ class Game:
             return day
         if cls.key == "number" and cls.anchor:
             n, d = cls.anchor
-            return n + (day - d).days
+            return n + (day - d).days // cls.reset.every
         return None
 
 

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api, type Board, type Member } from '../api'
 import { left } from '../format'
 import { go, query, usePath } from '../router'
-import { Av, Fx, FxEdit, Ghost, Header, Nav, Tile, goBack, sendOn, useApp, useFresh, useNow } from '../ui'
+import { Av, Fx, FxEdit, Ghost, Header, Nav, Tile, Weekly, goBack, sendOn, useApp, useFresh, useNow } from '../ui'
 import Boards from './Boards'
 import { CloseAccount, Motion, YourFile, useUsernameEdit } from './Personal'
 
@@ -225,7 +225,7 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
               <div key={g} className={`it game${on ? '' : ' off'}${isLit(g) ? ' lit' : ''}${isStruck(g) ? ' struck' : ''}`}>
                 <Tile game={g} name={name(g)} />
                 <div className="g">
-                  <div className="nm"><span>{name(g)}</span></div>
+                  <div className="nm"><span>{name(g)}</span><Weekly game={g} /></div>
                   <div className="sub">{agenda.players(g, lg.players)} of {b.members.length} play{games[g]?.ranked === false ? ' · for fun' : ''}</div>
                 </div>
                 <Switch on={on} label={`${name(g)} on my agenda`} onFlip={() => flip(g)} />
@@ -390,7 +390,7 @@ function Bylaws({ b, setB }: P) {
       {[...b.library].sort((x, y) => (games[x.game]?.name ?? x.name).localeCompare(games[y.game]?.name ?? y.name)).map(g => (
         <div key={g.game} className="it game sub-art compact">
           <Tile game={g.game} name={games[g.game]?.name ?? g.name} />
-          <div className="g"><div className="nm">{games[g.game]?.name ?? g.name} <small className="muted">{g.players} play{games[g.game]?.ranked === false ? ' · for fun' : ''}</small></div></div>
+          <div className="g"><div className="nm">{games[g.game]?.name ?? g.name}<Weekly game={g.game} /> <small className="muted">{g.players} play{games[g.game]?.ranked === false ? ' · for fun' : ''}</small></div></div>
           {g.removable && <button className="add strike" onClick={() => go(`/b/${b.slug}/you/strike/${encodeURIComponent(g.game)}`)}>take off ›</button>}
         </div>
       ))}
@@ -439,7 +439,7 @@ function AddGame({ b, setB }: P) {
       <div key={g} className={`it game${isLit(g) ? ' lit' : ''}`}>
         <Tile game={g} name={name(g)} />
         <div className="g">
-          <div className="nm">{name(g)}</div>
+          <div className="nm">{name(g)}<Weekly game={g} /></div>
           <div className="sub">{lg ? 'on the board, and on your agenda' : games[g]?.ranked === false ? 'for fun' : 'ranked'}</div>
         </div>
         {lg ? <span className="chip badge">added</span>

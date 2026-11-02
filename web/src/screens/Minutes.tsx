@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type Board, type Minutes as M, type Row } from '../api'
-import { dayLabel, fieldText, headline, isGrid, left, shiftDay } from '../format'
+import { dayLabel, fieldText, headline, isGrid, left, shiftDay, weekLabel } from '../format'
 import { go } from '../router'
 import { Av, FxQuery, Ghost, Header, Nav, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
 
@@ -27,19 +27,21 @@ export default function Minutes({ slug, game, day }: { slug: string; game: strin
   const title = G?.name ?? game
   // =minutes(board, game, puzzle): the game is any on the board, the puzzle any of the last 30 days
   const shown = m?.day ?? day ?? today ?? ''
-  const days = today ? Array.from({ length: 30 }, (_, i) => shiftDay(today, -i)) : []
+  const step = G?.weekly ? 7 : 1  // a weekly game's puzzles are a week apart
+  const when = (d: string) => (today ? (G?.weekly ? weekLabel : dayLabel)(d, today) : d)
+  const days = today ? Array.from({ length: 30 }, (_, i) => shiftDay(today, -i * step)) : []
   if (shown && !days.includes(shown)) days.push(shown)
   const tokens: Token[] = [
     { key: 'board', value: slug, options: me.boards.map(b => [b.slug, b.name]), onPick: s => go(`/b/${s}`) },
     { key: 'game', value: game, options: lib.length ? lib.map(g => [g.game, games[g.game]?.name ?? g.name]) : [[game, title]], onPick: g => go(at(g, shown), true) },
-    { key: 'puzzle', value: shown, options: days.length ? days.map(d => [d, today ? dayLabel(d, today) : d]) : [[shown, shown || '…']], onPick: d => go(at(game, d), true) },
+    { key: 'puzzle', value: shown, options: days.length ? days.map(d => [d, when(d)]) : [[shown, shown || '…']], onPick: d => go(at(game, d), true) },
   ]
   const head = (meta: string) => <><Header title={`${boardName}.xlsx`} meta={meta} back={`/b/${slug}`} /><FxQuery fn="minutes" tokens={tokens} /></>
   if (err) return <div className="app">{head('minutes')}<div className="center err">{err}</div></div>
   if (!m) return <div className="app">{head('minutes')}<Ghost what="the minutes" /><Nav slug={slug} on={null} temp={title} /></div>
 
-  const label = today ? dayLabel(m.day, today) : m.day
-  const prev = shiftDay(m.day, -1), next = shiftDay(m.day, 1)
+  const label = when(m.day)
+  const prev = shiftDay(m.day, -step), next = shiftDay(m.day, step)
   const mine = m.rows.find(r => r.me)
   const lock = m.open ? 'you filed · details are open'
     : nudge ? `file ${title} first. no peeking.`
@@ -50,9 +52,9 @@ export default function Minutes({ slug, game, day }: { slug: string; game: strin
       {head('minutes')}
       <div className="bd">
         <div className="seg">
-          <button onClick={() => go(at(game, prev), true)}>‹ {today ? dayLabel(prev, today) : prev}</button>
+          <button onClick={() => go(at(game, prev), true)}>‹ {when(prev)}</button>
           <button className="on">{label}</button>
-          <button disabled={m.current} onClick={() => go(at(game, next), true)}>{m.current ? '·' : `${today ? dayLabel(next, today) : next} ›`}</button>
+          <button disabled={m.current} onClick={() => go(at(game, next), true)}>{m.current ? '·' : `${when(next)} ›`}</button>
         </div>
         <div className="sub wrap">
           {m.rows.length} of {m.rows.length + m.not_in.length} present
@@ -86,7 +88,7 @@ export default function Minutes({ slug, game, day }: { slug: string; game: strin
           <span className={`who${r.me ? ' me' : ''}`}>
             <span className="rn">{r.place || '·'}</span><Av name={r.nickname} />{r.nickname}
             {r.highlights.map(h => <span key={h} className="chip badge">{h}</span>)}
-            {(r.tenure ?? 0) >= 3 && <span className="chip ten" title={`${r.tenure} days in a row`}>{r.tenure}d</span>}
+            {(r.tenure ?? 0) >= 3 && <span className="chip ten" title={`${r.tenure} ${G?.weekly ? 'weeks' : 'days'} in a row`}>{r.tenure}{G?.weekly ? 'w' : 'd'}</span>}
             {r.late && <span className="stamp">late</span>}
             {r.amended && <span className="stamp">amended</span>}
           </span>

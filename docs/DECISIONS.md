@@ -243,3 +243,23 @@ toast offers undo. Skipped games fold away like a spreadsheet's hidden rows: one
 at the foot of "to do" (the row numbers jump past them), and tapping it lists each with when
 it's back and the ways out: put it back, play it anyway, or leave them be.
 Filing a result wins over a skip. A skip doesn't hold a tenure: it still lapses at reset.
+
+## 2026-11-02 — Weekly games
+
+Some puzzles come out once a week (travle's challenge, every Monday). A game says so with
+`Reset(weekday=0)`; its "game day" is then the day its week began, so everything keyed on a
+game day works unchanged: filed on Wednesday, it shows filed until the reset, then it's on
+"to do" again; a skip lasts the week; its numbers advance one a week. Its tenure counts
+weeks. The library marks it "weekly", and nothing else about choosing it differs.
+
+Reviews: across games, "today" leaves weekly games out (there's no today to them); this
+week, this month and all time count a weekly win like any other. On its own, a weekly game's
+"today" reads "this week", its strip is 30 weeks, and averages qualify after fewer plays.
+
+Memos: the daily rules (daily wins, bull runs, the closing bell, attendance) never see a
+weekly game. It has its own: the week's champion once it closes, with weeks running; a
+standing appointment at 4, 8, 13, 26 and 52 weeks in a row; and a last call on the final
+day when some of the board haven't filed.
+
+Travle challenge #144 is anchored to the week of 2 November 2026 from one paste; if next
+Monday's isn't #145, the anchor moves.

@@ -24,13 +24,11 @@ def game_day(game_id: str, viewer: Person, now: datetime) -> date:
 
 
 def next_reset(game_id: str, viewer: Person, now: datetime) -> datetime:
+    """When the current puzzle closes: the reset after its game day (a week on, for a weekly game)."""
     reset = REGISTRY[game_id].reset
     tz = ZoneInfo(reset.tz or viewer.tz)
-    local = now.astimezone(tz)
-    at = local.replace(hour=reset.at.hour, minute=reset.at.minute, second=0, microsecond=0)
-    if at <= local:
-        at = (at.replace(tzinfo=None) + timedelta(days=1)).replace(tzinfo=tz)
-    return at
+    nxt = game_day(game_id, viewer, now) + timedelta(days=reset.every)
+    return datetime.combine(nxt, reset.at, tz)
 
 
 def _players(s: Session, board: Board, game_id: str) -> list[Membership]:
@@ -49,17 +47,18 @@ def _results(s: Session, game_id: str, day: date, people: list[int]) -> list[Res
         Result.withdrawn_at.is_(None))))
 
 
-def tenure(days: set[date], today: date) -> tuple[int, int, bool]:
+def tenure(days: set[date], today: date, every: int = 1) -> tuple[int, int, bool]:
     """A streak, in the board's words: (current, longest, at risk). Current counts back
-    from `today` if it's filed, else from yesterday, when it's still alive but at risk."""
+    from `today` if it's filed, else from yesterday, when it's still alive but at risk.
+    A weekly game's puzzles are `every=7` days apart, so its streak counts weeks."""
     longest = run = 0
     prev = None
     for d in sorted(days):
-        run = run + 1 if prev is not None and (d - prev).days == 1 else 1
+        run = run + 1 if prev is not None and (d - prev).days == every else 1
         longest, prev = max(longest, run), d
-    end = today if today in days else today - timedelta(days=1)
+    end = today if today in days else today - timedelta(days=every)
     current = 0
-    while end - timedelta(days=current) in days:
+    while end - timedelta(days=current * every) in days:
         current += 1
     return current, longest, current > 0 and today not in days
 
@@ -122,10 +121,10 @@ def today(s: Session, board: Board, viewer: Person, now: datetime | None = None)
         top = [r for p, r in placed if p == 1]
         my_place = next((_place_label(placed, p) for p, r in placed if r is mine), "")
         current = game.current(now, viewer.tz)
-        run, _, risk = tenure(_days(s, g, [viewer.id], day)[viewer.id], day)
+        run, _, risk = tenure(_days(s, g, [viewer.id], day)[viewer.id], day, game.reset.every)
         items.append({
             "tenure": {"days": run, "at_risk": risk},
-            "game": g, "name": game.name, "ranked": game.ranked(), "links": list(game.links),
+            "game": g, "name": game.name, "ranked": game.ranked(), "weekly": game.weekly(), "links": list(game.links),
             "play": game.play_url(),
             "day": day.isoformat(),
             "puzzle": mine.puzzle_key if mine else (str(current.isoformat() if isinstance(current, date)
@@ -176,7 +175,7 @@ def minutes(s: Session, board: Board, viewer: Person, game_id: str, day: date | 
     now = now or utcnow()
     game = REGISTRY[game_id]
     current_day = game_day(game_id, viewer, now)
-    day = day or current_day
+    day = game.week_of(day) if day else current_day
     players = _players(s, board, game_id)
     nick = {m.person_id: m.nickname for m in players}
     rows = _results(s, game_id, day, list(nick))
@@ -187,9 +186,9 @@ def minutes(s: Session, board: Board, viewer: Person, game_id: str, day: date | 
         Result.person_id == viewer.id, Result.game_id == game_id, Result.puzzle_day == day,
         Result.withdrawn_at.is_(None)))
     filed_ids = {r.person_id for r in rows}
-    runs = {p: tenure(ds, day)[0] for p, ds in _days(s, game_id, list(filed_ids), day).items()}
+    runs = {p: tenure(ds, day, game.reset.every)[0] for p, ds in _days(s, game_id, list(filed_ids), day).items()}
     return {
-        "game": game_id, "name": game.name, "ranked": game.ranked(), "day": day.isoformat(),
+        "game": game_id, "name": game.name, "ranked": game.ranked(), "weekly": game.weekly(), "day": day.isoformat(),
         "current": day == current_day,
         "resets_at": next_reset(game_id, viewer, now).isoformat() if day == current_day else None,
         "open": seen is not None,
@@ -204,6 +203,7 @@ STRIP = 30  # days in the "last 30" strip
 # what the standings can be sorted by: across all games, or within one
 STATS = {None: ("wins", "rate", "days", "filed"), "game": ("average", "best", "wins", "played", "tenure", "longest")}
 MIN_PLAYS = {"today": 1, "week": 3, "month": 5, "all": 10}  # to qualify for a ranking by average
+MIN_WEEKS = {"today": 1, "week": 1, "month": 2, "all": 4}  # the same, for a weekly game
 
 
 def _key(game_id: str) -> str | None:
@@ -238,9 +238,14 @@ def review(s: Session, board: Board, viewer: Person, period: str = "today", game
     for a in s.scalars(select(Agenda).where(Agenda.board_id == board.id)):
         if a.person_id in nick:
             agendas.setdefault(a.game_id, set()).add(a.person_id)
-    games = [game] if game else sorted(lib, key=lambda g: REGISTRY[g].name)
+    # a weekly game has no "today": across games it sits today out, and on its own, "today"
+    # is this week's puzzle (a span of one day from its game day, the monday it began)
+    games = [game] if game else sorted((g for g in lib if not (period == "today" and REGISTRY[g].weekly())),
+                                       key=lambda g: REGISTRY[g].name)
+    weekly = bool(game and REGISTRY[game].weekly())
     current = {g: game_day(g, viewer, now) for g in games}
-    back = max(span or 0, STRIP)
+    local = now.astimezone(ZoneInfo(viewer.tz)).date()
+    back = max(span or 0, STRIP * (7 if weekly else 1))  # alone, a weekly game's strip is 30 weeks
     rows: dict[tuple[str, date], list[Result]] = {}  # the period and the strip's 30 days
     for g in games:
         q = select(Result).where(Result.game_id == g, Result.person_id.in_(agendas.get(g, set())),
@@ -250,7 +255,10 @@ def review(s: Session, board: Board, viewer: Person, period: str = "today", game
         for r in s.scalars(q):
             rows.setdefault((g, r.puzzle_day), []).append(r)
     in_period = (lambda g, d: d > current[g] - timedelta(days=span)) if span else (lambda g, d: True)
-    ago = lambda g, d: (current[g] - d).days  # noqa: E731
+    def ago(g: str, d: date) -> int:  # the strip's cell: days back, or weeks for a weekly game alone
+        if weekly:
+            return (current[g] - d).days // 7
+        return (local - d).days if REGISTRY[g].weekly() else (current[g] - d).days
 
     who: dict[int, dict[str, Any]] = {}
     def me_(p: int) -> dict[str, Any]:  # noqa: E306
@@ -297,7 +305,7 @@ def review(s: Session, board: Board, viewer: Person, period: str = "today", game
                 best[g] = (top, day)  # the first to set it keeps a tied record
 
     high = game and REGISTRY[game].metric_def(_key(game)).better == "high"
-    least = MIN_PLAYS[period]
+    least = (MIN_WEEKS if weekly else MIN_PLAYS)[period]
     alltime = _days(s, game, list(nick), current[game]) if game else {}
     standings = []
     for p in nick:
@@ -313,7 +321,7 @@ def review(s: Session, board: Board, viewer: Person, period: str = "today", game
                     "qualified": x["ranked"] >= least and avg is not None}
         row["_best"] = x["best"][0] if game and x["best"] else None
         if game:  # tenure runs over all time, whatever the period
-            row["tenure"], row["longest"], row["at_risk"] = tenure(alltime.get(p, set()), current[game])
+            row["tenure"], row["longest"], row["at_risk"] = tenure(alltime.get(p, set()), current[game], REGISTRY[game].reset.every)
         standings.append(row)
 
     def order(r: dict[str, Any]) -> tuple:
@@ -341,7 +349,7 @@ def review(s: Session, board: Board, viewer: Person, period: str = "today", game
     for r in standings:
         del r["_best"]
 
-    out: dict[str, Any] = {"period": period, "game": game, "stat": stat, "stats": list(stats), "vs": vs,
+    out: dict[str, Any] = {"period": period, "game": game, "weekly": weekly, "stat": stat, "stats": list(stats), "vs": vs,
                            "now": now.isoformat(), "standings": standings,
                            "members": sorted(n for p, n in nick.items() if p != viewer.id),
                            "ranked_games": sorted((g for g in lib if REGISTRY[g].ranked()), key=lambda g: REGISTRY[g].name)}

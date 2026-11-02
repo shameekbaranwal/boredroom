@@ -5,7 +5,7 @@ export type Kind = 'guest' | 'account' | 'placeholder'
 export type BoardRef = { slug: string; name: string; nickname: string; role: string }
 export type Me = { username: string; kind: Kind; tz: string; email: string | null; agenda_sort: string | null; boards: BoardRef[] }
 export type Metric = { name: string; kind: string; better: 'high' | 'low'; max: number | null; unit: string | null }
-export type Game = { id: string; name: string; key: string; ranked: boolean; links: string[]; play: string | null; ranker: string[]; metrics: Metric[] }
+export type Game = { id: string; name: string; key: string; ranked: boolean; weekly: boolean; links: string[]; play: string | null; ranker: string[]; metrics: Metric[] }
 export type Field = { name: string; value: unknown; visibility: 'public' | 'detail' | 'spoiler' }
 
 export type Row = {
@@ -16,7 +16,7 @@ export type Row = {
 }
 export type Item = {
   game: string; name: string; ranked: boolean; links: string[]; play: string | null; day: string; puzzle: string | null
-  resets_at: string; filed: boolean; skipped: boolean; place: string; present: number; players: number; filed_by: string[]
+  resets_at: string; filed: boolean; skipped: boolean; weekly: boolean; place: string; present: number; players: number; filed_by: string[]
   leader: { nickname: string | null; tied: number; metrics: Record<string, number> } | null
   mine: Row | null; tenure: { days: number; at_risk: boolean }
   results: number; board_month: number  // filed by you ever; by the board in the last 30 days
@@ -29,7 +29,7 @@ export type Memo = {
 export type Today = { now: string; items: Item[]; memos: Memo[] }
 export type Meeting = { day: string; today: string; earlier: string | null; memos: Memo[] }
 export type Minutes = {
-  game: string; name: string; ranked: boolean; day: string; current: boolean; resets_at: string | null
+  game: string; name: string; ranked: boolean; weekly: boolean; day: string; current: boolean; resets_at: string | null
   open: boolean; rows: Row[]; not_in: string[]
 }
 export type Member = { nickname: string; username: string; role: string; kind: Kind; games: number; results: number; joined_at: string }
@@ -49,7 +49,7 @@ export type Standing = { nickname: string; me: boolean; wins: number; days: numb
   played?: number; average?: number | null; best?: Record<string, number> | null; qualified?: boolean
   tenure?: number; longest?: number; at_risk?: boolean }
 export type Review = {
-  period: Period; game: string | null; stat: string; stats: string[]; vs: string | null; now: string
+  period: Period; game: string | null; weekly: boolean; stat: string; stats: string[]; vs: string | null; now: string
   standings: Standing[]; members: string[]; ranked_games: string[]; strip: ('' | 'on' | 'ls' | 'lv')[]
   h2h?: { you: number; them: number; level: number }
   min_plays?: number; metric?: string; record?: { nickname: string; me: boolean; metrics: Record<string, number>; day: string } | null

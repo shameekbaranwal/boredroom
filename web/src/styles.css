@@ -203,6 +203,7 @@ a { color: var(--accent); }
 .mv { font: 700 14px var(--f-num); text-align: right; white-space: nowrap; }
 .det { font: 12.5px var(--f-num); color: var(--muted); padding-left: 30px; overflow-wrap: anywhere; }
 .grid { font-size: 13px; line-height: 1.15; white-space: pre; padding-left: 30px; }
+.wk { font: 700 10px var(--f-num); letter-spacing: .04em; text-transform: uppercase; color: var(--accent); border: 1px solid currentColor; border-radius: 3px; padding: 0 4px; margin-left: 6px; vertical-align: 2px; white-space: nowrap; }
 .chip { font: 11.5px var(--f-num); padding: 1px 7px; background: var(--bg); border: 1px solid var(--line); white-space: nowrap; }
 .chip.badge { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
 .chip.seat { border-style: dashed; color: var(--muted); }

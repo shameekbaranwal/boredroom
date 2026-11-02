@@ -35,7 +35,16 @@ export function left(iso: string, now: number): string {
   const ms = new Date(iso).getTime() - now
   if (ms <= 0) return 'now'
   const m = Math.floor(ms / 60000), h = Math.floor(m / 60)
+  if (h >= 48) return `${Math.floor(h / 24)}d ${h % 24}h`  // a weekly game's week
   return h ? `${h}h ${m % 60}m` : `${m}m`
+}
+
+/** A weekly game's puzzle, by the day its week began. */
+export function weekLabel(iso: string, today: string): string {
+  const diff = Math.round((new Date(today + 'T00:00:00').getTime() - new Date(iso + 'T00:00:00').getTime()) / 86400000)
+  if (diff >= 0 && diff < 7) return 'this week'
+  if (diff >= 7 && diff < 14) return 'last week'
+  return `week of ${new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toLowerCase()}`
 }
 
 export function dayLabel(iso: string, today: string): string {

@@ -17,7 +17,7 @@ const SORTS: Record<SortBy, { label: string; orders: [string, string]; up?: bool
   mine: { label: 'my results', orders: ['most first', 'fewest first'], key: i => i.results },
   popular: { label: 'popularity', orders: ['most played first', 'least played first'], key: i => i.board_month },
   busy: { label: 'busy today', orders: ['busiest first', 'quietest first'], key: i => i.present },
-  tenure: { label: 'my tenure', orders: ['longest first', 'shortest first'], key: i => i.tenure.days },
+  tenure: { label: 'my tenure', orders: ['longest first', 'shortest first'], key: i => i.tenure.days * (i.weekly ? 7 : 1) },  // weeks, counted in days
   name: { label: 'a–z', orders: ['a → z', 'z → a'], up: true, key: i => i.name.toLowerCase() },
 }
 

@@ -92,6 +92,13 @@ CASES = {
         "#travle #1406 +0 (Perfect)\n✅✅✅\nhttps://travle.earth",
         dict(metrics={"over": 0}, highlights=["perfect"]),
     )],
+    "travle_challenge": [(
+        "#travle_challenge #144 +1\n🟩🟧✅🟩✅✅\nhttps://travle.earth/challenge",
+        dict(puzzle=144, metrics={"over": 1}, highlights=[]),
+    ), (
+        "#travle_challenge #145 +0 (Perfect)\n✅✅✅\nhttps://travle.earth/challenge",
+        dict(puzzle=145, metrics={"over": 0}, highlights=["perfect"]),
+    )],
     "sdd": [(
         "System Design Daily #1001\n\n🟥🟩🟥🟩🟩\n\nhttps://systemdesigndaily.com/quiz",
         dict(puzzle=1001, metrics={"correct": 3}, comment=""),

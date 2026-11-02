@@ -176,7 +176,7 @@ def close_account():
 
 @api.get("/games")
 def games():
-    return jsonify([{"id": c.id, "name": c.name, "key": c.key, "ranked": c.ranked(),
+    return jsonify([{"id": c.id, "name": c.name, "key": c.key, "ranked": c.ranked(), "weekly": c.weekly(),
                      "links": list(c.links), "play": c.play_url(), "ranker": list(c.ranker),
                      "metrics": [{"name": m.name, "kind": m.kind, "better": m.better, "max": m.max,
                                   "unit": m.unit} for m in c.metrics]}

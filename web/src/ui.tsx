@@ -138,6 +138,12 @@ export function Tile({ game, name }: { game: string; name: string }) {
   return <span className="ic" style={{ ['--h' as string]: hue(game) }}>{name.slice(0, 1)}</span>
 }
 
+/** The library's one mark for a weekly game: a new puzzle a week, not a day. */
+export function Weekly({ game }: { game: string }) {
+  const { games } = useApp()
+  return games[game]?.weekly ? <span className="wk" title="a new puzzle every week">weekly</span> : null
+}
+
 export function Clip() {
   return (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
