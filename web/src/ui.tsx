@@ -3,6 +3,7 @@ import type { Game, Me } from './api'
 import { hue } from './format'
 import { go } from './router'
 import { knock, useNet } from './net'
+import { edit, held, send, unhold } from './outbox'
 import { TableMark, ThemeToggle, Wordmark } from './brand'
 
 export type Ctx = {
@@ -185,6 +186,7 @@ export function Ghost({ what, rows = 5 }: { what: string; rows?: number }) {
 export function NetBar() {
   const n = useNet()
   const el = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(false)
   const on = !!(n.away || n.waiting)
   useEffect(() => {
     const root = document.documentElement
@@ -201,14 +203,46 @@ export function NetBar() {
   const says = [
     n.away === 'offline' ? "you're not connected." : n.away ? "boredroom isn't answering, most likely a quick restart." : null,
     at && `you're looking at your copy from ${at}.`,
-    n.waiting && `${n.waiting} result${n.waiting > 1 ? 's' : ''} held on this phone${n.away ? ", sent once it's back" : ''}.`,
   ].filter(Boolean).join(' ')
-  return (
+  return <>
     <div ref={el} className={`netbar ${n.away ? 'away' : 'busy'}`} role="status">
       <b><span className="dot" aria-hidden="true" />{label}</b>
-      <span className="says">{says}</span>
-      {n.away && <button onClick={knock}>try again</button>}
+      <span className="says">{says}{n.waiting > 0 && <>{says && ' '}<button className="lnk" onClick={() => setOpen(true)}>
+        {n.waiting} result{n.waiting > 1 ? 's' : ''} held on this phone</button>{n.away ? ", sent once it's back." : '.'}</>}</span>
+      {n.away && <button className="go" onClick={knock}>try again</button>}
     </div>
+    {open && <Outbox onClose={() => setOpen(false)} />}
+  </>
+}
+
+/** The results held on this phone: read them, correct one, or drop it before it goes. */
+function Outbox({ onClose }: { onClose: () => void }) {
+  const n = useNet()  // re-renders as the outbox changes
+  const xs = held()
+  const [editing, setEditing] = useState<{ id: string; text: string } | null>(null)
+  useEffect(() => { if (!n.waiting) onClose() }, [n.waiting, onClose])
+  const when = (at: string) => new Date(at).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit', hour12: true })
+  return (
+    <Overlay title={`held on this phone · ${xs.length}`} onClose={onClose}>
+      <div className="held-n">these go to boredroom by themselves once it answers, timed from when you pasted them. nothing's filed until then.</div>
+      {xs.map(x => (
+        <div className="held-r" key={x.id}>
+          <div className="held-h"><small>pasted {when(x.at)}{x.source === 'share' ? ' · shared in' : ''}</small></div>
+          {editing?.id === x.id
+            ? <textarea className="keep" rows={Math.min(8, editing.text.split('\n').length + 1)} value={editing.text} spellCheck={false} autoFocus
+                aria-label="the held result" onChange={e => setEditing({ id: x.id, text: e.target.value })} />
+            : <pre>{x.text}</pre>}
+          <div className="row-a">
+            {editing?.id === x.id
+              ? <><button className="btn" onClick={() => { edit(x.id, editing.text); setEditing(null) }}>save</button>
+                  <button className="lnk" onClick={() => setEditing(null)}>cancel</button></>
+              : <><button className="lnk" onClick={() => setEditing({ id: x.id, text: x.text })}>edit</button>
+                  <button className="lnk" onClick={() => unhold(x.id)}>don't send it</button></>}
+          </div>
+        </div>
+      ))}
+      {!n.away && xs.length > 0 && <div className="held-n"><button className="btn" onClick={() => send()}>send them now</button></div>}
+    </Overlay>
   )
 }
 

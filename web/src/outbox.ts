@@ -24,6 +24,12 @@ export function hold(text: string, source: 'paste' | 'share'): Held {
   return h
 }
 export function unhold(id: string) { write(read().filter(x => x.id !== id)) }
+/** What this seat has waiting, oldest first. */
+export const held = () => mine(read())
+/** A held result, corrected before it goes; emptied, it's dropped. */
+export function edit(id: string, text: string) {
+  write(text.trim() ? read().map(x => x.id === id ? { ...x, text } : x) : read().filter(x => x.id !== id))
+}
 
 /** What sending found: results filed, and any that need a word from you. */
 export type Sent = { filed: number; conflicts: (FilingEvent & { paste_id: number })[]; failed: string[] }

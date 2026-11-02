@@ -257,10 +257,16 @@ body { padding-top: var(--net-h); }
 .netbar .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
 .netbar.away .dot { background: var(--bad); animation: pulse 1.6s ease-in-out infinite; }
 .netbar .says { flex: 1 1 16em; min-width: 0; color: var(--muted); }
-.netbar button { flex: none; margin-left: auto; padding: 5px 12px; border: 1px solid var(--note-b); background: var(--bg); color: var(--ink);
+.netbar .says .lnk { font-size: inherit; color: var(--ink); }
+.netbar .go { flex: none; margin-left: auto; padding: 5px 12px; border: 1px solid var(--note-b); background: var(--bg); color: var(--ink);
   font: inherit; font-weight: 700; cursor: pointer; }
 @keyframes pulse { 50% { opacity: .35; } }
-@media (min-width: 900px) { .netbar { justify-content: center; } .netbar .says { flex: 0 1 auto; } .netbar button { margin-left: 8px; } }
+@media (min-width: 900px) { .netbar { justify-content: center; } .netbar .says { flex: 0 1 auto; } .netbar .go { margin-left: 8px; } }
+.held-n { padding: 10px 14px; color: var(--muted); font-size: 13px; }
+.held-r { display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; border-top: 1px solid var(--line); }
+.held-r small { color: var(--muted); font: 12px var(--f-num); }
+.held-r pre { margin: 0; padding: 8px 10px; background: var(--surface); font: 13px/1.4 var(--f-num); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 10em; overflow-y: auto; }
+.held-r textarea { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--accent); background: var(--bg); color: var(--ink); font: 13px/1.4 var(--f-num); resize: vertical; }
 .trouble { display: flex; flex-direction: column; gap: 10px; align-items: center; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
 
