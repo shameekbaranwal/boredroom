@@ -310,8 +310,10 @@ function Peek({ slug, i, onSkip }: { slug: string; i: Item; onSkip?: () => void 
       )}
       <div className="peek-f">
         {m && m.not_in.length > 0 && <span className="sub">not in yet: {m.not_in.slice(0, 4).join(', ')}{m.not_in.length > 4 ? ` +${m.not_in.length - 4}` : ''}</span>}
-        {onSkip && <button className="lnk skip-l" onClick={onSkip}>skip till reset</button>}
-        <button className="more" onClick={() => go(`/b/${slug}/m/${i.game}`)}>the full minutes →</button>
+        <span className="peek-b">
+          {onSkip && <button className="lnk" onClick={onSkip}>skip till reset</button>}
+          <button className="more" onClick={() => go(`/b/${slug}/m/${i.game}`)}>the full minutes →</button>
+        </span>
       </div>
     </div>
   )
