@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from .core import REGISTRY, Result
 
-PADDING = "​" * 4000
+ZWSP = "​"
+# the share sheet cuts a message at 4096 bytes (utf-8), so the padding fills what's left of that
+LIMIT = 4000
 
 
 def _score(r: Result) -> str:
@@ -35,5 +37,7 @@ def forward_text(r: Result) -> str:
         name = REGISTRY[r.game].name
         score = _score(r)
         line = " · ".join(x for x in (score, f"read more for the {hidden[0]}") if x)
-        return f"[{name} spoiler] {line}\n\n\n{PADDING}{text}"
+        head = f"[{name} spoiler] {line}\n\n\n"
+        room = (LIMIT - len(head.encode()) - len(text.encode())) // len(ZWSP.encode())
+        return f"{head}{ZWSP * max(room, 0)}{text}"
     return text
