@@ -194,16 +194,22 @@ def test_a_pip_goes_to_the_week_s_last_once(db, seat):
     assert not [x for x in seats[3].get("/boards/soup/today").json["memos"] if x["kind"] == "pip"]  # never on the agenda
 
 
-def test_a_highlight_says_how_often_lately(db, seat):
-    (trent, judy), p, b = board(db, seat, "trent", "judy", games=("wordle",))
-    for k in (3, 0):
-        d = OCT30 - timedelta(days=k)
-        file(db, p["judy"], "Connections\nPuzzle #{}\n🟪🟪🟪🟪\n🟦🟦🟦🟦\n🟩🟩🟩🟩\n🟨🟨🟨🟨".format(1237 + (d - OCT30).days), d)
-    trent.put("/boards/soup/agenda/connections")
-    judy.put("/boards/soup/agenda/connections")
-    run(db, b, p["judy"], OCT30)
+def test_highlights_make_one_memo_once_the_puzzle_closes(db, seat):
+    (trent, judy, mallory), p, b = board(db, seat, "trent", "judy", "mallory", games=("connections",))
+    conn = "Connections\nPuzzle #{}\n🟪🟪🟪🟪\n🟦🟦🟦🟦\n🟩🟩🟩🟩\n🟨🟨🟨🟨"
+    yday = OCT30 - timedelta(days=1)
+    file(db, p["mallory"], conn.format(1237 - 3), OCT30 - timedelta(days=3))  # mallory had it three days ago
+    for n in ("trent", "judy", "mallory"):
+        file(db, p[n], conn.format(1237 - 1), yday)
+    got = run(db, b, p["judy"], OCT30)
+    hs = [m for m in got.values() if m.kind == "highlight"]
+    assert len(hs) == 1 and hs[0].day == OCT30
     texts = [m["text"] for m in trent.get("/boards/soup/meeting").json["memos"]]
-    assert any(t.startswith("connections: ") and t.endswith("from judy. that's 2 in a week.") for t in texts), texts
+    # one memo, everyone new to it, what it means; mallory, a regular, isn't news
+    assert "connections: flawless from judy and you." in texts, texts
+    # today's puzzle is still open: nothing about it yet
+    file(db, p["judy"], conn.format(1237), OCT30)
+    assert not any(k.endswith(str(OCT30)) for k in run(db, b, p["judy"], OCT30) if k.startswith("highlight:"))
 
 
 def test_the_agenda_carries_two_at_most(db, seat):

@@ -42,6 +42,7 @@ ATTENDANCE = (5, 10, 20, 30, 50, 100)  # days of perfect attendance worth a memo
 RUNS = (4, 7, 10, 14, 21, 30)  # daily wins in a row worth a memo, then every 10
 BOARD_COUNTS = (500, 1000, 2500, 5000, 10000)  # the board's nth result, then every 5000
 FIXTURES = (4, 8, 13, 26, 52)  # weeks in a row on a weekly game worth a memo, then every 52
+REGROUPED = date(2026, 10, 31)  # from here on, highlights are one memo per game and highlight
 LOW, LOW_A_DAY = 35, 3  # memos this interesting or less: at most three a day, so the small talk can't crowd the meeting
 GLYPH = {"takeover": "▲", "pip": "▼", "record": "♛", "pb": "★", "highlight": "✦", "tenure": "◆",
          "ended": "◇", "photo": "≈", "comeback": "↗", "missed": "✗", "precedent": "§", "run": "⇈",
@@ -201,8 +202,10 @@ def records_and_bests(b: Ledger) -> Iterator[Candidate]:
 
 @rule
 def highlights(b: Ledger) -> Iterator[Candidate]:
-    """What the game itself calls out (flawless, perfect, grade s), and how often lately.
-    The first of its kind on the board, with twenty results before it, is a precedent."""
+    """What the game itself calls out (flawless, under par, grade s). The first of its kind
+    on the board, with twenty results before it, is a precedent, said at once. The rest wait
+    for the puzzle to close, then make one memo per game and highlight naming everyone who
+    got it, leaving out whoever already had it in the week before: news, not a roll call."""
     for g, d in b.live():
         for r in b.by.get((g, d), []):
             h = next((h for h in r.highlights if h != "personal best"), None)  # bests are ours to call
@@ -212,11 +215,21 @@ def highlights(b: Ledger) -> Iterator[Candidate]:
             if len(earlier) >= 20 and not any(h in x.highlights for x in earlier):
                 yield Candidate(f"precedent:{g}:{h}", "precedent", d, [r.person_id], 75, g, r.id,
                                 {"on": d.isoformat(), "h": h})
+    for g, d in b.closed():
+        got: dict[str, list[Result]] = {}
+        for r in b.by.get((g, d), []):
+            h = next((h for h in r.highlights if h != "personal best"), None)  # a result's headline one
+            if h is not None:
+                got.setdefault(h, []).append(r)
+        for h, rs in got.items():
+            news = [r for r in rs if not any(
+                h in x.highlights and d - timedelta(days=WEEK) <= x.puzzle_day < d
+                for x in b.history[g] if x.person_id == r.person_id)]
+            if not news:
                 continue
-            n = sum(1 for x in b.history[g] if x.person_id == r.person_id and h in x.highlights
-                    and d - timedelta(days=WEEK) < x.puzzle_day <= d)
-            yield Candidate(f"highlight:{g}:{r.person_id}:{d}", "highlight", d, [r.person_id],
-                            65 if n > 1 else 50, g, r.id, {"on": d.isoformat(), "h": h, "n": n})
+            yield Candidate(f"highlight:{g}:{h}:{d}", "highlight", d + timedelta(days=1),
+                            sorted(r.person_id for r in news), 50 + 5 * min(len(news) - 1, 2), g,
+                            news[0].id if len(news) == 1 else None, {"on": d.isoformat(), "h": h, "k": len(news)})
 
 
 @rule
@@ -701,8 +714,12 @@ def text(m: Memo, nick: dict[int, str], me: int | None) -> str:
     if k == "pb":
         return f"{n(p)} set a personal best on {game}."
     if k == "highlight":
-        again = f" that's {f['n']} in a week." if f["n"] > 1 else ""
-        return f"{game}: {f['h']} from {n(p)}.{again}"
+        if "k" not in f:  # the old kind, one person's, with how many that week
+            again = f" that's {f['n']} in a week." if f["n"] > 1 else ""
+            return f"{game}: {f['h']} from {n(p)}.{again}"
+        names = sorted((n(x) for x in m.subjects), key=lambda x: (x == "you", x))
+        gloss = REGISTRY[m.game_id].glossary.get(f["h"]) if m.game_id in REGISTRY else None
+        return f"{game}: {f['h']} from {_names(names)}{f', {gloss}' if gloss else ''}."
     if k == "tenure":
         return f"{pos(p)} {f['n']}-day tenure on {game}. the board notes the commitment."
     if k == "ended":
@@ -811,7 +828,7 @@ def _number(m: Memo) -> str:
     f = m.facts
     return {"takeover": lambda: f"{f['wins']}–{f['was']}", "pip": lambda: f"{f['wins']} wins",
             "tenure": lambda: f"{f['n']}d", "ended": lambda: f"{f['n']}d",
-            "highlight": lambda: f"×{f['n']}" if f["n"] > 1 else "", "comeback": lambda: "#1",
+            "highlight": lambda: f"×{f.get('k', f.get('n'))}" if f.get("k", f.get("n", 1)) > 1 else "", "comeback": lambda: "#1",
             "missed": lambda: f"{f['n']}/{f['of']}", "precedent": lambda: "1st", "run": lambda: f"{f['n']} straight",
             "coup": lambda: f"{f['n']}d", "jinx": lambda: f"×{f['n']}", "unanimous": lambda: f"{f['n']}/{f['n']}",
             "sweep": lambda: f"{f['n']}/{f['n']}", "rumour": lambda: f"{f['wins']}–{f['lead']}",
@@ -862,6 +879,8 @@ def _visible(s: Session, board: Board, q) -> tuple[list[Memo], dict[int, str]]:
     for m in rows:
         if m.result_id in gone:
             continue
+        if m.kind == "highlight" and "k" not in m.facts and m.day >= REGROUPED:
+            continue  # one person's highlight, from before they were grouped; the grouped one says it
         if m.kind == "ended" and s.scalar(select(Result.id).where(
                 Result.person_id == m.subjects[0], Result.game_id == m.game_id,
                 Result.puzzle_day == date.fromisoformat(m.facts["gap"]), Result.withdrawn_at.is_(None)).limit(1)):

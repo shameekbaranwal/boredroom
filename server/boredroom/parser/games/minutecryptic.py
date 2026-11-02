@@ -13,6 +13,7 @@ class MinuteCryptic(Game):
         Metric("time", "duration", "low", unit="s", optional=True),
     )
     ranker = ("hints", "time")
+    glossary = {"under par": "fewer hints than the community par", "matched par": "as many hints as the community par"}
 
     def extract(self, b, r, ctx):
         m = b.find(r"Minute Cryptic - (\d{1,2}) ([A-Za-z]+),? (\d{4})")

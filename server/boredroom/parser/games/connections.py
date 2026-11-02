@@ -11,6 +11,7 @@ class Connections(Game):
     links = ("nytimes.com/games/connections",)
     anchor = (1237, date(2026, 10, 30))
     metrics = (Metric("mistakes", "count", "low", max=4),)
+    glossary = {"purple first": "the hardest group first"}
     ranker = ("mistakes",)
 
     COLOURS = "🟨🟩🟦🟪"

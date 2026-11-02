@@ -201,6 +201,8 @@ class Game:
     ranker: ClassVar[tuple[str, ...]] = ()
     # header matched -> drop the block silently (e.g. connections bonus puzzles)
     ignore: ClassVar[bool] = False
+    # what a highlight means, for anyone who doesn't play: {"under par": "fewer hints than the community par"}
+    glossary: ClassVar[dict[str, str]] = {}
     # how far a metric may differ between two pastes of the same play (see merge.py)
     tolerance: ClassVar[dict[str, float]] = {}
 

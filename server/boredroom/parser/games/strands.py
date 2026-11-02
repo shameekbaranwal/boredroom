@@ -14,6 +14,7 @@ class Strands(Game):
         Metric("hints", "count", "low"),
         Metric("spangram", "position", "low"),  # 1 = found it first
     )
+    glossary = {"spangram first": "the theme word before any other"}
     ranker = ("hints", "spangram")
 
     def extract(self, b, r, ctx):

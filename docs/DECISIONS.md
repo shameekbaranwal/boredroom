@@ -263,3 +263,18 @@ day when some of the board haven't filed.
 
 Travle challenge #144 is anchored to the week of 2 November 2026 from one paste; if next
 Monday's isn't #145, the anchor moves.
+
+## 2026-11-02 — Highlights, grouped and explained
+
+A highlight memo used to be one per person per day ("minute cryptic: under par from
+trent. that's 5 in a week."), so one game's regulars could fill the agenda every morning
+with the same line, and nothing said what "under par" meant. Now: once a puzzle closes,
+one memo per game and highlight names everyone who got it, leaving out whoever already had
+it that week (news, not a roll call), and a game may say what its highlight means
+(`glossary`): "minute cryptic: under par from judy and you, fewer hints than the community
+par." A result counts only its headline highlight. A first for the board (a precedent) is
+still said at once. Per-person highlights from 31 October on are hidden; the grouped ones
+replace them.
+
+"send on" for a spoiler result shows its score on the first line ("[wiki game spoiler]
+6 steps · 3:23 · read more for the route"); only the spoiler waits under "read more".
