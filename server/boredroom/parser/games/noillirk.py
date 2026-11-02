@@ -1,6 +1,6 @@
-from datetime import date
+from datetime import date, time
 
-from ..core import Game, Metric
+from ..core import Game, Metric, Reset
 from ..text import number
 
 
@@ -10,6 +10,7 @@ class Noillirk(Game):
     header = r"^Noillirk daily #\d+"
     links = ("playdaily.org/noillirk",)
     anchor = (34, date(2026, 10, 30))
+    reset = Reset("UTC", time(0, 0))  # 05:30 IST, from the chat
     metrics = (Metric("distance", "distance", "high", unit="m"),)  # bigger is better
     ranker = ("distance",)
 
