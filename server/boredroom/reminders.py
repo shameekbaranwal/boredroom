@@ -161,6 +161,7 @@ def digests(s: Session, now: datetime) -> Iterator[tuple[int, list[str], Push]]:
 
 
 NEWS = 45  # a memo this interesting or more can lead the digest
+NOT_NEWS = ("pip", "missed", "quorum")  # never the lead: a dig at someone, or no news at all
 ABOUT_YOU = ("pb", "tenure", "run", "attendance", "milestone", "fixture", "sweep", "earnings", "commendation")
 
 
@@ -195,7 +196,7 @@ def digest(s: Session, m: Membership, now: datetime) -> Push | None:
     today = memos.local_day(person, now)
     rows, nick = memos._visible(s, board, select(Memo).where(Memo.board_id == board.id, Memo.day == today))
     rows.sort(key=lambda x: (-x.interest, x.id))
-    lead = next((x for x in rows if x.interest >= NEWS), None)
+    lead = next((x for x in rows if x.interest >= NEWS and x.kind not in NOT_NEWS), None)
     yours = next((x for x in rows if x is not lead and person.id in x.subjects and x.kind in ABOUT_YOU), None)
     standing = _standing(s, m, now)
     if not (lead or yours or standing):
