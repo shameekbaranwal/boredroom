@@ -242,7 +242,7 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
           {device.usable && mineHere.length > 0 && (
             <div className="cell">
               <span className="k">nudges before reset<small className="muted">{device.p.on
-                ? `${belled} of your ${mineHere.length} ${mineHere.length === 1 ? 'game' : 'games'} here · an hour before it resets, if it's still open`
+                ? `${belled} of your ${mineHere.length} ${mineHere.length === 1 ? 'game' : 'games'} here · an hour before it resets, if it's still open. a game you've skipped stays quiet till its reset`
                 : 'reminders are off on this device'}</small></span>
               <Switch on={allBells} label={`nudge me before every game on my ${b.name} agenda resets`} onFlip={nudgeAll}
                 words={['all', belled ? 'some' : 'none']} />
