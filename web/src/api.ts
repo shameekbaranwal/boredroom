@@ -194,6 +194,7 @@ export const api = {
   renewInvite: (slug: string) => call<Board>('POST', `/boards/${encodeURIComponent(slug)}/invite`),
   nickname: (slug: string, nickname: string) => call<Board>('PATCH', `/boards/${encodeURIComponent(slug)}/me`, { nickname }),
   digest: (slug: string, digest: boolean) => call<Board>('PATCH', `/boards/${encodeURIComponent(slug)}/me`, { digest }),
+  nudges: (slug: string, on: boolean) => call<Board>(on ? 'PUT' : 'DELETE', `/boards/${encodeURIComponent(slug)}/nudges`),
   nudge: (slug: string, game: string, on: boolean) => call<Board>(on ? 'PUT' : 'DELETE', `/boards/${encodeURIComponent(slug)}/agenda/${encodeURIComponent(game)}/nudge`),
   devices: () => call<Devices>('GET', '/me/push'),
   subscribe: (sub: PushSubscriptionJSON) => call<Devices>('PUT', '/me/push', sub),

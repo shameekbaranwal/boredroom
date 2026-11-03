@@ -103,6 +103,8 @@ def test_digest_and_nudge_switches(push_app):
     assert trent.put("/boards/soup/agenda/krillion/nudge").json["you"]["nudges"] == ["krillion"]
     assert trent.put("/boards/soup/agenda/anno/nudge").status_code == 409
     assert trent.delete("/boards/soup/agenda/krillion/nudge").json["you"]["nudges"] == []
+    assert sorted(trent.put("/boards/soup/nudges").json["you"]["nudges"]) == ["krillion", "wordle"]  # all at once
+    assert trent.delete("/boards/soup/nudges").json["you"]["nudges"] == []
     assert trent.patch("/boards/soup/me", {"nickname": "t"}).json["you"]["nickname"] == "t"
 
 
@@ -167,6 +169,19 @@ def test_games_resetting_close_together_share_a_push(push_app, s):
     assert title == "krillion resets in 1h"
     reminders.tick(s, CFG, datetime(2026, 11, 1, 9, 30, tzinfo=IST), fake)
     assert [p.title for _, p in fake.sent] == ["krillion resets in 1h", "anno resets in 1h"]
+
+
+def test_games_resetting_at_once_are_named_in_one_push(push_app, s):
+    (trent,), people = _setup(push_app, s, "trent")
+    trent.put("/boards/soup/nudges")  # every game on the agenda, then one silenced
+    for gm in ("metazooa", "noillirk", "fermi"):  # metazooa and noillirk go at utc midnight, 05:30 ist
+        trent.put(f"/boards/soup/agenda/{gm}")
+        trent.put(f"/boards/soup/agenda/{gm}/nudge")
+    trent.delete("/boards/soup/agenda/fermi/nudge")
+    fake = Fake()
+    reminders.tick(s, CFG, datetime(2026, 11, 1, 4, 31, tzinfo=IST), fake)
+    assert [(p.title, p.body) for _, p in fake.sent] == [
+        ("metazooa and noillirk reset in 59m", "none filed yet. the meeting started without you.")]
 
 
 def test_tenure_at_risk_is_mentioned(push_app, s):

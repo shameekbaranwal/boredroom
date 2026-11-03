@@ -572,6 +572,25 @@ def nudge_on(slug, game):
     return jsonify(boards.board_json(g.db, b, m))
 
 
+@api.put("/boards/<slug>/nudges")
+@auth_required
+def nudges_on(slug):
+    """Every game on your agenda here nudges before it resets."""
+    b, m = boards.get_board(g.db, slug, g.person)
+    boards.set_nudges(g.db, b, g.person, True)
+    g.db.commit()
+    return jsonify(boards.board_json(g.db, b, m))
+
+
+@api.delete("/boards/<slug>/nudges")
+@auth_required
+def nudges_off(slug):
+    b, m = boards.get_board(g.db, slug, g.person)
+    boards.set_nudges(g.db, b, g.person, False)
+    g.db.commit()
+    return jsonify(boards.board_json(g.db, b, m))
+
+
 @api.delete("/boards/<slug>/agenda/<game>/nudge")
 @auth_required
 def nudge_off(slug, game):

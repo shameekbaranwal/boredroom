@@ -159,6 +159,12 @@ def set_nudge(s: Session, board: Board, person: Person, game_id: str, on: bool) 
     row.nudge = on
 
 
+def set_nudges(s: Session, board: Board, person: Person, on: bool) -> None:
+    """Every game on your agenda here nudges, or none does."""
+    for row in s.scalars(select(Agenda).where(Agenda.board_id == board.id, Agenda.person_id == person.id)):
+        row.nudge = on
+
+
 def agenda_of(s: Session, board: Board, person: Person) -> list[str]:
     return list(s.scalars(select(Agenda.game_id).where(
         Agenda.board_id == board.id, Agenda.person_id == person.id).order_by(Agenda.game_id)))

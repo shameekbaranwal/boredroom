@@ -25,7 +25,7 @@ class Config:
     vapid_public_key: str | None = os.environ.get("BOREDROOM_VAPID_PUBLIC_KEY") or None
     vapid_private_key: str | None = os.environ.get("BOREDROOM_VAPID_PRIVATE_KEY") or None
     contact_email: str | None = os.environ.get("BOREDROOM_CONTACT_EMAIL") or None
-    # the minute-by-minute reminder scheduler; on in the image, off in tests and dev
+    # the reminder scheduler (every half hour); on in the image, off in tests and dev
     scheduler: bool = os.environ.get("BOREDROOM_SCHEDULER", "off") == "on"
 
     @property

@@ -33,6 +33,7 @@ from .push import Push, Sender, deliver, webpush_sender
 
 log = logging.getLogger(__name__)
 
+EVERY = timedelta(minutes=30)  # the scheduler's tick
 LEAD = timedelta(minutes=60)  # a nudge goes out this long before the reset
 GROUP = timedelta(minutes=30)  # games resetting this soon after it ride along
 DIGEST_AT = 20  # the evening digest's hour, in your timezone; sent in the hour that follows
@@ -60,6 +61,10 @@ def _mark(s: Session, person_id: int, keys: list[str], status: str) -> None:
 def _left(d: timedelta) -> str:
     m = max(1, round(d.total_seconds() / 60))
     return f"{m}m" if m < 60 else f"{m // 60}h" + (f" {m % 60}m" if m % 60 else "")
+
+
+def _and(xs: list[str]) -> str:
+    return xs[0] if len(xs) == 1 else f"{', '.join(xs[:-1])} and {xs[-1]}"
 
 
 def _filed(s: Session, person_id: int, game_id: str, day) -> bool:
@@ -107,19 +112,30 @@ def reset_nudges(s: Session, now: datetime) -> Iterator[tuple[int, list[str], Pu
         first = min(at for at, g in due if key(g) in new)
         new += _claim(s, pid, "reset", [key(g) for at, g in open_ if first < at <= first + GROUP and at - now > LEAD])
         picked = [(at, g) for at, g in open_ if key(g) in new]
-        names = [REGISTRY[g].name.lower() for _, g in picked]
+        name = lambda g: REGISTRY[g].name.lower()  # noqa: E731
+        risks = []  # tenures that lapse if these resets pass unfiled
+        for _, g in picked:
+            every = REGISTRY[g].reset.every  # a weekly game's tenure counts weeks
+            day = reads.game_day(g, person, now)
+            run, _, risk = reads.tenure(reads._days(s, g, [pid], day)[pid], day, every)
+            if risk and run >= 2:
+                risks.append(f"{run}-{'week' if every == 7 else 'day'}" + ("" if len(picked) == 1 else f" {name(g)}"))
         at, g = picked[0]
         if len(picked) == 1:
-            every = REGISTRY[g].reset.every  # a weekly game's tenure counts weeks
-            run, _, risk = reads.tenure(reads._days(s, g, [pid], reads.game_day(g, person, now))[pid],
-                                        reads.game_day(g, person, now), every)
-            body = (f"your {run}-{'week' if every == 7 else 'day'} tenure lapses at reset." if risk and run >= 2
-                    else "you haven't filed. the board is waiting.")
-            push = Push(f"{names[0]} resets in {_left(at - now)}", body, f"/b/{gs[g]}", tag="reset")
+            title = f"{name(g)} resets in {_left(at - now)}"
+            body = f"your {risks[0]} tenure lapses at reset." if risks else "you haven't filed. the board is waiting."
         else:
-            push = Push(f"{len(picked)} items reset within the hour",
-                        f"{', '.join(names[:-1])} and {names[-1]}. the meeting started without you.",
-                        f"/b/{gs[g]}", tag="reset")
+            # one push for games resetting together: their names up top, each one's time when they differ
+            together = len({a for a, _ in picked}) == 1
+            names = [name(x) for _, x in picked]
+            listed = _and(names)
+            title = (f"{listed} reset in {_left(at - now)}" if together and len(names) <= 3
+                     else f"{len(picked)} games reset {'in ' + _left(at - now) if together else 'within the hour'}")
+            body = ("" if together and len(names) <= 3
+                    else ", ".join(f"{name(x)} in {_left(a - now)}" for a, x in picked) + ". ")
+            body += (f"your {_and(risks)} {'tenure lapses' if len(risks) == 1 else 'tenures lapse'} at reset." if risks
+                     else "none filed yet. the meeting started without you.")
+        push = Push(title, body, f"/b/{gs[g]}", tag="reset")
         yield pid, new, push
 
 
@@ -174,7 +190,7 @@ def digest(s: Session, m: Membership, now: datetime) -> Push | None:
 
 
 def tick(s: Session, cfg: Config, now: datetime | None = None, send: Sender = webpush_sender) -> int:
-    """One minute's work: every push due now. Returns how many went out."""
+    """One tick's work: every push due now. Returns how many went out."""
     now = now or utcnow()
     sent = 0
     for source in (reset_nudges, digests):
@@ -193,15 +209,18 @@ def tick(s: Session, cfg: Config, now: datetime | None = None, send: Sender = we
 
 def healthy(s: Session, now: datetime | None = None) -> bool:
     st = s.get(SchedulerState, "reminders")
-    return st is not None and (now or utcnow()) - st.last_tick < timedelta(minutes=5)
+    return st is not None and (now or utcnow()) - st.last_tick < EVERY + timedelta(minutes=5)
 
 
 def start(engine: Engine, cfg: Config) -> threading.Thread:
-    """The scheduler: a thread in each gunicorn worker, ticking at the top of every minute.
-    Only the worker holding the advisory lock does the work that minute."""
+    """The scheduler: a thread in each gunicorn worker, ticking on the hour and half hour
+    (utc). Resets fall on whole hours in utc or at someone's midnight, which is a quarter-
+    hour boundary anywhere, so a nudge still goes about an hour ahead and every local hour
+    gets a tick for the digest. Only the worker holding the advisory lock does the work."""
     def loop() -> None:
         while True:
-            time.sleep(60 - time.time() % 60 + random.uniform(0.5, 3))
+            step = EVERY.total_seconds()
+            time.sleep(step - time.time() % step + random.uniform(0.5, 3))
             try:
                 with engine.connect() as lock:
                     if not lock.scalar(text("SELECT pg_try_advisory_lock(:k)"), {"k": LOCK}):

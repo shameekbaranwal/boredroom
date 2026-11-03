@@ -191,6 +191,18 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
   // games added since the visit began go at the end, not where your finger is
   const lib = new Map(b.library.map(g => [g.game, g]))
   const ids = [...order.filter(g => lib.has(g)), ...b.library.map(g => g.game).filter(g => !order.includes(g))]
+  // every game on your agenda here nudges, or none: one switch instead of a bell each
+  const mineHere = ids.filter(g => agenda.on(g))
+  const belled = mineHere.filter(g => b.you.nudges.includes(g)).length
+  const allBells = mineHere.length > 0 && belled === mineHere.length
+  const nudgeAll = async () => {
+    const on = !allBells
+    if (on && !(await device.ensure())) return
+    buzz()
+    setB({ ...b, you: { ...b.you, nudges: on ? mineHere : [] } })
+    try { setB(await api.nudges(slug, on)); toast(on ? `every game on your ${b.name} agenda nudges an hour before it resets, if it's still open.` : `no more nudges from ${b.name}.`) }
+    catch (e) { toast((e as Error).message); api.board(slug).then(setB).catch(() => {}) }
+  }
   const flip = (g: string) => {
     buzz()
     const v = agenda.flip(g, name(g))
@@ -227,6 +239,15 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
       {sheet === 'everywhere' && <div className="bd"><YourFile onEditName={user.start} closeTo={`/b/${slug}/you/close`} /></div>}
       {sheet === 'agenda' && <div className="bd">
           <div className="sec" id="games">your agenda <b className={`num${recalc !== null ? ' lit' : ''}`}>{agenda.count(ids)}</b> <span className="sec-n">of {b.name}'s {b.library.length} {b.library.length === 1 ? 'game' : 'games'} · switch on the ones you play</span></div>
+          {device.usable && mineHere.length > 0 && (
+            <div className="cell">
+              <span className="k">nudges before reset<small className="muted">{device.p.on
+                ? `${belled} of your ${mineHere.length} ${mineHere.length === 1 ? 'game' : 'games'} here · an hour before it resets, if it's still open`
+                : 'reminders are off on this device'}</small></span>
+              <Switch on={allBells} label={`nudge me before every game on my ${b.name} agenda resets`} onFlip={nudgeAll}
+                words={['all', belled ? 'some' : 'none']} />
+            </div>
+          )}
           {ids.map(g => {
             const lg = lib.get(g)!, on = agenda.on(g)
             return (
