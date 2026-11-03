@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 
 from . import reads
 from .config import Config
-from .models import (Agenda, Board, Membership, Person, PushLog, PushSubscription, Result, SchedulerState,
+from .models import (Agenda, Board, Membership, Person, PushLog, PushSubscription, Result, SchedulerState, Skip,
                      utcnow)
 from .parser import REGISTRY
 from .push import Push, Sender, deliver, webpush_sender
@@ -67,6 +67,10 @@ def _filed(s: Session, person_id: int, game_id: str, day) -> bool:
                                             Result.puzzle_day == day, Result.withdrawn_at.is_(None)).limit(1)) is not None
 
 
+def _skipped(s: Session, person_id: int, game_id: str, day) -> bool:
+    return s.get(Skip, (person_id, game_id, day)) is not None
+
+
 def _pushable(s: Session) -> set[int]:
     return set(s.scalars(select(PushSubscription.person_id).distinct()))
 
@@ -89,7 +93,7 @@ def reset_nudges(s: Session, now: datetime) -> Iterator[tuple[int, list[str], Pu
         open_: list[tuple[datetime, str]] = []
         for g in gs:
             day = reads.game_day(g, person, now)
-            if not _filed(s, pid, g, day):
+            if not _filed(s, pid, g, day) and not _skipped(s, pid, g, day):  # sitting it out: no nudge
                 open_.append((reads.next_reset(g, person, now), g))
         open_.sort()
         due = [(at, g) for at, g in open_ if at - now <= LEAD]
@@ -106,9 +110,11 @@ def reset_nudges(s: Session, now: datetime) -> Iterator[tuple[int, list[str], Pu
         names = [REGISTRY[g].name.lower() for _, g in picked]
         at, g = picked[0]
         if len(picked) == 1:
+            every = REGISTRY[g].reset.every  # a weekly game's tenure counts weeks
             run, _, risk = reads.tenure(reads._days(s, g, [pid], reads.game_day(g, person, now))[pid],
-                                        reads.game_day(g, person, now))
-            body = f"your {run}-day tenure lapses at reset." if risk and run >= 2 else "you haven't filed. the board is waiting."
+                                        reads.game_day(g, person, now), every)
+            body = (f"your {run}-{'week' if every == 7 else 'day'} tenure lapses at reset." if risk and run >= 2
+                    else "you haven't filed. the board is waiting.")
             push = Push(f"{names[0]} resets in {_left(at - now)}", body, f"/b/{gs[g]}", tag="reset")
         else:
             push = Push(f"{len(picked)} items reset within the hour",
@@ -140,7 +146,9 @@ def digests(s: Session, now: datetime) -> Iterator[tuple[int, list[str], Push]]:
 
 def digest(s: Session, m: Membership, now: datetime) -> Push | None:
     """One board's evening digest for one member, or None when there's nothing open."""
-    items = reads.today(s, m.board, m.person, now)["items"]
+    # what's open tonight: not a game you're sitting out, nor a weekly one with days to go
+    items = [i for i in reads.today(s, m.board, m.person, now)["items"] if not i["skipped"]
+             and not (i["weekly"] and not i["filed"] and datetime.fromisoformat(i["resets_at"]) - now > timedelta(days=1))]
     open_ = [i for i in items if not i["filed"]]
     if not open_:
         return None

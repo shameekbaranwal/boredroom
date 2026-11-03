@@ -139,6 +139,21 @@ def test_filed_games_and_switched_off_ones_stay_quiet(push_app, s):
     assert reminders.tick(s, CFG, at, fake) == 0
 
 
+def test_a_skipped_game_gets_no_nudge_and_leaves_the_digest(push_app, s):
+    (trent,), _ = _setup(push_app, s, "trent")
+    at = datetime(2026, 11, 1, 8, 45, tzinfo=IST)  # krillion resets at 09:30
+    push_app.config["CLOCK"] = lambda: at  # a skip is for the game day it's made on
+    trent.put("/boards/soup/agenda/krillion/nudge")
+    trent.put("/boards/soup/skips/krillion")
+    fake = Fake()
+    assert reminders.tick(s, CFG, at, fake) == 0
+    evening = datetime(2026, 11, 1, 20, 5, tzinfo=IST)  # skipped again tonight: only wordle is open
+    push_app.config["CLOCK"] = lambda: evening
+    trent.put("/boards/soup/skips/krillion")
+    assert reminders.tick(s, CFG, evening, fake) == 1
+    assert "krillion" not in fake.sent[0][1].body and "wordle" in fake.sent[0][1].body
+
+
 def test_games_resetting_close_together_share_a_push(push_app, s):
     (trent,), people = _setup(push_app, s, "trent")
     for gm in ("krillion", "anno"):  # 09:30 and 10:30 ist

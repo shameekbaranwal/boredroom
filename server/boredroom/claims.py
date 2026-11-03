@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from . import memos
 from .errors import fail
 from .models import (Agenda, AuthToken, Board, BoardGame, Feedback, GameRequest, Invite, Membership, MemoDismissal,
-                     Paste, Person, Result, Skip)
+                     Paste, Person, PushLog, PushSubscription, Result, Skip)
 
 
 def placeholder_username(s: Session, name: str) -> str:
@@ -102,7 +102,8 @@ def merge_guest(s: Session, guest: Person, account: Person) -> dict[str, int]:
     guest's own device, so unlike a claim everything comes along: results (where both
     filed the same puzzle, the account's stays, as in a claim), boards with their agendas
     and nicknames, a chair, skips, dismissed memos, the memos about them, and the guest's
-    tokens, so the guest's other devices land in the account too. Returns what moved."""
+    tokens and reminder subscriptions, so the guest's other devices land in the account too.
+    Returns what moved."""
     if guest.kind != "guest" or account.kind != "account" or guest.id == account.id:
         fail(400, "only a guest seat folds into an account")
     have = set(s.execute(select(Result.game_id, Result.puzzle_key).where(Result.person_id == account.id)).all())
@@ -114,11 +115,16 @@ def merge_guest(s: Session, guest: Person, account: Person) -> dict[str, int]:
             r.person_id, moved = account.id, moved + 1
     for model, col in ((Paste, Paste.person_id), (GameRequest, GameRequest.person_id), (AuthToken, AuthToken.person_id),
                        (Feedback, Feedback.person_id),
+                       (PushSubscription, PushSubscription.person_id),
                        (Invite, Invite.created_by), (BoardGame, BoardGame.added_by)):
         s.execute(update(model).where(col == guest.id).values({col.key: account.id}))
     for x in s.scalars(select(Skip).where(Skip.person_id == guest.id)).all():
         if s.get(Skip, (account.id, x.game_id, x.day)) is None:
             s.add(Skip(person_id=account.id, game_id=x.game_id, day=x.day, skipped_at=x.skipped_at))
+    sent = set(s.scalars(select(PushLog.key).where(PushLog.person_id == account.id)))
+    for x in s.scalars(select(PushLog).where(PushLog.person_id == guest.id)).all():  # so nothing's sent twice
+        if x.key not in sent:
+            x.person_id = account.id
     for x in s.scalars(select(MemoDismissal).where(MemoDismissal.person_id == guest.id)).all():
         if s.get(MemoDismissal, (account.id, x.memo_id)) is None:
             s.add(MemoDismissal(person_id=account.id, memo_id=x.memo_id, dismissed_at=x.dismissed_at))
@@ -130,7 +136,7 @@ def merge_guest(s: Session, guest: Person, account: Person) -> dict[str, int]:
         own = s.get(Membership, (b.id, account.id))
         if own is None:  # a board only the guest was on: the account takes the seat as it was
             s.add(Membership(board_id=b.id, person_id=account.id, nickname=m.nickname, role=m.role,
-                             joined_at=m.joined_at, left_at=m.left_at))
+                             joined_at=m.joined_at, left_at=m.left_at, digest=m.digest))
             boards += 1
         else:  # both were on it: the account's seat stays, and keeps the guest's standing
             own.joined_at = min(own.joined_at, m.joined_at)
@@ -140,9 +146,12 @@ def merge_guest(s: Session, guest: Person, account: Person) -> dict[str, int]:
                 own.role = "chair"
         s.flush()
         if m.left_at is None:
-            for game in s.scalars(select(Agenda.game_id).where(Agenda.board_id == b.id, Agenda.person_id == guest.id)).all():
-                if s.get(Agenda, (b.id, account.id, game)) is None:
-                    s.add(Agenda(board_id=b.id, person_id=account.id, game_id=game))
+            for a in s.scalars(select(Agenda).where(Agenda.board_id == b.id, Agenda.person_id == guest.id)).all():
+                own_a = s.get(Agenda, (b.id, account.id, a.game_id))
+                if own_a is None:
+                    s.add(Agenda(board_id=b.id, person_id=account.id, game_id=a.game_id, nudge=a.nudge))
+                elif a.nudge:  # a nudge either seat asked for stays on
+                    own_a.nudge = True
         if b.chair_id == guest.id:
             b.chair_id = account.id
         claimed = b.settings.get("claimed", {})
