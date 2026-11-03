@@ -61,15 +61,15 @@ export function AskMemo() {
   const [gone, setGone] = useState(false)
   if (gone || !shouldAsk(p)) return null
   const yes = async () => {
-    if (await enable()) toast("carried. at 20:00 the board nudges you if anything's still open.")
+    if (await enable()) toast("carried. around 20:00, the board's day in one push.")
     else toast(why({ ...p, perm: Notification.permission }))
     setGone(true)
   }
   return (
     <div className="memo">
       <div className="memo-h"><span>memo</span><span>from: the chair</span><span>re: reminders</span></div>
-      <b>motion to nudge you in the evening if anything's still open.</b>
-      <small>one push at 20:00, only when you have games left. tap a game's bell under you for a nudge an hour before it resets.</small>
+      <b>motion to send you the board's day each evening.</b>
+      <small>one push around 20:00: the big news, where you stand this week, what's left. ring a game's bell under you → agenda for a nudge an hour before it resets.</small>
       <div className="row-a">
         <button className="btn" disabled={p.busy} onClick={yes}>yes, nudge me</button>
         <button className="lnk" onClick={() => { askLater(); setGone(true) }}>not now</button>

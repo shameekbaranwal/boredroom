@@ -8,7 +8,7 @@ from boredroom import filing, reminders
 from boredroom.app import create_app
 from boredroom.config import Config
 from boredroom.db import Base
-from boredroom.models import Person, PushLog, PushSubscription
+from boredroom.models import Board, Memo, Person, PushLog, PushSubscription
 from boredroom.parser import REGISTRY
 
 from .conftest import Seat
@@ -142,7 +142,7 @@ def test_filed_games_and_switched_off_ones_stay_quiet(push_app, s):
 
 
 def test_a_skipped_game_gets_no_nudge_and_leaves_the_digest(push_app, s):
-    (trent,), _ = _setup(push_app, s, "trent")
+    (trent, judy, mallory), people = _setup(push_app, s, "trent", "judy", "mallory")
     at = datetime(2026, 11, 1, 8, 45, tzinfo=IST)  # krillion resets at 09:30
     push_app.config["CLOCK"] = lambda: at  # a skip is for the game day it's made on
     trent.put("/boards/soup/agenda/krillion/nudge")
@@ -152,8 +152,12 @@ def test_a_skipped_game_gets_no_nudge_and_leaves_the_digest(push_app, s):
     evening = datetime(2026, 11, 1, 20, 5, tzinfo=IST)  # skipped again tonight: only wordle is open
     push_app.config["CLOCK"] = lambda: evening
     trent.put("/boards/soup/skips/krillion")
-    assert reminders.tick(s, CFG, evening, fake) == 1
-    assert "krillion" not in fake.sent[0][1].body and "wordle" in fake.sent[0][1].body
+    for n in ("judy", "mallory"):
+        filing.file_paste(s, people[n], krillion(evening), now=evening)
+    s.commit()
+    reminders.tick(s, CFG, evening, fake)
+    body = next(p.body for ep, p in fake.sent if ep.endswith("-trent"))
+    assert body.endswith("1 still open: wordle.")
 
 
 def test_games_resetting_close_together_share_a_push(push_app, s):
@@ -196,28 +200,41 @@ def test_tenure_at_risk_is_mentioned(push_app, s):
     assert fake.sent[0][1].body == "your 2-day tenure lapses at reset."
 
 
-def test_the_evening_digest(push_app, s):
+def test_the_evening_digest_is_the_days_news(push_app, s):
     (trent, judy, mallory), people = _setup(push_app, s, "trent", "judy", "mallory")
     at = datetime(2026, 11, 1, 20, 0, 30, tzinfo=IST)
-    # krillion's 1 nov puzzle runs until 10:30 on the 2nd
+    # krillion's 1 nov puzzle runs until 10:30 on the 2nd: judy beats mallory on it
     filing.file_paste(s, people["judy"], krillion(at), now=at)
-    filing.file_paste(s, people["mallory"], krillion(at), now=at)
+    filing.file_paste(s, people["mallory"], krillion(at).replace("340", "300"), now=at)
     s.commit()
-    judy.patch("/boards/soup/me", {"digest": False})
+    mallory.patch("/boards/soup/me", {"digest": False})
     fake = Fake()
     assert reminders.tick(s, CFG, datetime(2026, 11, 1, 19, 59, tzinfo=IST), fake) == 0
     reminders.tick(s, CFG, at, fake)
     got = {ep.rsplit("-", 1)[1]: p for ep, p in fake.sent}
-    assert set(got) == {"trent", "mallory"}  # judy switched hers off
-    assert got["trent"].title == "soup: the meeting started without you."
-    assert got["trent"].body == "judy and mallory filed 2 between them. open: wordle, krillion. wordle resets in 4h."
-    assert got["mallory"].title == "soup: 1 item still open."
+    assert set(got) == {"trent", "judy"}  # mallory switched hers off
+    assert (got["trent"].title, got["trent"].url) == ("soup · sunday so far", "/b/soup/meeting")
+    assert got["trent"].body == "judy leads the week on 1 win. you're yet to take one. 2 still open: wordle and krillion."
+    assert got["judy"].body == "you hold #1 this week on 1 win, the only one with any. 1 still open: wordle."
     assert reminders.tick(s, CFG, at + timedelta(minutes=5), fake) == 0  # once a day
 
 
-def test_nothing_open_means_no_digest(push_app, s):
-    (trent,), people = _setup(push_app, s, "trent")
-    trent.delete("/boards/soup/agenda/wordle")
+def test_the_days_biggest_memo_leads_the_digest(push_app, s):
+    (trent, judy), people = _setup(push_app, s, "trent", "judy")
+    at = datetime(2026, 11, 1, 20, 0, 30, tzinfo=IST)
+    board = s.scalar(select(Board))
+    s.add(Memo(board_id=board.id, key="sweep:x", kind="sweep", day=at.date(), subjects=[people["judy"].id],
+               facts={"on": "2026-11-01", "n": 4}, interest=80))
+    s.commit()
+    fake = Fake()
+    reminders.tick(s, CFG, at, fake)
+    got = {ep.rsplit("-", 1)[1]: p.body for ep, p in fake.sent}
+    assert got["trent"].startswith("clean sweep: #1 on all 4 of judy's items. the board demands a recount.")
+    assert got["judy"].startswith("clean sweep: #1 on all 4 of your items.")
+
+
+def test_a_quiet_day_means_no_digest(push_app, s):
+    (trent,), people = _setup(push_app, s, "trent")  # alone: no wins to speak of, no news
     at = datetime(2026, 11, 1, 20, 10, tzinfo=IST)
     filing.file_paste(s, people["trent"], krillion(at), now=at)
     s.commit()

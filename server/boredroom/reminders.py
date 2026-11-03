@@ -24,9 +24,9 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from . import reads
+from . import memos, reads
 from .config import Config
-from .models import (Agenda, Board, Membership, Person, PushLog, PushSubscription, Result, SchedulerState, Skip,
+from .models import (Agenda, Board, Membership, Memo, Person, PushLog, PushSubscription, Result, SchedulerState, Skip,
                      utcnow)
 from .parser import REGISTRY
 from .push import Push, Sender, deliver, webpush_sender
@@ -160,33 +160,55 @@ def digests(s: Session, now: datetime) -> Iterator[tuple[int, list[str], Push]]:
         yield person.id, [key], push
 
 
-def digest(s: Session, m: Membership, now: datetime) -> Push | None:
-    """One board's evening digest for one member, or None when there's nothing open."""
-    # what's open tonight: not a game you're sitting out, nor a weekly one with days to go
-    items = [i for i in reads.today(s, m.board, m.person, now)["items"] if not i["skipped"]
-             and not (i["weekly"] and not i["filed"] and datetime.fromisoformat(i["resets_at"]) - now > timedelta(days=1))]
-    open_ = [i for i in items if not i["filed"]]
-    if not open_:
+NEWS = 45  # a memo this interesting or more can lead the digest
+ABOUT_YOU = ("pb", "tenure", "run", "attendance", "milestone", "fixture", "sweep", "earnings", "commendation")
+
+
+def _standing(s: Session, m: Membership, now: datetime) -> str | None:
+    """Where you stand on the week's daily wins: "you're 2nd this week, 1 win behind athr"."""
+    rows = reads.review(s, m.board, m.person, "week", now=now)["standings"]
+    mine = next((r for r in rows if r["me"]), None)
+    top = [r for r in rows if r["place"] == 1]
+    if not top or mine is None:
         return None
-    done = len(items) - len(open_)
-    counts: dict[str, int] = {}
-    for i in items:
-        for n in i["filed_by"]:
-            if n != m.nickname:
-                counts[n] = counts.get(n, 0) + 1
-    names = [i["name"].lower() for i in open_]
-    soon = min(open_, key=lambda i: i["resets_at"])
-    left = datetime.fromisoformat(soon["resets_at"]) - now
-    title = (f"{m.board.name}: the meeting started without you." if done == 0
-             else f"{m.board.name}: {len(open_)} {'item' if len(open_) == 1 else 'items'} still open.")
-    others = sorted(counts, key=lambda n: (-counts[n], n))
-    said = (f"{others[0]} filed {counts[others[0]]}." if len(others) == 1
-            else f"{others[0]} and {others[1]} filed {counts[others[0]] + counts[others[1]]} between them." if len(others) == 2
-            else f"{others[0]}, {others[1]} and {len(others) - 2} more filed {sum(counts.values())}." if others
-            else "no one else has filed either. a quiet floor.")
-    listed = names[0] if len(names) == 1 else f"{', '.join(names[:3])}{' and more' if len(names) > 3 else ''}"
-    body = f"{said} open: {listed}. {soon['name'].lower()} resets in {_left(left)}."
-    return Push(title, body, f"/b/{m.board.slug}", tag=f"digest:{m.board.slug}")
+    win = lambda n: f"{n} win{'' if n == 1 else 's'}"  # noqa: E731
+    if mine["place"] == 1:
+        others = [r for r in top if not r["me"]]
+        if others:
+            return f"you share #1 this week with {_and([r['nickname'] for r in others])}."
+        nxt = next((r for r in rows if not r["me"] and r["wins"]), None)
+        return f"you hold #1 this week, {win(mine['wins'] - nxt['wins'])} clear of {nxt['nickname']}." if nxt \
+            else f"you hold #1 this week on {win(mine['wins'])}, the only one with any."
+    if mine["place"] is None:
+        return f"{top[0]['nickname']} leads the week on {win(top[0]['wins'])}. you're yet to take one."
+    ahead = rows[rows.index(mine) - 1]
+    ordinal = {2: "2nd", 3: "3rd"}.get(mine["place"], f"{mine['place']}th")
+    return f"you're {ordinal} this week, {win(ahead['wins'] - mine['wins'])} behind {ahead['nickname']}."
+
+
+def digest(s: Session, m: Membership, now: datetime) -> Push | None:
+    """One board's evening digest for one member: the day's news, not a to-do list (the
+    reset nudges do that). The biggest memo of the day, where you stand on the week, a line
+    about you if there's one, then what's still open. None on a day with nothing to say."""
+    board, person = m.board, m.person
+    memos.refresh(s, board, person, now)
+    today = memos.local_day(person, now)
+    rows, nick = memos._visible(s, board, select(Memo).where(Memo.board_id == board.id, Memo.day == today))
+    rows.sort(key=lambda x: (-x.interest, x.id))
+    lead = next((x for x in rows if x.interest >= NEWS), None)
+    yours = next((x for x in rows if x is not lead and person.id in x.subjects and x.kind in ABOUT_YOU), None)
+    standing = _standing(s, m, now)
+    if not (lead or yours or standing):
+        return None
+    items = [i for i in reads.today(s, board, person, now)["items"] if not i["skipped"]
+             and not (i["weekly"] and not i["filed"] and datetime.fromisoformat(i["resets_at"]) - now > timedelta(days=1))]
+    open_ = [i["name"].lower() for i in items if not i["filed"]]
+    tail = (f"{len(open_)} still open: {_and(open_[:3]) if len(open_) <= 3 else ', '.join(open_[:3]) + ' and more'}."
+            if open_ else "all filed today." if items else "")
+    line = lambda x: memos.text(x, nick, person.id).rstrip(".") + "."  # noqa: E731
+    body = " ".join(p for p in (lead and line(lead), standing, yours and line(yours), tail) if p)
+    weekday = now.astimezone(ZoneInfo(person.tz)).strftime("%A").lower()
+    return Push(f"{board.name} · {weekday} so far", body, f"/b/{board.slug}/meeting", tag=f"digest:{board.slug}")
 
 
 def tick(s: Session, cfg: Config, now: datetime | None = None, send: Sender = webpush_sender) -> int:

@@ -169,7 +169,7 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
     const on = !b.you.digest
     if (on && !(await device.ensure())) return
     setB({ ...b, you: { ...b.you, digest: on } })
-    try { setB(await api.digest(slug, on)); toast(on ? `the ${b.name} digest is on: 20:00, if anything's open.` : `no evening digest from ${b.name}.`) }
+    try { setB(await api.digest(slug, on)); toast(on ? `the ${b.name} digest is on: its day in one push, around 20:00.` : `no evening digest from ${b.name}.`) }
     catch (e) { toast((e as Error).message) }
   }
 
@@ -284,7 +284,7 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
 
           {device.usable && (
             <div className="cell">
-              <span className="k">evening digest<small className="muted">{device.p.on ? `20:00, what's still open on ${b.name} · the bells nudge before a reset` : 'reminders are off on this device'}</small></span>
+              <span className="k">evening digest<small className="muted">{device.p.on ? `around 20:00, ${b.name}'s day in one push: the big news, where you stand this week, what's left. quiet days stay quiet` : 'reminders are off on this device'}</small></span>
               <Switch on={b.you.digest} label={`evening digest from ${b.name}`} onFlip={digest} words={['on', 'off']} />
             </div>
           )}
