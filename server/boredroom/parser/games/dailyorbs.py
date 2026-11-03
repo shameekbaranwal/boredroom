@@ -12,7 +12,9 @@ class DailyOrbs(Game):
     header = r"^DailyOrbs [A-Za-z]+ \d{1,2},? \d{4}"
     links = ("dailyorbs.com",)
     key = "date"
-    reset = Reset("UTC", time(9, 0))  # about 2:30 pm IST, from the chat
+    # 5 am in new york: 2:30 pm IST in us summer time (the game's own code has the 23 Oct
+    # puzzle at 09:00 utc), 3:30 pm IST once us clocks go back (from 1 Nov)
+    reset = Reset("America/New_York", time(5, 0))
     metrics = (
         Metric("orbs", "count", "high", optional=True),
         Metric("lives_lost", "count", "low", optional=True),

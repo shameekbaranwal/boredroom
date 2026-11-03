@@ -126,7 +126,7 @@ current for them now.
   - krillion: 9:30 (04:00 UTC)
   - anno: 10:30 (05:00 UTC)
   - maptap, pindrop and fermi: 5:30 (00:00 UTC)
-  - dailyorbs: 2:30 pm (09:00 UTC)
+  - dailyorbs: 5 am new york: 2:30 pm IST in us summer time, 3:30 pm in winter
   - NYT games and most others: local midnight
 
   The local-midnight ones matter for the Singapore member: their today flips 2.5 h

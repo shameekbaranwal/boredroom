@@ -72,6 +72,12 @@ def test_reset_is_per_game():
     assert REGISTRY["fermi"].current(datetime(2026, 10, 31, 4, 30, tzinfo=timezone.utc), "Asia/Kolkata") == 97
     # after us daylight time ends (1 Nov) it's 10:30 IST: 10:00 IST on 2 Nov is still 98
     assert REGISTRY["fermi"].current(datetime(2026, 11, 2, 4, 30, tzinfo=timezone.utc), "Asia/Kolkata") == 98
+    # dailyorbs goes at 5 am in new york: 14:30 IST in us summer time, 15:30 after 1 Nov
+    orbs = REGISTRY["orbs"]
+    assert orbs.current(datetime(2026, 10, 23, 8, 59, tzinfo=timezone.utc), "Asia/Kolkata") == date(2026, 10, 22)
+    assert orbs.current(datetime(2026, 10, 23, 9, 1, tzinfo=timezone.utc), "Asia/Kolkata") == date(2026, 10, 23)
+    assert orbs.current(datetime(2026, 11, 3, 9, 30, tzinfo=timezone.utc), "Asia/Kolkata") == date(2026, 11, 2)
+    assert orbs.current(datetime(2026, 11, 3, 10, 1, tzinfo=timezone.utc), "Asia/Kolkata") == date(2026, 11, 3)
     # metazooa goes at utc midnight: 03:00 IST on 31 Oct is still the 30th's (1187)
     assert REGISTRY["metazooa"].current(night, "Asia/Kolkata") == 1187
 
