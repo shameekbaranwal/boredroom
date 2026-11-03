@@ -13,8 +13,8 @@ from sqlalchemy.orm import Session
 
 from . import memos
 from .errors import fail
-from .models import (Agenda, AuthToken, Board, BoardGame, GameRequest, Invite, Membership, MemoDismissal, Paste,
-                     Person, Result, Skip)
+from .models import (Agenda, AuthToken, Board, BoardGame, Feedback, GameRequest, Invite, Membership, MemoDismissal,
+                     Paste, Person, Result, Skip)
 
 
 def placeholder_username(s: Session, name: str) -> str:
@@ -113,6 +113,7 @@ def merge_guest(s: Session, guest: Person, account: Person) -> dict[str, int]:
         else:
             r.person_id, moved = account.id, moved + 1
     for model, col in ((Paste, Paste.person_id), (GameRequest, GameRequest.person_id), (AuthToken, AuthToken.person_id),
+                       (Feedback, Feedback.person_id),
                        (Invite, Invite.created_by), (BoardGame, BoardGame.added_by)):
         s.execute(update(model).where(col == guest.id).values({col.key: account.id}))
     for x in s.scalars(select(Skip).where(Skip.person_id == guest.id)).all():

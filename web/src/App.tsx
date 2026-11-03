@@ -7,6 +7,8 @@ import Agenda from './screens/Agenda'
 import Desk from './screens/Desk'
 import Join from './screens/Join'
 import Meeting from './screens/Meeting'
+import News from './screens/News'
+import Feedback from './screens/Feedback'
 import Member from './screens/Member'
 import Minutes from './screens/Minutes'
 import Review from './screens/Review'
@@ -111,6 +113,8 @@ function Route({ path, me }: { path: string; me: Me }) {
   if ((m = match('/join/:code', path))) return <Join code={m.code} />
   if (match('/new', path)) return <NewBoard />
   if (match('/desk', path)) return <Desk />
+  if (match('/news', path)) return <News />
+  if (match('/feedback', path)) return <Feedback />
   if (match('/me', path)) return <MeScreen />
   if (match('/me/close', path)) return <MeScreen page="close" />
   if (match('/meeting', path)) {  // the meeting tab from a screen with no board: your last board's

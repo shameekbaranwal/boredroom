@@ -1,7 +1,7 @@
 import re
 def test_guest_gets_a_token_and_me_needs_it(client, seat):
     a = seat("ivan")
-    assert a.get("/me").json == {"username": "ivan", "kind": "guest", "tz": "Asia/Kolkata", "email": None, "agenda_sort": None, "boards": []}
+    assert a.get("/me").json == {"username": "ivan", "kind": "guest", "tz": "Asia/Kolkata", "email": None, "agenda_sort": None, "boards": [], "news": None}
     assert client.get("/api/v1/me").status_code == 401
     assert client.get("/api/v1/me", headers={"Authorization": "Bearer nope"}).status_code == 401
 

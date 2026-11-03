@@ -850,3 +850,19 @@ html { overscroll-behavior-y: contain; }
 .who-l { display: inline-flex; align-items: center; gap: .4em; color: inherit; cursor: pointer; min-width: 0;
   text-decoration: underline dotted var(--muted); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .who-l:hover, .who-l:focus-visible { text-decoration: underline solid var(--accent); color: var(--accent); }
+
+/* ---- what's new, and notes to the developer ---- */
+.bd > .rel { display: flex; flex-direction: column; gap: 6px; }
+.rel-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.rel-h b { font-size: 16px; }
+.rel.latest .rel-h b { color: var(--accent); }
+.rel-d { color: var(--muted); font: 12px var(--f-num); white-space: nowrap; }
+.rel ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; color: var(--ink); font-size: 14px; line-height: 1.45; }
+.go .dot { display: inline-block; width: 7px; height: 7px; margin-left: 7px; border-radius: 50%; background: var(--accent); vertical-align: middle; }
+.bd > .note-w { display: flex; flex-direction: column; gap: 6px; }
+.note-w textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  font: 15px/1.45 var(--f-ui); resize: vertical; }
+.note-w textarea:focus { outline: none; border-color: var(--accent); }
+.note-w small { font-size: 12px; }
+.bd > .note { display: flex; flex-direction: column; gap: 4px; }
+.note div { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }

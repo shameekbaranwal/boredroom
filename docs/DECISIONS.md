@@ -290,3 +290,16 @@ along, the chair included. Where both filed the same puzzle the account's result
 On a board both were on, the account's seat stays (its nickname) and takes the guest's
 standing: the earlier joining date, and the chair if the guest held it. The guest's
 tokens move too, so its other devices land in the account.
+
+## 2026-11-03 — What's new, and notes to the developer
+
+Release notes live in `server/boredroom/news.py`, newest first, one per promote to
+production, its id the day it went out. Each person keeps the newest one they've read, so a
+card on the agenda ("memo from: the developer, re: what's new") shows once per release on
+every device, and only to people who joined before it. The notes page is under you →
+everywhere. A release marked `major` is meant to be pushed to everyone with reminders on,
+once reminders ship.
+
+People can send the developer a note from the app, a bug or an idea, kept with their
+username, the board they were last on, the release and their browser. Notes never leave the
+database: `scripts/notes.py` lists them. The privacy policy says so.

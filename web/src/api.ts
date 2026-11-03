@@ -4,7 +4,12 @@ import { lost, net, reached, set, type Away } from './net'
 
 export type Kind = 'guest' | 'account' | 'placeholder'
 export type BoardRef = { slug: string; name: string; nickname: string; role: string }
-export type Me = { username: string; kind: Kind; tz: string; email: string | null; agenda_sort: string | null; boards: BoardRef[] }
+export type Me = { username: string; kind: Kind; tz: string; email: string | null; agenda_sort: string | null; boards: BoardRef[]
+  news: Release | null }  // the latest release, while it's news to you
+/** A release's notes (what's new). Its id is the day it went out. */
+export type Release = { id: string; title: string; notes: string[]; major: boolean }
+/** A note to the developer. */
+export type Note = { id: number; kind: 'bug' | 'idea'; text: string; board: string | null; sent_at: string }
 export type Metric = { name: string; kind: string; better: 'high' | 'low'; max: number | null; unit: string | null }
 export type Game = { id: string; name: string; key: string; ranked: boolean; weekly: boolean; links: string[]; play: string | null; ranker: string[]; metrics: Metric[] }
 export type Field = { name: string; value: unknown; visibility: 'public' | 'detail' | 'spoiler' }
@@ -201,5 +206,9 @@ export const api = {
   preview: (text: string) => call<Filing>('POST', '/pastes/preview', { text }),
   replace: (id: number, paste_id: number) => call<unknown>('POST', `/results/${id}/replace`, { paste_id }),
   results: () => call<MyResult[]>('GET', '/results'),
+  news: () => call<{ releases: Release[]; seen: string | null }>('GET', '/news'),
+  newsSeen: (id: string) => call<Me>('POST', '/news/seen', { id }),
+  notes: () => call<Note[]>('GET', '/feedback'),
+  sendNote: (kind: Note['kind'], text: string, board: string | null) => call<Note[]>('POST', '/feedback', { kind, text, board }),
   withdraw: (id: number) => call<unknown>('DELETE', `/results/${id}`),
 }

@@ -34,6 +34,7 @@ class Person(Base):
     google_sub: Mapped[str | None] = mapped_column(String(255), unique=True)
     email: Mapped[str | None] = mapped_column(String(320))
     agenda_sort: Mapped[str | None] = mapped_column(String(20))  # "resets:first"; none is the usual
+    news_seen: Mapped[str | None] = mapped_column(String(20))  # the newest release they've read (news.py)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     memberships: Mapped[list["Membership"]] = relationship(back_populates="person")
@@ -182,6 +183,21 @@ class GameRequest(Base):
     link: Mapped[str | None] = mapped_column(String(200))
     raw: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Feedback(Base):
+    """A note to the developer from inside the app: a bug or an idea. Read with
+    scripts/notes.py; it never leaves the database."""
+    __tablename__ = "feedback"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    person_id: Mapped[int | None] = mapped_column(ForeignKey("person.id", ondelete="SET NULL"), index=True)
+    kind: Mapped[str] = mapped_column(String(8))  # bug | idea
+    text: Mapped[str] = mapped_column(Text)
+    board: Mapped[str | None] = mapped_column(String(60))  # the board they were on, by slug
+    release: Mapped[str] = mapped_column(String(20))  # the newest release at the time (news.LATEST)
+    device: Mapped[str | None] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
 
 
 class ThrottleHit(Base):

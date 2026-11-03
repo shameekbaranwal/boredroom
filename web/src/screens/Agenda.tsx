@@ -6,6 +6,7 @@ import { go } from '../router'
 import { Av, Clip, Fx, FxQuery, Ghost, Header, Nav, Overlay, Tile, Trouble, Who, Whos, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
 import Boards from './Boards'
 import { InstallMemo } from '../install'
+import { NewsMemo } from '../news'
 import { playLink } from '../opens'
 import { MemoRow } from '../memos'
 import { orderOptions, readSort, sortOptions, sorted, writeSort, type Sort, type SortBy } from '../sort'
@@ -106,6 +107,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
       <FxQuery fn="agenda" tokens={tokens(slug, me.boards, sort, setSort)} />
       <div className="bd">
         <Pasteboard board={board} shared={shared} onFiled={filedNow} back={back ? away : null} onBackDone={() => setAway(null)} />
+        <NewsMemo />
         <InstallMemo onDone={ok => ok && toast('installed. see you on the home screen.')} />
         {placeholders.length > 0 && !board.you.claimed && (
           <button className="more" onClick={() => go(`/b/${slug}/you/register#seats`)}>

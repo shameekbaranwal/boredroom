@@ -10,11 +10,11 @@ from typing import Any
 from flask import Blueprint, current_app, g, jsonify, request
 from sqlalchemy import func, select
 
-from . import admin, boards, claims, filing, invites, memos, names, people, reads, throttle
+from . import admin, boards, claims, filing, invites, memos, names, news, people, reads, throttle
 from . import auth
 from .auth import auth_required, create_guest, valid_tz, USERNAME
 from .errors import fail
-from .models import Board, Membership, Person, Result, utcnow
+from .models import Board, Feedback, Membership, Person, Result, utcnow
 from .parser import REGISTRY
 
 api = Blueprint("api", __name__, url_prefix="/api/v1")
@@ -43,7 +43,62 @@ def me_json(p: Person) -> dict[str, Any]:
         "username": p.username, "kind": p.kind, "tz": p.tz, "email": p.email, "agenda_sort": p.agenda_sort,
         "boards": [{"slug": m.board.slug, "name": m.board.name, "nickname": m.nickname, "role": m.role}
                    for m in sorted(live, key=lambda m: m.board.name)],
+        "news": news.release_json(r) if (r := news.unseen(p)) else None,  # the agenda's "what's new" card
     }
+
+
+# -- what's new, and notes to the developer ----------------------------------------
+
+@api.get("/news")
+@auth_required
+def news_list():
+    """Every release, newest first, and the newest one you've read."""
+    return jsonify({"releases": [news.release_json(r) for r in news.RELEASES], "seen": g.person.news_seen})
+
+
+@api.post("/news/seen")
+@auth_required
+def news_seen():
+    """{id}: you've read up to this release; its card leaves the agenda."""
+    news.seen(g.person, str(body().get("id", "")))
+    g.db.commit()
+    return jsonify(me_json(g.person))
+
+
+FEEDBACK_KINDS = ("bug", "idea")
+
+
+@api.post("/feedback")
+@auth_required
+def feedback_new():
+    """{kind: bug|idea, text, board?}: a note to the developer."""
+    b = body()
+    kind, text = b.get("kind"), b.get("text")
+    if kind not in FEEDBACK_KINDS:
+        fail(400, "a note is a bug or an idea")
+    if not isinstance(text, str) or not text.strip():
+        fail(400, "write something first")
+    if len(text) > 2000:
+        fail(400, "keep it under 2000 characters")
+    throttle.limit(g.db, f"feedback:{g.person.id}", 10, 3600, "that's a lot of notes for one hour. the developer is reading.")
+    slug = b.get("board")
+    board = slug if isinstance(slug, str) and any(m.board.slug == slug for m in g.person.memberships) else None
+    g.db.add(Feedback(person_id=g.person.id, kind=kind, text=text.strip(), board=board, release=news.LATEST.id,
+                      device=request.headers.get("User-Agent", "")[:200]))
+    g.db.commit()
+    return jsonify(_my_notes()), 201
+
+
+@api.get("/feedback")
+@auth_required
+def feedback_mine():
+    """The notes you've sent, newest first."""
+    return jsonify(_my_notes())
+
+
+def _my_notes() -> list[dict[str, Any]]:
+    rows = g.db.scalars(select(Feedback).where(Feedback.person_id == g.person.id).order_by(Feedback.created_at.desc()).limit(50))
+    return [{"id": f.id, "kind": f.kind, "text": f.text, "board": f.board, "sent_at": f.created_at.isoformat()} for f in rows]
 
 
 # -- people ----------------------------------------------------------------------

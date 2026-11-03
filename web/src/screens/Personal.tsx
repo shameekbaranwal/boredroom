@@ -96,6 +96,12 @@ export function YourFile({ onEditName, closeTo }: { onEditName: () => void; clos
       <span className="k">sign out<small className="muted">{me.kind === 'guest' ? 'a guest seat is lost for good' : 'sign in again with google any time'}</small></span>
       <HoldToSign label="sign out" hint="hold to sign out" tone="ghost" busy={false} ready onDone={signOut} />
     </div>
+    <div className="sec">the developer</div>
+    <button className="go" onClick={() => go('/news')}>
+      <span className="k">what's new{me.news && <span className="dot" aria-label="something new" />}</span><span className="v">{me.news ? me.news.title : 'the release notes'}</span>
+    </button>
+    <button className="go" onClick={() => go('/feedback')}><span className="k">send a note</span><span className="v">a bug, or an idea</span></button>
+
     <button className="go bad" onClick={() => go(closeTo)}><span className="k">wind up your account</span></button>
   </>
 }

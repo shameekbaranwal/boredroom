@@ -10,7 +10,7 @@ from flask import Blueprint, Response
 
 legal = Blueprint("legal", __name__)
 TEMPLATE = (Path(__file__).parent / "pages" / "legal.html").read_text(encoding="utf-8")
-UPDATED = "31 october 2026"
+UPDATED = "3 november 2026"
 
 
 def _contact() -> str:
@@ -42,6 +42,9 @@ mail, contacts or files.</li>
 them (scores, grids, and anything else in the share text, such as a wiki game route).</li>
 <li><b>your boredroom details</b>: your username, nicknames on boards, the boards you're on, the
 games on your agenda, and your timezone.</li>
+<li><b>notes you send the developer</b> from the app: what you write, whether it's a bug or an
+idea, the board you were on and your browser's name, so a bug can be found. only the operator
+reads them. if your account is deleted, your notes stay without your name on them.</li>
 <li><b>basic server logs</b> (time, page requested, ip address), kept for a short time to keep the
 service running and find problems.</li>
 </ul>
