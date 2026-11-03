@@ -92,6 +92,8 @@ const TITLES: Record<Page, string> = {
   strike: 'a game off', retire: 'invitations', resign: 'resignation', close: 'wind up',
 }
 
+type Sheet = 'board' | 'agenda' | 'everywhere'
+
 export default function You({ slug, page, arg }: { slug: string; page?: string; arg?: string }) {
   const { me } = useApp()
   const [b, setB] = useState<Board | null>(null)
@@ -139,7 +141,10 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
   const path = usePath()
   const now = useNow()
   const slug = b.slug
-  const [sheet, setSheet] = useState<'board' | 'everywhere'>(() => location.hash === '#everywhere' ? 'everywhere' : 'board')
+  // three sheets: the board's settings, your agenda on it (its own tab, so a long library
+  // never buries the board), and you everywhere. A new member starts on the agenda.
+  const [sheet, setSheet] = useState<Sheet>(() => location.hash === '#everywhere' ? 'everywhere'
+    : location.hash === '#games' || location.hash === '#agenda' || query(location.pathname + location.search).get('welcome') ? 'agenda' : 'board')
   const [picker, setPicker] = useState(false)
   const [nick, setNick] = useState<string | null>(null)  // editing your name, in the formula bar
   const [recalc, setRecalc] = useState<number | null>(null)
@@ -170,13 +175,12 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
 
   useEffect(() => {
     if (location.hash === '#seats') go(`/b/${slug}/you/register#seats`, true)
-    else if (location.hash === '#games') document.getElementById('games')?.scrollIntoView()
     if (stamp) setTimeout(() => history.replaceState(history.state, '', location.pathname), 1200)
   }, [])  // eslint-disable-line react-hooks/exhaustive-deps
 
-  const show = (s: 'board' | 'everywhere') => {
+  const show = (s: Sheet) => {
     setSheet(s); setNick(null)
-    history.replaceState(history.state, '', location.pathname + (s === 'everywhere' ? '#everywhere' : ''))
+    history.replaceState(history.state, '', location.pathname + (s === 'board' ? '' : `#${s}`))
   }
   const saveNick = async () => {
     const v = (nick ?? '').trim()
@@ -217,25 +221,11 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
       {fx}
       <div className="sheets" role="tablist">
         <button role="tab" aria-selected={sheet === 'board'} className={sheet === 'board' ? 'on' : ''} onClick={() => show('board')}>on {b.name}</button>
+        <button role="tab" aria-selected={sheet === 'agenda'} className={sheet === 'agenda' ? 'on' : ''} onClick={() => show('agenda')}>agenda <b className="num">{agenda.count(ids)}</b></button>
         <button role="tab" aria-selected={sheet === 'everywhere'} className={sheet === 'everywhere' ? 'on' : ''} onClick={() => show('everywhere')}>everywhere</button>
       </div>
-      {sheet === 'everywhere'
-        ? <div className="bd"><YourFile onEditName={user.start} closeTo={`/b/${slug}/you/close`} /></div>
-        : <div className="bd">
-          {query(path).get('welcome') && <div className="card"><b>welcome aboard, {b.you.nickname}.</b><small>switch on the games you play. pasting a result switches its game on too.</small></div>}
-          <div className="seat-card">
-            <Av name={b.you.nickname} />
-            <div className="g">
-              <button className="seat-name" onClick={() => setNick(b.you.nickname)} aria-label={`your name on ${b.name}: ${b.you.nickname}. change it`}>
-                {b.you.nickname}<span className="pen" aria-hidden="true">✎</span>
-              </button>
-              <div className="sub">seat {seat || '–'} of {ps.length}{since && ` · since ${since}`} · {mine?.results ?? 0} on file</div>
-            </div>
-            {b.you.role === 'chair' && <span className="rstamp">chair</span>}
-            {stamp === 'claimed' && <span className="rstamp thunk">claimed</span>}
-          </div>
-          {small && <Invitation b={b} setB={setB} now={now} />}
-
+      {sheet === 'everywhere' && <div className="bd"><YourFile onEditName={user.start} closeTo={`/b/${slug}/you/close`} /></div>}
+      {sheet === 'agenda' && <div className="bd">
           <div className="sec" id="games">your agenda <b className={`num${recalc !== null ? ' lit' : ''}`}>{agenda.count(ids)}</b> <span className="sec-n">of {b.name}'s {b.library.length} {b.library.length === 1 ? 'game' : 'games'} · switch on the ones you play</span></div>
           {ids.map(g => {
             const lg = lib.get(g)!, on = agenda.on(g)
@@ -255,6 +245,22 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
           <button className="go" onClick={() => go(`/b/${slug}/you/bylaws#games`)}>
             <span className="k">missing a game?</span><span className="v">add it in the bylaws</span>
           </button>
+        </div>}
+      {sheet === 'board' && <div className="bd">
+          {query(path).get('welcome') && <div className="card"><b>welcome aboard, {b.you.nickname}.</b><small>switch on the games you play. pasting a result switches its game on too.</small></div>}
+          <div className="seat-card">
+            <Av name={b.you.nickname} />
+            <div className="g">
+              <button className="seat-name" onClick={() => setNick(b.you.nickname)} aria-label={`your name on ${b.name}: ${b.you.nickname}. change it`}>
+                {b.you.nickname}<span className="pen" aria-hidden="true">✎</span>
+              </button>
+              <div className="sub">seat {seat || '–'} of {ps.length}{since && ` · since ${since}`} · {mine?.results ?? 0} on file</div>
+            </div>
+            {b.you.role === 'chair' && <span className="rstamp">chair</span>}
+            {stamp === 'claimed' && <span className="rstamp thunk">claimed</span>}
+          </div>
+          {small && <Invitation b={b} setB={setB} now={now} />}
+
           {device.usable && (
             <div className="cell">
               <span className="k">evening digest<small className="muted">{device.p.on ? `20:00, what's still open on ${b.name} · the bells nudge before a reset` : 'reminders are off on this device'}</small></span>
