@@ -1,5 +1,6 @@
 import { api } from './api'
 import { go } from './router'
+import { releaseDay } from './screens/News'
 import { useApp } from './ui'
 
 /** The agenda's card while a release is news to you: its title and first line, then
@@ -13,7 +14,7 @@ export function NewsMemo() {
     <div className="memo">
       <div className="memo-h"><span>memo</span><span>from: the developer</span><span>re: what's new</span></div>
       <b>{r.title}</b>
-      {r.notes[0] && <small>{r.notes[0]}{r.notes.length > 1 ? ` and ${r.notes.length - 1} more.` : ''}</small>}
+      <small>{r.notes.length} {r.notes.length === 1 ? 'change' : 'changes'}, out {releaseDay(r.id)}. under you → everywhere any time.</small>
       <div className="row-a">
         <button className="btn" onClick={() => go('/news')}>read it</button>
         <button className="lnk" onClick={done}>noted</button>
