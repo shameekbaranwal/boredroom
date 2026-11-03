@@ -177,14 +177,19 @@ function HoldToSign({ label, busy, ready, onDone, hint = `hold to sign · ${labe
   const raf = useRef(0)
   const t0 = useRef(0)
   const done = useRef(false)
+  const step = useRef(0)  // the thirds of the hold already felt
   const stop = () => { cancelAnimationFrame(raf.current); if (!done.current) setP(0) }
   const start = () => {
     if (busy || !ready || done.current) return
     t0.current = performance.now()
+    step.current = 0
+    navigator.vibrate?.(10)  // the pen touches the paper
     const tick = (now: number) => {
       const v = Math.min(1, (now - t0.current) / HOLD)
       setP(v)
-      if (v >= 1) { done.current = true; navigator.vibrate?.(12); onDone(); return }
+      if (v >= 1) { done.current = true; navigator.vibrate?.([30, 60, 45]); onDone(); return }  // signed
+      const third = Math.floor(v * 3)
+      if (third > step.current) { step.current = third; navigator.vibrate?.(8) }  // the signature getting on
       raf.current = requestAnimationFrame(tick)
     }
     raf.current = requestAnimationFrame(tick)
