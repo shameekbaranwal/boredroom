@@ -274,7 +274,7 @@ class PushLog(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     person_id: Mapped[int] = mapped_column(ForeignKey("person.id", ondelete="CASCADE"))
     key: Mapped[str] = mapped_column(String(200))  # "reset:krillion:2026-11-01", "digest:soup:2026-11-01"
-    kind: Mapped[str] = mapped_column(String(12))  # reset | digest | test
+    kind: Mapped[str] = mapped_column(String(12))  # reset | digest | update | test
     status: Mapped[str] = mapped_column(String(12), default="sending")  # sending | sent | failed
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
 

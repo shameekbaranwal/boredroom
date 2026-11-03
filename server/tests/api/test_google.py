@@ -39,7 +39,7 @@ def test_new_account_then_signing_in_again(app, client):
     google(app, IVAN, GoogleId("sub-other", "ivan.k@outlook.com", None))
     first = sign_in(client, "good:0", tz="Asia/Singapore")
     assert first.status_code == 201 and first.json["created"]
-    assert first.json["me"] | {"boards": []} == {
+    assert first.json["me"] | {"boards": [], "news": None} == {  # news depends on the day: test_news.py
         "username": "ivan.k", "kind": "account", "tz": "Asia/Singapore",
         "email": "ivan.k@gmail.com", "agenda_sort": None, "boards": [], "news": None}
     again = sign_in(client, "good:0")

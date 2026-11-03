@@ -16,8 +16,12 @@ def test_the_latest_release_is_news_until_read(db, seat):
     assert a.post("/news/seen", {"id": news.RELEASES[-1].id}).json["news"] is None  # never moves back
 
 
-def test_someone_new_never_gets_old_news(seat):
-    assert seat("judy").get("/me").json["news"] is None  # joined after the latest release went out
+def test_someone_new_never_gets_old_news(db, seat):
+    judy = seat("judy")
+    joined = datetime.combine(news.day(news.LATEST), datetime.min.time(), timezone.utc)  # the day it went out
+    db.query(Person).filter_by(username="judy").update({"created_at": joined})
+    db.commit()
+    assert judy.get("/me").json["news"] is None
 
 
 def test_a_note_to_the_developer(db, seat):

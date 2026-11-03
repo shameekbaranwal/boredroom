@@ -303,3 +303,19 @@ once reminders ship.
 People can send the developer a note from the app, a bug or an idea, kept with their
 username, the board they were last on, the release and their browser. Notes never leave the
 database: `scripts/notes.py` lists them. The privacy policy says so.
+
+## 2026-11-03 — Reminders
+
+Web push, off until someone turns it on for a device (you → everywhere), asked only from a
+tap. Three kinds, sent by a scheduler that ticks on the hour and half hour (utc):
+
+- **A nudge before a reset**, per game, rung with its bell under you → agenda (or all at
+  once): an hour before the reset, only if it's still open and not skipped. Games
+  resetting together share one push that names them.
+- **The evening digest**, per board, on by default, around 20:00 in your timezone: the
+  day's news, not a to-do list. The biggest memo (never a pip), where you stand on the
+  week's wins, a line about you if there is one, then what's left. Quiet days send nothing.
+- **An update**, once, when the latest release (news.py) is marked major: in someone's
+  daytime, in its first three days, unless they've already read it.
+
+Each push is logged before it's sent (`push_log`), so a key never goes to a person twice.

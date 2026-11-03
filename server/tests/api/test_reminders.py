@@ -267,3 +267,23 @@ def test_the_service_worker_renews_a_replaced_subscription(push_app):
     assert c.post("/api/v1/me/push/renew", json={"old": "https://nope/x", "sub": new}).status_code == 404
     assert c.post("/api/v1/me/push/renew", json={"old": SUB["endpoint"], "sub": new}).status_code == 200
     assert [d["endpoint"] for d in trent.get("/me/push").json["devices"]] == [new["endpoint"]]
+
+
+def test_a_major_release_is_pushed_once_in_the_day(push_app, s, monkeypatch):
+    from boredroom import news
+    r = news.Release("2026-11-01", "a big one", ("first thing.", "second thing."), major=True)
+    monkeypatch.setattr(news, "LATEST", r)
+    monkeypatch.setattr(news, "AGE", {r.id: 0})
+    (trent, judy), people = _setup(push_app, s, "trent", "judy")
+    for n in ("trent", "judy"):
+        people[n].created_at = datetime(2026, 10, 1, tzinfo=IST)
+    people["judy"].news_seen = r.id  # judy has read it
+    s.commit()
+    fake = Fake()
+    assert reminders.tick(s, CFG, datetime(2026, 11, 1, 3, 0, tzinfo=IST), fake) == 0  # not at night
+    assert reminders.tick(s, CFG, datetime(2026, 11, 1, 11, 0, tzinfo=IST), fake) == 1
+    (ep, p), = fake.sent
+    assert ep.endswith("-trent") and (p.title, p.body, p.url) == (
+        "new in boredroom: a big one", "first thing. and 1 more under what's new.", "/news")
+    assert reminders.tick(s, CFG, datetime(2026, 11, 1, 11, 30, tzinfo=IST), fake) == 0  # once
+

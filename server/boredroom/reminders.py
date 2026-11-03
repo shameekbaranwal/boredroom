@@ -24,7 +24,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from . import memos, reads
+from . import memos, news, reads
 from .config import Config
 from .models import (Agenda, Board, Membership, Memo, Person, PushLog, PushSubscription, Result, SchedulerState, Skip,
                      utcnow)
@@ -212,11 +212,34 @@ def digest(s: Session, m: Membership, now: datetime) -> Push | None:
     return Push(f"{board.name} · {weekday} so far", body, f"/b/{board.slug}/meeting", tag=f"digest:{board.slug}")
 
 
+UPDATE_FOR = timedelta(days=3)  # a major release is pushed only while it's fresh
+DAYTIME = range(10, 21)  # and only in someone's daytime
+
+
+def updates(s: Session, now: datetime) -> Iterator[tuple[int, list[str], Push]]:
+    """(person, log keys, push) for the latest release, once, if it's major: to everyone with
+    reminders on who hasn't read it yet and was here before it, in their daytime, in its
+    first few days."""
+    r = news.LATEST
+    out = datetime.combine(news.day(r), datetime.min.time(), ZoneInfo("UTC"))
+    if not r.major or not (out <= now < out + UPDATE_FOR):
+        return
+    for pid in _pushable(s):
+        person = s.get(Person, pid)
+        if news.unseen(person) is None or now.astimezone(ZoneInfo(person.tz)).hour not in DAYTIME:
+            continue
+        key = f"update:{r.id}"
+        if not _claim(s, pid, "update", [key]):
+            continue
+        rest = f" and {len(r.notes) - 1} more under what's new." if len(r.notes) > 1 else ""
+        yield pid, [key], Push(f"new in boredroom: {r.title}", (r.notes[0] if r.notes else "") + rest, "/news", tag="update")
+
+
 def tick(s: Session, cfg: Config, now: datetime | None = None, send: Sender = webpush_sender) -> int:
     """One tick's work: every push due now. Returns how many went out."""
     now = now or utcnow()
     sent = 0
-    for source in (reset_nudges, digests):
+    for source in (reset_nudges, digests, updates):
         for pid, keys, push in list(source(s, now)):
             ok = deliver(s, pid, push, cfg, send)
             _mark(s, pid, keys, "sent" if ok else "failed")
