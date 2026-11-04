@@ -24,7 +24,7 @@ class Release:
 
 RELEASES: tuple[Release, ...] = (
     Release("2026-11-04-3", "a nudge to update", (
-        "when a new version of boredroom is out, a bar at the top says so. tap \"reload\" to get it; you'll stay on the same screen.",
+        "a bar at the top now says when there's a new version; \"reload\" gets it.",
     )),
     Release("2026-11-04-2", "reset times on the clock", (
         "prefer \"till 9:30 am\" to \"6h 12m left\"? in the \"you\" tab, on its \"everywhere\" sheet, switch \"reset times\" to \"clock time\". weekly games read \"till midnight on mon\".",
