@@ -5,7 +5,7 @@ import type { Item } from './api'
 // The choice goes with your account (me.agenda_sort, "resets:first"), so every device
 // you sign in on orders it the same way.
 
-export type SortBy = 'usual' | 'resets' | 'mine' | 'popular' | 'busy' | 'tenure' | 'name'
+export type SortBy = 'usual' | 'own' | 'resets' | 'mine' | 'popular' | 'busy' | 'tenure' | 'name'
 export type Order = 'first' | 'last'  // the sort's natural way round, or the other
 export type Sort = { by: SortBy; order: Order }
 
@@ -13,6 +13,7 @@ export type Sort = { by: SortBy; order: Order }
  *  (the natural order puts the biggest first, except resets and names). */
 const SORTS: Record<SortBy, { label: string; orders: [string, string]; up?: boolean; key: (i: Item) => number | string }> = {
   usual: { label: 'the usual', orders: ['as usual', 'reversed'], key: () => 0 },
+  own: { label: 'my order', orders: ['as arranged', 'reversed'], up: true, key: i => i.position ?? 0 },  // arranged on the "agenda" sheet of the "you" tab
   resets: { label: 'resets', orders: ['soonest first', 'latest first'], up: true, key: i => Date.parse(i.resets_at) },
   mine: { label: 'my results', orders: ['most first', 'fewest first'], key: i => i.results },
   popular: { label: 'popularity', orders: ['most played first', 'least played first'], key: i => i.board_month },

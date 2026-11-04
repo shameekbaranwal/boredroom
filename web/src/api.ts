@@ -26,6 +26,7 @@ export type Item = {
   leader: { nickname: string | null; tied: number; metrics: Record<string, number> } | null
   mine: Row | null; tenure: { days: number; at_risk: boolean }
   results: number; board_month: number  // filed by you ever; by the board in the last 30 days
+  position: number  // its place in your own order ("my order")
 }
 export type Memo = {
   id: number; kind: string; glyph: string; day: string; game: string | null
@@ -41,7 +42,7 @@ export type Minutes = {
 export type Member = { nickname: string; username: string; role: string; kind: Kind; games: number; results: number; joined_at: string }
 export type Board = {
   slug: string; name: string; settings: Record<string, unknown>; invite: { code: string; expires_at: string | null }
-  you: { nickname: string; role: string; agenda: string[]; claimed?: boolean; digest: boolean; nudges: string[] }
+  you: { nickname: string; role: string; agenda: string[]; claimed?: boolean; digest: boolean; nudges: string[]; order: string[] }
   members: Member[]
   library: { game: string; name: string; rules: Record<string, unknown>; players: number; removable: boolean }[]
   leaving: Leaving
@@ -200,6 +201,8 @@ export const api = {
   subscribe: (sub: PushSubscriptionJSON) => call<Devices>('PUT', '/me/push', sub),
   unsubscribe: (id: number) => call<Devices>('DELETE', `/me/push/${id}`),
   testPush: () => call<{ sent: number } & Devices>('POST', '/me/push/test'),
+  /** Your agenda here in your own order, for the "my order" sort. */
+  order: (slug: string, games: string[]) => call<Board>('PUT', `/boards/${encodeURIComponent(slug)}/order`, { games }),
   agenda: (slug: string, game: string, on: boolean) => call<Board>(on ? 'PUT' : 'DELETE', `/boards/${encodeURIComponent(slug)}/agenda/${encodeURIComponent(game)}`),
   claim: (slug: string, username: string) => call<{ moved: number; board: Board }>('POST', `/boards/${encodeURIComponent(slug)}/claim`, { username }),
   review: (slug: string, q: ReviewQuery) => call<Review>('GET', `/boards/${encodeURIComponent(slug)}/review?${new URLSearchParams(

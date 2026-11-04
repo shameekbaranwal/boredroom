@@ -32,7 +32,7 @@ def test_create_join_and_nickname(seat):
     assert judy.post("/boards/join", {"code": "wrong"}).status_code == 404
     joined = judy.post("/boards/join", {"code": b["invite"]["code"]}).json
     assert joined["you"] == {"nickname": "judy", "role": "member", "agenda": [], "claimed": False,
-                             "digest": True, "nudges": []}
+                             "digest": True, "nudges": [], "order": []}
     assert judy.patch("/boards/soup/me", {"nickname": "j0dy"}).json["you"]["nickname"] == "j0dy"
     assert [m["nickname"] for m in chair.get("/boards/soup").json["members"]] == ["j0dy", "shmk"]
     assert [x["slug"] for x in judy.get("/me").json["boards"]] == ["soup"]
@@ -99,3 +99,27 @@ def test_resets_as_a_clock_time(seat):
     assert a.patch("/me", {"reset_clock": True}).json["reset_clock"] is True
     assert a.patch("/me", {"reset_clock": "yes"}).status_code == 400
 
+
+
+def test_your_own_agenda_order(seat):
+    a, b = seat("trent"), seat("judy")
+    code = a.post("/boards", {"name": "soup"}).json["invite"]["code"]
+    b.post("/boards/join", {"code": code})
+    for g in ("wordle", "krillion", "mini", "connections"):
+        a.put(f"/boards/soup/agenda/{g}")
+    b.put("/boards/soup/agenda/wordle")
+    # nothing placed yet: by name
+    assert a.get("/boards/soup").json["you"]["order"] == ["connections", "krillion", "mini", "wordle"]  # "nyt mini"
+    # the ones you place come first; the rest keep their turn; strangers to your agenda are ignored
+    out = a.put("/boards/soup/order", {"games": ["mini", "wordle", "anno", "mini"]}).json["you"]
+    assert out["order"] == ["mini", "wordle", "connections", "krillion"]
+    assert out["agenda"] == ["connections", "krillion", "mini", "wordle"]  # still the plain list
+    items = a.get("/boards/soup/today").json["items"]
+    assert sorted((i["position"], i["game"]) for i in items) == [(0, "mini"), (1, "wordle"), (2, "connections"), (3, "krillion")]
+    # a game you add later goes at the end
+    a.put("/boards/soup/agenda/strands")
+    assert a.get("/boards/soup").json["you"]["order"][-1] == "strands"
+    # yours alone
+    assert b.get("/boards/soup").json["you"]["order"] == ["wordle"]
+    assert a.put("/boards/soup/order", {"games": "mini"}).status_code == 400
+    assert a.patch("/me", {"agenda_sort": "own:first"}).json["agenda_sort"] == "own:first"

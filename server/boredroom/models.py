@@ -128,6 +128,7 @@ class Agenda(Base):
     game_id: Mapped[str] = mapped_column(String(40), primary_key=True)
     added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     nudge: Mapped[bool] = mapped_column(Boolean, default=False)  # a push an hour before it resets
+    position: Mapped[int | None] = mapped_column(Integer, nullable=True)  # your own order; unplaced go last
 
 
 class Paste(Base):

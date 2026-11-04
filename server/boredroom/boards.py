@@ -12,6 +12,7 @@ from . import claims, invites, names
 from .errors import fail
 from .models import Agenda, Board, BoardGame, Invite, Membership, Paste, Person, Result, utcnow
 from .parser import REGISTRY
+from .reads import my_order
 
 
 def slugify(name: str) -> str:
@@ -165,6 +166,16 @@ def set_nudges(s: Session, board: Board, person: Person, on: bool) -> None:
         row.nudge = on
 
 
+def set_order(s: Session, board: Board, person: Person, games: list[str]) -> None:
+    """Places your agenda games in this order. Games left out keep their turn after these,
+    in the order they had; games not on your agenda are ignored."""
+    rows = {a.game_id: a for a in s.scalars(select(Agenda).where(Agenda.board_id == board.id, Agenda.person_id == person.id))}
+    placed = list(dict.fromkeys(g for g in games if g in rows))
+    rest = [g for g in my_order(s, board, person.id) if g not in placed]
+    for n, g in enumerate(placed + rest):
+        rows[g].position = n
+
+
 def agenda_of(s: Session, board: Board, person: Person) -> list[str]:
     return list(s.scalars(select(Agenda.game_id).where(
         Agenda.board_id == board.id, Agenda.person_id == person.id).order_by(Agenda.game_id)))
@@ -188,7 +199,8 @@ def board_json(s: Session, board: Board, m: Membership) -> dict[str, Any]:
         "settings": {k: v for k, v in board.settings.items() if k != "claimed"},  # person ids stay here
         "you": {"nickname": m.nickname, "role": m.role, "agenda": sorted(agendas.get(m.person_id, [])),
                 "claimed": m.person_id in board.settings.get("claimed", {}).values(),  # one seat each
-                "digest": m.digest, "nudges": sorted(nudges)},
+                "digest": m.digest, "nudges": sorted(nudges),
+                "order": my_order(s, board, m.person_id)},  # your agenda in your own order
         "members": [{"nickname": x.nickname, "username": x.person.username, "role": x.role,
                      "kind": x.person.kind, "joined_at": x.joined_at.isoformat(),
                      "games": len(agendas.get(x.person_id, [])), "results": filed.get(x.person_id, 0)}

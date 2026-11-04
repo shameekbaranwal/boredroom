@@ -34,7 +34,7 @@ def clock():
     return current_app.config.get("CLOCK", lambda: None)()
 
 
-AGENDA_SORTS = {"usual", "resets", "mine", "popular", "busy", "tenure", "name"}  # web/src/sort.ts
+AGENDA_SORTS = {"usual", "own", "resets", "mine", "popular", "busy", "tenure", "name"}  # web/src/sort.ts
 
 
 def me_json(p: Person) -> dict[str, Any]:
@@ -567,6 +567,19 @@ def agenda_add(slug, game):
 def agenda_remove(slug, game):
     b, m = boards.get_board(g.db, slug, g.person)
     boards.set_agenda(g.db, b, g.person, game, False)
+    g.db.commit()
+    return jsonify(boards.board_json(g.db, b, m))
+
+
+@api.put("/boards/<slug>/order")
+@auth_required
+def agenda_order(slug):
+    """{games: [...]}: your agenda here in your own order, for the "my order" sort."""
+    b, m = boards.get_board(g.db, slug, g.person)
+    games = (request.get_json(silent=True) or {}).get("games")
+    if not isinstance(games, list) or not all(isinstance(x, str) for x in games) or len(games) > 200:
+        fail(400, "games is a list of game ids")
+    boards.set_order(g.db, b, g.person, games)
     g.db.commit()
     return jsonify(boards.board_json(g.db, b, m))
 

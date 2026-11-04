@@ -148,11 +148,19 @@ def today(s: Session, board: Board, viewer: Person, now: datetime | None = None)
     month = dict(s.execute(select(Result.game_id, func.count()).where(
         Result.game_id.in_(games), Result.person_id.in_(members), Result.puzzle_day >= since,
         Result.withdrawn_at.is_(None)).group_by(Result.game_id)).all()) if games and members else {}
+    own = {g: n for n, g in enumerate(my_order(s, board, viewer.id))}
     for i in items:
+        i["position"] = own[i["game"]]  # its place in your own order (boards.my_order)
         i["results"] = filed.get(i["game"], 0)
         i["board_month"] = month.get(i["game"], 0)
     items.sort(key=lambda i: (i["filed"], -i["results"], i["resets_at"]))
     return {"now": now.isoformat(), "items": items}
+
+
+def my_order(s: Session, board: Board, person_id: int) -> list[str]:
+    """Your agenda here in your own order: the games you placed, then the rest by name."""
+    rows = s.scalars(select(Agenda).where(Agenda.board_id == board.id, Agenda.person_id == person_id))
+    return [a.game_id for a in sorted(rows, key=lambda a: (a.position is None, a.position or 0, getattr(REGISTRY.get(a.game_id), "name", a.game_id).lower()))]
 
 
 def skip(s: Session, viewer: Person, game_id: str, on: bool, now: datetime | None = None) -> None:

@@ -879,3 +879,12 @@ html { overscroll-behavior-y: contain; }
 @keyframes ring { 0%, 100% { transform: none; } 25% { transform: rotate(14deg); } 50% { transform: rotate(-10deg); } 75% { transform: rotate(5deg); } }
 @media (prefers-reduced-motion: reduce) { .bell.on svg { animation: none; } }
 .cell .k small .lnk { font-size: 12px; }
+
+/* your order: the agenda games with a ↑ and a ↓ each */
+.it.arr { gap: 10px; }
+.arr-n { flex: none; width: 18px; text-align: right; font: 12px var(--f-num); color: var(--muted); }
+.arr-b { flex: none; width: 36px; height: 36px; display: grid; place-items: center; background: var(--bg); color: var(--ink);
+  border: 1px solid var(--line); font: 700 16px var(--f-num); cursor: pointer; }
+.arr-b:active { background: var(--surface); }
+.arr-b:disabled { color: var(--line); cursor: default; }
+.arr-b:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
