@@ -4,7 +4,7 @@ import { lost, net, reached, set, type Away } from './net'
 
 export type Kind = 'guest' | 'account' | 'placeholder'
 export type BoardRef = { slug: string; name: string; nickname: string; role: string }
-export type Me = { username: string; kind: Kind; tz: string; email: string | null; agenda_sort: string | null; boards: BoardRef[]
+export type Me = { username: string; kind: Kind; tz: string; email: string | null; agenda_sort: string | null; reset_clock: boolean; boards: BoardRef[]
   news: Release | null }  // the latest release, while it's news to you
 /** A release's notes (what's new). Its id is the day it went out. */
 export type Release = { id: string; title: string; notes: string[]; major: boolean }
@@ -176,7 +176,7 @@ export const api = {
   config: () => call<{ google_client_id: string | null; environment: string; vapid_public_key: string | null }>('GET', '/config'),
   games: () => call<Game[]>('GET', '/games'),
   me: () => call<Me>('GET', '/me'),
-  updateMe: (b: Partial<{ tz: string; username: string; agenda_sort: string | null }>) => call<Me>('PATCH', '/me', b),
+  updateMe: (b: Partial<{ tz: string; username: string; agenda_sort: string | null; reset_clock: boolean }>) => call<Me>('PATCH', '/me', b),
   guest: (username?: string) => call<{ token: string; me: Me }>('POST', '/guests', { username, tz: tz() }),
   google: (credential: string) => call<SignedIn>('POST', '/auth/google', { credential, tz: tz() }),
   signOut: () => call<{ signed_out: boolean }>('POST', '/auth/signout'),

@@ -75,6 +75,18 @@ export function YourFile({ onEditName, closeTo }: { onEditName: () => void; clos
         : <input className="cell-sel" value={tz} onChange={e => setTz(e.target.value)} onBlur={() => saveTz(tz)} />}
     </label>
 
+    <div className="cell">
+      <span className="k">reset times<small className="muted">{me.reset_clock ? `on the agenda as "till 9:30 am", in your timezone` : 'on the agenda as "6h 12m left"'}</small></span>
+      <div className="seg" role="radiogroup" aria-label="reset times">
+        {([false, true] as const).map(v => (
+          <button key={String(v)} role="radio" aria-checked={me.reset_clock === v} className={me.reset_clock === v ? 'on' : ''}
+            onClick={() => { if (me.reset_clock !== v) api.updateMe({ reset_clock: v }).then(refreshMe).catch(e => toast((e as Error).message)) }}>
+            {v ? 'clock time' : 'time left'}
+          </button>
+        ))}
+      </div>
+    </div>
+
     <div className="sec">this device</div>
     <div className="cell">
       <span className="k">appearance</span>

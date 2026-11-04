@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, ApiError, type Board, type Filing, type Item, type Memo, type Minutes, type Today } from '../api'
 import { hold, unhold, type Held } from '../outbox'
-import { headline, left } from '../format'
+import { headline, left, resetWords } from '../format'
 import { go } from '../router'
 import { Av, Clip, Fx, FxQuery, Ghost, Header, Nav, Overlay, Tile, Trouble, Who, Whos, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
 import Boards from './Boards'
@@ -159,7 +159,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
               </div>
               <div className="pr">
                 <span className="pill done">{i.ranked && i.place ? `#${i.place}` : '✓'}</span>
-                <span className="rs">resets in {left(i.resets_at, now)}</span>
+                <span className="rs">{resetWords(i.resets_at, now, me).resets}</span>
                 <span className="pr-a">
                   {i.mine?.forward && <button className="lnk" onClick={e => { e.stopPropagation(); sendOn(i.mine!.forward!, toast) }}>send on</button>}
                   {i.play && <SiteLink i={i} />}
@@ -230,6 +230,7 @@ function SiteLink({ i }: { i: Item }) {
 /** The skipped games, from their strip: when each comes back, and the ways to have it sooner. */
 function Skipped({ items, now, onClose, onBack, onPlay }:
   { items: Item[]; now: number; onClose: () => void; onBack: (i: Item) => void; onPlay: (i: Item) => void }) {
+  const { me } = useApp()
   return (
     <Overlay title="skipped till reset" onClose={onClose}>
       <div className="skip-m">
@@ -243,7 +244,7 @@ function Skipped({ items, now, onClose, onBack, onPlay }:
             <Tile game={i.game} name={i.name} />
             <div className="g">
               <div className="nm">{i.name}</div>
-              <div className="sub">back in {left(i.resets_at, now)}</div>
+              <div className="sub">{resetWords(i.resets_at, now, me).back}</div>
               {i.tenure.at_risk && i.tenure.days >= 2 && <div className="risk-l">your {i.tenure.days}-{unit(i)} tenure still lapses at reset</div>}
             </div>
             <div className="row-a">
@@ -260,7 +261,7 @@ function Skipped({ items, now, onClose, onBack, onPlay }:
 
 function OpenRow({ i, slug, now, lit, open, onToggle, playing, onPlay, by, onSkip }:
   { i: Item; slug: string; now: number; lit: boolean; open: boolean; onToggle: () => void; playing: boolean; onPlay: () => void; by: SortBy; onSkip: () => void }) {
-  const { games } = useApp()
+  const { games, me } = useApp()
   const url = playUrl(i)
   const link = url ? playLink(url) : null
   const ms = new Date(i.resets_at).getTime() - now
@@ -291,7 +292,7 @@ function OpenRow({ i, slug, now, lit, open, onToggle, playing, onPlay, by, onSki
                 <span className="play-i" aria-hidden="true">{playing ? '' : '▶'}</span>{playing ? 'playing' : 'play'}<span className="play-x" aria-hidden="true">↗</span>
               </a>
             : <span className="pill todo">open</span>}
-          <span className={`rs${urg ? ' urg' : ''}`}>{left(i.resets_at, now)} left</span>
+          <span className={`rs${urg ? ' urg' : ''}`}>{resetWords(i.resets_at, now, me).open}</span>
         </div>
       </div>
       {open && <Peek slug={slug} i={i} onSkip={onSkip} />}

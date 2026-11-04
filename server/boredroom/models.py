@@ -35,6 +35,7 @@ class Person(Base):
     email: Mapped[str | None] = mapped_column(String(320))
     agenda_sort: Mapped[str | None] = mapped_column(String(20))  # "resets:first"; none is the usual
     news_seen: Mapped[str | None] = mapped_column(String(20))  # the newest release they've read (news.py)
+    reset_clock: Mapped[bool] = mapped_column(Boolean, default=False)  # resets as a clock time, not time left
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     memberships: Mapped[list["Membership"]] = relationship(back_populates="person")

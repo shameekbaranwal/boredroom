@@ -41,6 +41,7 @@ def me_json(p: Person) -> dict[str, Any]:
     live = [m for m in p.memberships if m.left_at is None]
     return {
         "username": p.username, "kind": p.kind, "tz": p.tz, "email": p.email, "agenda_sort": p.agenda_sort,
+        "reset_clock": p.reset_clock,
         "boards": [{"slug": m.board.slug, "name": m.board.name, "nickname": m.nickname, "role": m.role}
                    for m in sorted(live, key=lambda m: m.board.name)],
         "news": news.release_json(r) if (r := news.unseen(p)) else None,  # the agenda's "what's new" card
@@ -195,6 +196,10 @@ def update_me():
         if name != g.person.username and g.db.scalar(select(Person.id).where(Person.username == name)):
             fail(409, "that username is taken")
         g.person.username = name
+    if "reset_clock" in b:  # resets as a clock time ("till 9:30 am") or time left, on every device
+        if not isinstance(b["reset_clock"], bool):
+            fail(400, "reset_clock is true or false")
+        g.person.reset_clock = b["reset_clock"]
     if "agenda_sort" in b:  # how your agenda is ordered, on every device
         v = b["agenda_sort"]
         by, _, order = v.partition(":") if isinstance(v, str) else ("", "", "")

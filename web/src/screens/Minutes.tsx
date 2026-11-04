@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type Board, type Minutes as M, type Row } from '../api'
-import { dayLabel, fieldText, headline, isGrid, left, shiftDay, weekLabel } from '../format'
+import { dayLabel, fieldText, headline, isGrid, resetWords, shiftDay, weekLabel } from '../format'
 import { go } from '../router'
 import { FxQuery, Ghost, Header, Nav, Trouble, Who, Whos, sendOn, useApp, useFresh, useNow, type Token } from '../ui'
 
@@ -58,7 +58,7 @@ export default function Minutes({ slug, game, day }: { slug: string; game: strin
         </div>
         <div className="sub wrap">
           {m.rows.length} of {m.rows.length + m.not_in.length} present
-          {m.resets_at && <> · resets in {left(m.resets_at, now)}</>}
+          {m.resets_at && <> · {resetWords(m.resets_at, now, me).resets}</>}
         </div>
         <div className={`lock${nudge ? ' err' : ''}`}>{lock}</div>
         {m.rows.map((r, i) => <MinuteRow key={i} r={r} open={m.open} onNudge={() => setNudge(true)} />)}

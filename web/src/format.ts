@@ -39,6 +39,33 @@ export function left(iso: string, now: number): string {
   return h ? `${h}h ${m % 60}m` : `${m}m`
 }
 
+/** A reset as a clock time in your timezone: "9:30 am", "midnight", "5:30 am tomorrow",
+ *  "midnight on mon" (a weekly game), "9 am on 10 nov". Midnight tonight is just "midnight". */
+export function clock(iso: string, tz: string, now: number): string {
+  const at = new Date(iso)
+  const ymd = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: tz })
+  const hm = at.toLocaleTimeString('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit', hourCycle: 'h23' })
+  const [h, m] = hm.split(':').map(Number)
+  const time = h === 0 && m === 0 ? 'midnight'
+    : `${h % 12 || 12}${m ? `:${String(m).padStart(2, '0')}` : ''} ${h < 12 ? 'am' : 'pm'}`
+  const days = Math.round((new Date(ymd(at)).getTime() - new Date(ymd(new Date(now))).getTime()) / 86400000)
+  if (days <= 0) return time
+  if (days === 1) return time === 'midnight' ? time : `${time} tomorrow`
+  if (days < 7) return `${time} on ${at.toLocaleDateString('en-GB', { timeZone: tz, weekday: 'short' }).toLowerCase()}`
+  return `${time} on ${at.toLocaleDateString('en-GB', { timeZone: tz, day: 'numeric', month: 'short' }).toLowerCase()}`
+}
+
+/** A reset in words, the way you chose (me.reset_clock): time left ("6h 12m left",
+ *  "resets in 6h 12m") or a clock time ("till 9:30 am", "resets at 9:30 am"). */
+export function resetWords(iso: string, now: number, me: { tz: string; reset_clock: boolean }) {
+  if (!me.reset_clock) {
+    const l = left(iso, now)
+    return { open: `${l} left`, resets: `resets in ${l}`, back: `back in ${l}` }
+  }
+  const c = clock(iso, me.tz, now)
+  return { open: `till ${c}`, resets: `resets at ${c}`, back: `back at ${c}` }
+}
+
 /** A weekly game's puzzle, by the day its week began. */
 export function weekLabel(iso: string, today: string): string {
   const diff = Math.round((new Date(today + 'T00:00:00').getTime() - new Date(iso + 'T00:00:00').getTime()) / 86400000)

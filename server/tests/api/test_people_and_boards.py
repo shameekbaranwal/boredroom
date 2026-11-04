@@ -2,7 +2,8 @@ import re
 def test_guest_gets_a_token_and_me_needs_it(client, seat):
     a = seat("ivan")
     assert a.get("/me").json | {"news": None} == {  # news depends on the day: test_news.py
-        "username": "ivan", "kind": "guest", "tz": "Asia/Kolkata", "email": None, "agenda_sort": None, "boards": [], "news": None}
+        "username": "ivan", "kind": "guest", "tz": "Asia/Kolkata", "email": None, "agenda_sort": None, "reset_clock": False,
+        "boards": [], "news": None}
     assert client.get("/api/v1/me").status_code == 401
     assert client.get("/api/v1/me", headers={"Authorization": "Bearer nope"}).status_code == 401
 
@@ -90,3 +91,11 @@ def test_the_agenda_sort_goes_with_you(client, seat):
     for bad in ("shoe size:first", "resets:sideways", 7):
         assert a.patch("/me", {"agenda_sort": bad}).status_code == 400
     assert a.patch("/me", {"agenda_sort": None}).json["agenda_sort"] is None
+
+
+def test_resets_as_a_clock_time(seat):
+    a = seat("ivan")
+    assert a.get("/me").json["reset_clock"] is False
+    assert a.patch("/me", {"reset_clock": True}).json["reset_clock"] is True
+    assert a.patch("/me", {"reset_clock": "yes"}).status_code == 400
+
