@@ -24,12 +24,12 @@ class Release:
 
 RELEASES: tuple[Release, ...] = (
     Release("2026-11-04", "reminders: the board's evening, and a nudge before a reset", (
-        "turn on reminders under you → everywhere. on an iphone, from the home screen app.",
-        "around 8 pm, one push per board: the day's big news, where you stand this week, what's left. quiet days stay quiet.",
-        "ring a game's bell under you → agenda for a nudge an hour before it resets, if it's still open. or switch on every bell at once.",
+        "switch on reminders in the \"you\" tab, on its \"everywhere\" sheet. on android it works right in the browser; on an iphone, add boredroom to your home screen first and switch it on from there.",
+        "around 8 pm, one push per board: the day's big news, where you stand this week and what's left to play.",
+        "tap a game's bell on the \"agenda\" sheet of the \"you\" tab to get a nudge an hour before it resets whenever you haven't filed it yet. one switch at the top rings every bell.",
         "a game you've skipped stays quiet till it resets, and games resetting together share one push.",
-        "the you tab has a third sheet, agenda, so the board's settings aren't buried under its games.",
-        "holding to sign out buzzes as it signs.",
+        "the \"you\" tab has a third sheet, \"agenda\", so the board's settings aren't buried under its games.",
+        "and a few small fixes.",
     ), major=True),
     Release("2026-11-03", "what's new, and a word with the developer", (
         "this page: what changed in each release. a card on your agenda says when there's something new.",
