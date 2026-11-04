@@ -23,6 +23,9 @@ class Release:
 
 
 RELEASES: tuple[Release, ...] = (
+    Release("2026-11-04-2", "reset times on the clock", (
+        "prefer \"till 9:30 am\" to \"6h 12m left\"? in the \"you\" tab, on its \"everywhere\" sheet, switch \"reset times\" to \"clock time\". weekly games read \"till midnight on mon\".",
+    )),
     Release("2026-11-04", "reminders: the board's evening, and a nudge before a reset", (
         "switch on reminders in the \"you\" tab, on its \"everywhere\" sheet. on android it works right in the browser; on an iphone, add boredroom to your home screen first and switch it on from there.",
         "around 8 pm, one push per board: the day's big news, where you stand this week and what's left to play.",

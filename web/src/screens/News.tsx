@@ -8,7 +8,7 @@ const lastBoard = () => { try { return localStorage.getItem(LAST) } catch { retu
 
 /** The day a release went out, the way the minutes say a day: "3 nov". */
 export const releaseDay = (id: string) =>
-  new Date(id + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toLowerCase()
+  new Date(id.slice(0, 10) + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toLowerCase()  // "2026-11-04-2" is a second that day
 
 /** What's new: every release, newest first. Opening it reads them all. */
 export default function News() {
