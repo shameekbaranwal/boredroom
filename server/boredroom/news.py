@@ -23,6 +23,10 @@ class Release:
 
 
 RELEASES: tuple[Release, ...] = (
+    Release("2026-11-04-4", "your own order", (
+        "line up your games the way you play them: in the \"you\" tab, on its \"agenda\" sheet, tap \"arrange\" and move them with ↑ and ↓. the agenda then follows \"my order\", which you can also pick from its sort.",
+        "and a few small fixes.",
+    )),
     Release("2026-11-04-3", "a nudge to update", (
         "a bar at the top now says when there's a new version; \"reload\" gets it.",
     )),
