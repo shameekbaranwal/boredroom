@@ -217,7 +217,7 @@ export function NetBar() {
   }, [on, net])  // the update bar and the net bar are different rows
   if (!on) return null
   if (!net && n.update) return <>  {/* nothing wrong with the line: a newer boredroom is out */}
-    <div ref={el} className="netbar busy" role="status">
+    <div ref={el} className="netbar busy" role="status" aria-live="polite">
       <b><span className="dot" aria-hidden="true" />updated</b>
       <span className="says">{n.update.title ? `boredroom has a new version: ${n.update.title}.` : 'boredroom has a new version.'} reload to get it; you'll land right here.</span>
       <button className="lnk" onClick={later}>later</button>
