@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from flask import Flask, Response, g, request, send_from_directory
@@ -93,6 +94,10 @@ def _serve_web(app: Flask, dist: Path, environment: str) -> None:
         return
 
     page = (dist / "index.html").read_text(encoding="utf-8")
+    # the web build being served: its main script's hashed name. An open app compares it
+    # with its own to know it's out of date (web/src/update.ts)
+    m = re.search(r'<script[^>]*src="(/assets/[^"]+\.js)"', page)
+    app.config["WEB_BUILD"] = m[1] if m else None
 
     @app.get("/manifest.webmanifest")
     def manifest():

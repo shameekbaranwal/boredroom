@@ -3,6 +3,7 @@ import type { Game, Me } from './api'
 import { hue } from './format'
 import { go } from './router'
 import { knock, useNet } from './net'
+import { later, reload } from './update'
 import { edit, held, send, unhold } from './outbox'
 import { TableMark, ThemeToggle, Wordmark } from './brand'
 
@@ -203,7 +204,8 @@ export function NetBar() {
   const n = useNet()
   const el = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
-  const on = !!(n.away || n.waiting)
+  const net = !!(n.away || n.waiting)
+  const on = net || !!n.update
   useEffect(() => {
     const root = document.documentElement
     if (!on || !el.current) { root.style.removeProperty('--net-h'); return }
@@ -212,8 +214,16 @@ export function NetBar() {
     ro.observe(el.current)
     fit()
     return () => { ro.disconnect(); root.style.removeProperty('--net-h') }
-  }, [on])
+  }, [on, net])  // the update bar and the net bar are different rows
   if (!on) return null
+  if (!net && n.update) return <>  {/* nothing wrong with the line: a newer boredroom is out */}
+    <div ref={el} className="netbar busy" role="status">
+      <b><span className="dot" aria-hidden="true" />updated</b>
+      <span className="says">{n.update.title ? `boredroom has a new version: ${n.update.title}.` : 'boredroom has a new version.'} reload to get it; you'll land right here.</span>
+      <button className="lnk" onClick={later}>later</button>
+      <button className="go" onClick={reload}>reload</button>
+    </div>
+  </>
   const at = n.stale && new Date(n.stale).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })
   const label = n.away === 'offline' ? 'offline' : n.away ? 'reconnecting' : 'sending'
   const says = [

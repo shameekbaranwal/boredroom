@@ -261,6 +261,8 @@ body { padding-top: var(--net-h); }
 .netbar .go { flex: none; margin-left: auto; padding: 5px 12px; border: 1px solid var(--note-b); background: var(--bg); color: var(--ink);
   font: inherit; font-weight: 700; cursor: pointer; }
 @keyframes pulse { 50% { opacity: .35; } }
+.netbar > .lnk { margin-left: auto; font-size: 13px; color: var(--muted); }
+.netbar > .lnk + .go { margin-left: 0; }
 @media (min-width: 900px) { .netbar { justify-content: center; } .netbar .says { flex: 0 1 auto; } .netbar .go { margin-left: 8px; } }
 .held-n { padding: 10px 14px; color: var(--muted); font-size: 13px; }
 .held-r { display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; border-top: 1px solid var(--line); }

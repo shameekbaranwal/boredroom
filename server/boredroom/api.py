@@ -136,7 +136,10 @@ def client_config():
     """What a client needs before signing in. The google client id is public by design."""
     cfg = current_app.config["BOREDROOM"]
     return jsonify({"google_client_id": cfg.google_client_id, "environment": cfg.environment,
-                    "vapid_public_key": cfg.vapid_public_key if cfg.push else None})
+                    "vapid_public_key": cfg.vapid_public_key if cfg.push else None,
+                    # the web build being served, and the latest release: an open app reloads for them
+                    "web_build": current_app.config.get("WEB_BUILD"),
+                    "release": {"id": news.LATEST.id, "title": news.LATEST.title}})
 
 
 @api.post("/auth/google")

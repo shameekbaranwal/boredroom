@@ -11,9 +11,10 @@ export type NetState = {
   away: Away | null
   stale: number | null    // a screen is showing a copy from this time
   waiting: number         // results held on this device until the server's back
+  update: { build: string; title: string | null } | null  // a newer version is out (update.ts)
 }
 
-let state: NetState = { away: null, stale: null, waiting: 0 }
+let state: NetState = { away: null, stale: null, waiting: 0, update: null }
 const subs = new Set<() => void>()
 export const set = (p: Partial<NetState>) => { state = { ...state, ...p }; subs.forEach(f => f()) }
 export const net = () => state

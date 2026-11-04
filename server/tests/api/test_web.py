@@ -49,3 +49,12 @@ def test_stage_installs_under_its_own_name(tmp_path, engine):
     stage = get("stage")
     assert stage.json["name"] == "boredroom stage" and stage.json["short_name"] == "stage"
     assert stage.mimetype == "application/manifest+json"
+
+
+def test_config_says_which_web_build_is_served(tmp_path, engine):
+    (tmp_path / "index.html").write_text('<script src="/theme-boot.js"></script>'
+                                         '<script type="module" crossorigin src="/assets/index-AB12.js"></script>')
+    c = create_app(Config(web_dist=str(tmp_path)), engine=engine).test_client()
+    cfg = c.get("/api/v1/config").json
+    assert cfg["web_build"] == "/assets/index-AB12.js"  # an open app with another script is out of date
+    assert cfg["release"]["id"] and cfg["release"]["title"]
