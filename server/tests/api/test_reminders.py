@@ -287,3 +287,30 @@ def test_a_major_release_is_pushed_once_in_the_day(push_app, s, monkeypatch):
         "new in boredroom: a big one", "first thing. and 1 more under what's new.", "/news")
     assert reminders.tick(s, CFG, datetime(2026, 11, 1, 11, 30, tzinfo=IST), fake) == 0  # once
 
+
+
+def test_an_answer_to_a_note_goes_to_its_sender_alone(push_app, s):
+    from boredroom import news
+    from boredroom.models import Feedback
+    (trent, judy), people = _setup(push_app, s, "trent", "judy")
+    for x in (trent, judy):  # both were here before the release, both have read it
+        x.post("/news/seen", {"id": news.LATEST.id})
+    trent.post("/feedback", {"kind": "idea", "text": "keep my place on the review"})
+    f = s.scalar(select(Feedback))
+    assert trent.get("/news").json["replies"] == []
+    f.reply, f.reply_release = "done: back keeps your place now.", news.LATEST.id
+    s.commit()
+    # trent's card comes back, carrying the answer; judy sees nothing new
+    assert trent.get("/me").json["news"]["for_you"] == "done: back keeps your place now."
+    assert judy.get("/me").json["news"] is None
+    assert judy.get("/news").json["replies"] == []
+    assert trent.get("/news").json["replies"] == [{"release": news.LATEST.id, "kind": "idea", "text": "keep my place on the review",
+                                                   "reply": "done: back keeps your place now.", "read": False}]
+    # pushed once, to trent's device only
+    fake = Fake()
+    assert reminders.answer(s, f, CFG, fake) == 1
+    assert reminders.answer(s, f, CFG, fake) == 0
+    assert [(e.endswith("trent"), p.url) for e, p in fake.sent] == [(True, f"/news#{news.LATEST.id}")]
+    # reading what's new reads the answer: the card goes, the answer stays on the page
+    assert trent.post("/news/seen", {"id": news.LATEST.id}).json["news"] is None
+    assert trent.get("/news").json["replies"][0]["read"] is True

@@ -202,6 +202,12 @@ class Feedback(Base):
     release: Mapped[str] = mapped_column(String(20))  # the newest release at the time (news.LATEST)
     device: Mapped[str | None] = mapped_column(String(200))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    # the developer's answer, when a release does what the note asked: shown to its sender
+    # alone, under that release on what's new. Written only by scripts/reply.py.
+    reply: Mapped[str | None] = mapped_column(Text)
+    reply_release: Mapped[str | None] = mapped_column(String(20))
+    replied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reply_read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class ThrottleHit(Base):
@@ -276,7 +282,7 @@ class PushLog(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     person_id: Mapped[int] = mapped_column(ForeignKey("person.id", ondelete="CASCADE"))
     key: Mapped[str] = mapped_column(String(200))  # "reset:krillion:2026-11-01", "digest:soup:2026-11-01"
-    kind: Mapped[str] = mapped_column(String(12))  # reset | digest | update | test
+    kind: Mapped[str] = mapped_column(String(12))  # reset | digest | update | reply | test
     status: Mapped[str] = mapped_column(String(12), default="sending")  # sending | sent | failed
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
 

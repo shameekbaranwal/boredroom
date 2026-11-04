@@ -4,14 +4,21 @@ A release is written here when it's promoted to production; its `id` is the day 
 out ("2026-11-03", or "2026-11-03-2" for a second that day), and the list's order is what
 counts. Each person keeps the id of the newest one they've read (`Person.news_seen`), so the
 agenda's "what's new" card shows once per release on every device. Someone who joined
-after a release never gets its card: it's news only to people who were here before."""
+after a release never gets its card: it's news only to people who were here before.
+
+A release can also answer someone's note (Feedback.reply, written by scripts/reply.py):
+that person alone sees their note and the answer under the release, and the card comes
+back for them until they've read it."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
-from .models import Person
+from sqlalchemy import select
+from sqlalchemy.orm import Session, object_session
+
+from .models import Feedback, Person, utcnow
 
 
 @dataclass(frozen=True)
@@ -77,6 +84,36 @@ def unseen(p: Person) -> Release | None:
 
 
 def seen(p: Person, release_id: str) -> None:
-    """They've read up to this release (never moves back)."""
-    if release_id in AGE and AGE[release_id] < AGE.get(p.news_seen or "", len(RELEASES)):
+    """They've read up to this release (never moves back), and the answers to their notes
+    that came with it or before it."""
+    if release_id not in AGE:
+        return
+    if AGE[release_id] < AGE.get(p.news_seen or "", len(RELEASES)):
         p.news_seen = release_id
+    if s := object_session(p):
+        for f in replies(s, p):
+            if f.reply_read_at is None and AGE[f.reply_release] >= AGE[release_id]:
+                f.reply_read_at = utcnow()
+
+
+def replies(s: Session, p: Person) -> list[Feedback]:
+    """Their notes the developer has answered, with a release that's out, newest first."""
+    rows = s.scalars(select(Feedback).where(Feedback.person_id == p.id, Feedback.reply.is_not(None),
+                                            Feedback.reply_release.in_(list(AGE))))
+    return sorted(rows, key=lambda f: AGE[f.reply_release])
+
+
+def reply_json(f: Feedback) -> dict[str, Any]:
+    return {"release": f.reply_release, "kind": f.kind, "text": f.text, "reply": f.reply, "read": f.reply_read_at is not None}
+
+
+def card(p: Person) -> dict[str, Any] | None:
+    """The agenda's "what's new" card: the latest release while it's news to them, or the
+    release that answered one of their notes, until they've read the answer."""
+    s = object_session(p)
+    unread = [f for f in replies(s, p) if f.reply_read_at is None] if s else []
+    r = unseen(p) or (RELEASES[AGE[unread[0].reply_release]] if unread else None)
+    if r is None:
+        return None
+    mine = next((f for f in unread if f.reply_release == r.id), None)
+    return release_json(r) | ({"for_you": mine.reply} if mine else {})

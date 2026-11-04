@@ -892,3 +892,13 @@ html { overscroll-behavior-y: contain; }
 .dragging { position: relative; z-index: 5; background: var(--bg); box-shadow: 0 6px 18px rgba(0, 0, 0, .18); cursor: grabbing; }
 .dragging .grip { color: var(--accent); cursor: grabbing; }
 .shifting { position: relative; transition: transform .16s ease-out; }
+
+/* an answer to your note, yours alone: on the agenda's card and under its release */
+.for-you { display: grid; gap: 2px; padding: 8px 10px; border-left: 3px solid var(--accent); background: var(--bg); font-size: 14.5px; line-height: 1.45; }
+.for-you span { font: 11px "IBM Plex Mono", ui-monospace, monospace; letter-spacing: .06em; color: var(--accent); }
+.rel-you { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--note); display: grid; gap: 6px; }
+.rel-you-h { font: 11px "IBM Plex Mono", ui-monospace, monospace; letter-spacing: .06em; color: var(--accent); }
+.rel-you blockquote { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.4; font-style: italic; }
+.rel-you blockquote::before { content: "you wrote: "; font-style: normal; }
+.rel-you p { margin: 0; font-size: 14.5px; line-height: 1.45; color: var(--ink); }
+.rel-you-s { font-size: 12.5px; color: var(--muted); }

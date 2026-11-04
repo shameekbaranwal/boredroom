@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 
 from . import memos, news, reads
 from .config import Config
-from .models import (Agenda, Board, Membership, Memo, Person, PushLog, PushSubscription, Result, SchedulerState, Skip,
+from .models import (Agenda, Board, Feedback, Membership, Memo, Person, PushLog, PushSubscription, Result, SchedulerState, Skip,
                      utcnow)
 from .parser import REGISTRY
 from .push import Push, Sender, deliver, webpush_sender
@@ -228,11 +228,27 @@ def updates(s: Session, now: datetime) -> Iterator[tuple[int, list[str], Push]]:
         person = s.get(Person, pid)
         if news.unseen(person) is None or now.astimezone(ZoneInfo(person.tz)).hour not in DAYTIME:
             continue
+        if any(f.reply_release == r.id for f in news.replies(s, person)):
+            continue  # their answer's own push (scripts/reply.py) tells them about this one
         key = f"update:{r.id}"
         if not _claim(s, pid, "update", [key]):
             continue
         rest = f" and {len(r.notes) - 1} more under what's new." if len(r.notes) > 1 else ""
         yield pid, [key], Push(f"new in boredroom: {r.title}", (r.notes[0] if r.notes else "") + rest, "/news", tag="update")
+
+
+def answer(s: Session, f: Feedback, cfg: Config, send: Sender = webpush_sender) -> int:
+    """The answer to someone's note, pushed to them once, whatever the hour: only ever sent
+    by scripts/reply.py, on the developer's word. Returns how many devices took it."""
+    if f.person_id is None or not f.reply or f.reply_release not in news.AGE:
+        return 0
+    r = news.RELEASES[news.AGE[f.reply_release]]
+    key = f"reply:{f.id}"
+    if not _claim(s, f.person_id, "reply", [key]):
+        return 0
+    ok = deliver(s, f.person_id, Push(f"re: your note · {r.title}", f.reply, f"/news#{r.id}", tag="reply"), cfg, send)
+    _mark(s, f.person_id, [key], "sent" if ok else "failed")
+    return ok
 
 
 def tick(s: Session, cfg: Config, now: datetime | None = None, send: Sender = webpush_sender) -> int:

@@ -319,3 +319,14 @@ tap. Three kinds, sent by a scheduler that ticks on the hour and half hour (utc)
   daytime, in its first three days, unless they've already read it.
 
 Each push is logged before it's sent (`push_log`), so a key never goes to a person twice.
+
+## Answering a note with a release
+
+When a release does what someone's note asked, the developer can answer that note:
+`scripts/reply.py N "answer" [--push]`. The answer lives in the database with the note
+(never in git: it quotes someone), tied to a release that's already out. Only the note's
+sender sees it: their note and the answer under that release on what's new, and the
+agenda's what's-new card comes back for them until they've read it. `--push` sends it to
+their devices once, whatever the hour, and that stands in for the release's own update
+push. Every answer on production is the developer's own words, approved one by one; so a
+fix too small for the release notes can still be told to the person who asked for it.

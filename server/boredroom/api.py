@@ -44,7 +44,7 @@ def me_json(p: Person) -> dict[str, Any]:
         "reset_clock": p.reset_clock,
         "boards": [{"slug": m.board.slug, "name": m.board.name, "nickname": m.nickname, "role": m.role}
                    for m in sorted(live, key=lambda m: m.board.name)],
-        "news": news.release_json(r) if (r := news.unseen(p)) else None,  # the agenda's "what's new" card
+        "news": news.card(p),  # the agenda's "what's new" card
     }
 
 
@@ -53,8 +53,9 @@ def me_json(p: Person) -> dict[str, Any]:
 @api.get("/news")
 @auth_required
 def news_list():
-    """Every release, newest first, and the newest one you've read."""
-    return jsonify({"releases": [news.release_json(r) for r in news.RELEASES], "seen": g.person.news_seen})
+    """Every release, newest first, the newest one you've read, and the answers to your notes."""
+    return jsonify({"releases": [news.release_json(r) for r in news.RELEASES], "seen": g.person.news_seen,
+                    "replies": [news.reply_json(f) for f in news.replies(g.db, g.person)]})
 
 
 @api.post("/news/seen")
