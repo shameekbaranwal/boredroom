@@ -25,7 +25,10 @@ export default function News() {
   // opened from an answer's push or card: straight to its release
   useEffect(() => {
     const id = decodeURIComponent(location.hash.slice(1))
-    if (rs && id) document.getElementById(id)?.scrollIntoView({ block: 'start' })
+    const el = rs && id ? document.getElementById(id) : null
+    if (!el) return
+    const under = document.querySelector('.hd')?.getBoundingClientRect().bottom ?? 0  // the sticky header, and any bar above it
+    window.scrollTo(0, Math.max(0, scrollY + el.getBoundingClientRect().top - under - 8))
   }, [rs])
   const slug = me.boards.find(b => b.slug === lastBoard())?.slug ?? me.boards[0]?.slug
   return (
