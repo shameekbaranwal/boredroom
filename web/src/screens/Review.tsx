@@ -38,6 +38,8 @@ export default function Review({ slug }: { slug: string }) {
   }
   // a new game changes which stats make sense, so the stat goes back to its default
   const set = (x: Partial<ReviewQuery>) => { setAll(false); go(url({ ...q, ...('game' in x ? { stat: null } : {}), ...x }), true) }
+  // a game tapped in the lists opens as a page of its own, so back comes to the list again
+  const open = (x: Partial<ReviewQuery>) => { setAll(false); go(url({ ...q, stat: null, ...x })) }
 
   const name = (g: string) => games[g]?.name ?? g
   // a weekly game on its own has no "today": its puzzle is this week's, and it counts in weeks
@@ -57,7 +59,8 @@ export default function Review({ slug }: { slug: string }) {
     { key: 'vs', value: q.vs ?? '', options: [['', 'no one'], ...(r?.members ?? (q.vs ? [q.vs] : [])).map(m => [m, m] as [string, string])], onPick: v => set({ vs: v || null }) },
   ]
   const head = <>
-    <Header title={`${board.name}.xlsx`} meta={q.game ? name(q.game) : 'review'} onTitle={() => setPicker(true)} />
+    <Header title={`${board.name}.xlsx`} meta={q.game ? name(q.game) : 'review'} onTitle={() => setPicker(true)}
+      back={q.game ? url({ period: q.period }) : undefined} />
     <FxQuery fn="review" tokens={tokens} />
   </>
   if (err) return <div className="app">{head}<Trouble err={err} retry={() => api.review(slug, q).then(x => { setR(x); setErr('') }).catch(e => setErr(e.message))} /><Nav slug={slug} on="review" /></div>
@@ -176,14 +179,14 @@ export default function Review({ slug }: { slug: string }) {
         </>}
         {r.weeklies && r.weeklies.length > 0 && <>
           <div className="sec">this week <span className="sec-n">· weekly games · tap one for its review</span></div>
-          {r.weeklies.map(g => item(g, () => set({ game: g.game, period: 'today' })))}
+          {r.weeklies.map(g => item(g, () => open({ game: g.game, period: 'today' })))}
         </>}
 
         {r.records && <>
           <div className="sec">{q.period === 'all' ? 'board records' : `best ${per(q.period)}`} <span className="sec-n">· tap one for the game's review</span></div>
           {r.records.length === 0 && <div className="sub wrap">no records yet.</div>}
           {r.records.map(x => (
-            <div key={x.game} className="it" onClick={() => set({ game: x.game })} role="button" tabIndex={0}>
+            <div key={x.game} className="it" onClick={() => open({ game: x.game })} role="button" tabIndex={0}>
               <Tile game={x.game} name={x.name} />
               <div className="g">
                 <div className="nm">{x.name}</div>
