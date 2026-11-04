@@ -11,6 +11,7 @@ import { AskMemo } from '../reminders'
 import { shouldAsk, usePush } from '../push'
 import { playLink } from '../opens'
 import { MemoRow } from '../memos'
+import { Dots, useReorder } from '../drag'
 import { orderOptions, readSort, sortOptions, sorted, writeSort, type Sort, type SortBy } from '../sort'
 
 const TODO = 8  // open games shown before "n more"
@@ -39,6 +40,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
     api.updateMe({ agenda_sort: writeSort(x) }).then(refreshMe).then(() => setPicked(null))
       .catch(() => toast("the order didn't save. it holds here for now."))
   }
+  const drag = useReorder()  // in "my order", rows drag into place right here
   const [fresh, setFresh] = useState<Set<string>>(new Set())  // just filed: the rows flash once
   const [peek, setPeek] = useState<string | null>(null)  // the row opened in place
   const [hidden, setHidden] = useState(false)  // the skipped games, opened from their strip
@@ -93,6 +95,21 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
   const extra = board.library.filter(g => !board.you.agenda.includes(g.game)).length
   const placeholders = board.members.filter(m => m.kind === 'placeholder')
   const toggle = (g: string) => setPeek(p => (p === g ? null : g))
+  // "my order": a row dragged among the ones shown takes its place among all your games,
+  // just before the one it now sits above (or after the one above it, at the bottom)
+  const mine = sort.by === 'own' && sort.order === 'first'
+  const place = (shown: string[], moved: string) => {
+    const full = sorted(today.items, { by: 'own', order: 'first' }).map(i => i.game).filter(g => g !== moved)
+    const k = shown.indexOf(moved), below = shown[k + 1]
+    full.splice(below ? full.indexOf(below) : full.indexOf(shown[k - 1]) + 1, 0, moved)
+    setToday(t => t && { ...t, items: t.items.map(i => ({ ...i, position: full.indexOf(i.game) })) })
+    setFresh(new Set([moved]))
+    setTimeout(() => setFresh(new Set()), 1400)
+    api.order(slug, full).then(setBoard).catch(e => { toast((e as Error).message); load() })
+  }
+  const grab = (i: Item, shown: Item[]) => mine && shown.length > 1
+    ? { row: drag.row(i.game), grip: drag.grip(i.game, shown.map(x => x.game), place) } : undefined
+  const todo = all || open.length <= TODO + 1 ? open : open.slice(0, TODO)
   // sitting a game out: off the to-do list until it resets, on every board; undo puts it back
   const skip = async (i: Item, on: boolean) => {
     setPeek(null)
@@ -128,7 +145,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
           {open.length === 0 && today.items.length > 0 && <div className="sub wrap">
             {skipped.length ? <>nothing left to do: {filed.length} filed, {skipped.length} skipped till reset.</> : <>all {filed.length} filed. the board thanks you.</>}
           </div>}
-          {(all || open.length <= TODO + 1 ? open : open.slice(0, TODO)).map(i => <OpenRow key={i.game} i={i} slug={slug} now={now} lit={fresh.has(i.game)}
+          {todo.map(i => <OpenRow key={i.game} i={i} slug={slug} now={now} lit={fresh.has(i.game)} drag={grab(i, todo)}
             open={peek === i.game} onToggle={() => toggle(i.game)}
             playing={away?.game === i.game} onPlay={() => setAway({ game: i.game, name: i.name, at: Date.now() })} by={sort.by}
             onSkip={() => skip(i, true)} />)}
@@ -142,10 +159,11 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
         </>}
         {tab === 'filed' && <>
           {filed.length === 0 && <div className="sub wrap">nothing filed yet today. paste a result above.</div>}
-          {filed.map(i => (
-            <div key={i.game} className={`row${peek === i.game ? ' open' : ''}`}>
+          {filed.map(i => { const d = grab(i, filed); return (
+            <div key={i.game} ref={d?.row.ref} style={d?.row.style} className={`row${peek === i.game ? ' open' : ''}${d?.row.className ? ` ${d.row.className}` : ''}`}>
             <div className={`it${fresh.has(i.game) ? ' lit' : ''}`} role="button" tabIndex={0} aria-expanded={peek === i.game}
               onClick={() => toggle(i.game)} onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), toggle(i.game))}>
+              {d && <button {...d.grip} aria-label={`move ${i.name}: drag, or use the arrow keys`}><Dots /></button>}
               <Tile game={i.game} name={i.name} />
               <div className="g">
                 <div className="nm">{i.name} <span className="muted" style={{ fontWeight: 400, fontSize: 13 }}>{i.mine?.puzzle}</span></div>
@@ -168,7 +186,7 @@ export default function Agenda({ slug, shared }: { slug: string; shared?: string
             </div>
             {peek === i.game && <Peek slug={slug} i={i} />}
             </div>
-          ))}
+          ) })}
         </>}
         <Memos slug={slug} memos={today.memos} onChange={memos => setToday(t => t && { ...t, memos })} />
         {today.items.length === 0 && <div className="sub wrap">nothing on your agenda yet. pick your games, or just paste a result: its game joins your agenda.</div>}
@@ -259,17 +277,20 @@ function Skipped({ items, now, onClose, onBack, onPlay }:
   )
 }
 
-function OpenRow({ i, slug, now, lit, open, onToggle, playing, onPlay, by, onSkip }:
-  { i: Item; slug: string; now: number; lit: boolean; open: boolean; onToggle: () => void; playing: boolean; onPlay: () => void; by: SortBy; onSkip: () => void }) {
+type Grab = { row: ReturnType<ReturnType<typeof useReorder>['row']>; grip: ReturnType<ReturnType<typeof useReorder>['grip']> }
+
+function OpenRow({ i, slug, now, lit, open, onToggle, playing, onPlay, by, onSkip, drag }:
+  { i: Item; slug: string; now: number; lit: boolean; open: boolean; onToggle: () => void; playing: boolean; onPlay: () => void; by: SortBy; onSkip: () => void; drag?: Grab }) {
   const { games, me } = useApp()
   const url = playUrl(i)
   const link = url ? playLink(url) : null
   const ms = new Date(i.resets_at).getTime() - now
   const urg = ms < 3600000
   return (
-    <div className={`row${open ? ' open' : ''}`}>
+    <div ref={drag?.row.ref} style={drag?.row.style} className={`row${open ? ' open' : ''}${drag?.row.className ? ` ${drag.row.className}` : ''}`}>
       <div className={`it${lit ? ' lit' : ''}`} role="button" tabIndex={0} aria-expanded={open}
         onClick={onToggle} onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onToggle())}>
+        {drag && <button {...drag.grip} aria-label={`move ${i.name}: drag, or use the arrow keys`}><Dots /></button>}
         <Tile game={i.game} name={i.name} />
         <div className="g">
           <div className="nm">{i.name} {i.puzzle && <span className="muted" style={{ fontWeight: 400, fontSize: 13 }}>{i.puzzle}</span>}</div>

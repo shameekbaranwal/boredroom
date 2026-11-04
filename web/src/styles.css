@@ -880,11 +880,15 @@ html { overscroll-behavior-y: contain; }
 @media (prefers-reduced-motion: reduce) { .bell.on svg { animation: none; } }
 .cell .k small .lnk { font-size: 12px; }
 
-/* your order: the agenda games with a ↑ and a ↓ each */
+/* your order: the agenda games, each with a grip to drag it by */
 .it.arr { gap: 10px; }
 .arr-n { flex: none; width: 18px; text-align: right; font: 12px var(--f-num); color: var(--muted); }
-.arr-b { flex: none; width: 36px; height: 36px; display: grid; place-items: center; background: var(--bg); color: var(--ink);
-  border: 1px solid var(--line); font: 700 16px var(--f-num); cursor: pointer; }
-.arr-b:active { background: var(--surface); }
-.arr-b:disabled { color: var(--line); cursor: default; }
-.arr-b:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* dragging rows into your order (drag.tsx) */
+.grip { flex: none; display: grid; place-items: center; width: 28px; height: 40px; margin: -4px 0 -4px -6px; padding: 0;
+  background: none; border: 0; color: var(--muted); cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; }
+.grip svg circle { fill: currentColor; }
+.grip:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.dragging { position: relative; z-index: 5; background: var(--bg); box-shadow: 0 6px 18px rgba(0, 0, 0, .18); cursor: grabbing; }
+.dragging .grip { color: var(--accent); cursor: grabbing; }
+.shifting { position: relative; transition: transform .16s ease-out; }

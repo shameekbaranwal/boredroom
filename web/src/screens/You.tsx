@@ -8,6 +8,7 @@ import { CloseAccount, Motion, YourFile, useUsernameEdit } from './Personal'
 import { Bell } from '../reminders'
 import { useDevice } from '../push'
 import { readSort } from '../sort'
+import { Dots, useReorder } from '../drag'
 
 // The "you" page keeps a board's books: your seat, your agenda, the register of members,
 // the bylaws. Two things about games, kept apart in the words too:
@@ -156,10 +157,11 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
   const [isLit, light] = useMark()
   const [isStruck, strike] = useMark(600)
   const [order] = useState(() => sortGames(b, name))
-  // your own order ("my order" on the agenda): arranged here with ↑ and ↓, saved on each move
+  // your own order ("my order" on the agenda): dragged into place here, saved on each drop
   const [arranging, setArranging] = useState(() => location.hash === '#arrange')
   const [moved, setMoved] = useState<string[] | null>(null)  // shown at once; the server catches up
   const sent = useRef(0)
+  const drag = useReorder()
   const own = readSort(me.agenda_sort).by === 'own'
   const stamp = query(path).get('stamp')
   const device = useDevice()
@@ -219,10 +221,8 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
   }
   const placed = (moved ?? b.you.order).filter(g => agenda.on(g))
   const arranged = [...placed, ...mineHere.filter(g => !placed.includes(g))]
-  const move = (n: number, d: -1 | 1) => {
-    const xs = [...arranged];
-    [xs[n], xs[n + d]] = [xs[n + d], xs[n]]
-    buzz(); setMoved(xs); light(xs[n + d])
+  const move = (xs: string[], g: string) => {
+    setMoved(xs); light(g)
     const k = ++sent.current
     api.order(slug, xs).then(nb => { if (k === sent.current) { setB(nb); setMoved(null) } })
       .catch(e => { toast((e as Error).message); setMoved(null) })
@@ -276,15 +276,17 @@ function Main({ b, setB }: { b: Board; setB: (b: Board) => void }) {
               <button className={`btn sm${arranging ? '' : ' ghost'}`} onClick={() => { setArranging(!arranging); history.replaceState(history.state, '', location.pathname + '#agenda') }}>{arranging ? 'done' : 'arrange'}</button>
             </div>
           )}
-          {arranging && mineHere.length > 1 ? arranged.map((g, n) => (
-            <div key={g} className={`it game arr${isLit(g) ? ' lit' : ''}`}>
-              <span className="arr-n">{n + 1}</span>
-              <Tile game={g} name={name(g)} />
-              <div className="g"><div className="nm"><span>{name(g)}</span><Weekly game={g} /></div></div>
-              <button className="arr-b" aria-label={`move ${name(g)} up`} disabled={n === 0} onClick={() => move(n, -1)}>↑</button>
-              <button className="arr-b" aria-label={`move ${name(g)} down`} disabled={n === arranged.length - 1} onClick={() => move(n, 1)}>↓</button>
-            </div>
-          )) : ids.map(g => {
+          {arranging && mineHere.length > 1 ? arranged.map((g, n) => {
+            const r = drag.row(g)
+            return (
+              <div key={g} ref={r.ref} style={r.style} className={`it game arr${isLit(g) ? ' lit' : ''}${r.className ? ` ${r.className}` : ''}`}>
+                <button {...drag.grip(g, arranged, move)} aria-label={`move ${name(g)}: drag, or use the arrow keys`}><Dots /></button>
+                <span className="arr-n">{n + 1}</span>
+                <Tile game={g} name={name(g)} />
+                <div className="g"><div className="nm"><span>{name(g)}</span><Weekly game={g} /></div></div>
+              </div>
+            )
+          }) : ids.map(g => {
             const lg = lib.get(g)!, on = agenda.on(g)
             return (
               <div key={g} className={`it game${on ? '' : ' off'}${isLit(g) ? ' lit' : ''}${isStruck(g) ? ' struck' : ''}`}>
