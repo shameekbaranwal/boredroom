@@ -246,7 +246,7 @@ def answer(s: Session, f: Feedback, cfg: Config, send: Sender = webpush_sender) 
     key = f"reply:{f.id}"
     if not _claim(s, f.person_id, "reply", [key]):
         return 0
-    ok = deliver(s, f.person_id, Push(f"re: your {'bug report' if f.kind == 'bug' else 'idea'}", f.reply, f"/news#{r.id}", tag=f"reply:{f.id}")  # its own: two answers both stay in the tray, cfg, send)
+    ok = deliver(s, f.person_id, Push(f"re: your {'bug report' if f.kind == 'bug' else 'idea'}", f.reply, f"/news#{r.id}", tag=f"reply:{f.id}"), cfg, send)  # its own tag: two answers both stay
     _mark(s, f.person_id, [key], "sent" if ok else "failed")
     return ok
 
