@@ -30,7 +30,7 @@ class Release:
 
 
 RELEASES: tuple[Release, ...] = (
-    Release("2026-11-04-4", "your own order", (
+    Release("2026-11-04-4", "arrange your agenda", (
         "line up your games the way you play them: pick \"my order\" in the agenda's sort, then drag a game by the dots at its left.",
         "or arrange them all at once: in the \"you\" tab, on its \"agenda\" sheet, tap \"arrange\".",
         "and a few small fixes.",
