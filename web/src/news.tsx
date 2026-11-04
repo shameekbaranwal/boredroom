@@ -14,7 +14,7 @@ export function NewsMemo() {
     <div className="memo">
       <div className="memo-h"><span>memo</span><span>from: the developer</span><span>re: what's new</span></div>
       <b>{r.title}</b>
-      <small>{r.notes.length} {r.notes.length === 1 ? 'change' : 'changes'}, out {releaseDay(r.id)}. under you → everywhere any time.</small>
+      <small>{r.notes.length} {r.notes.length === 1 ? 'change' : 'changes'}, out {releaseDay(r.id)}. any time from the "you" tab, on its "everywhere" sheet.</small>
       <div className="row-a">
         <button className="btn" onClick={() => go('/news')}>read it</button>
         <button className="lnk" onClick={done}>noted</button>
