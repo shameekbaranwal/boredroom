@@ -45,8 +45,10 @@ if (typeof window !== 'undefined') {
     keep(was)
     restore(spots[shown] ?? 0)
   })
-  window.addEventListener('pagehide', () => keep(here()))  // a reload comes back to the same spot
-  restore(spots[shown] ?? 0)
+  window.addEventListener('pagehide', () => keep(here()))
+  // a reload comes back to the same spot; opening the app afresh starts at the top
+  const nav = performance.getEntriesByType?.('navigation')[0] as PerformanceNavigationTiming | undefined
+  if (nav?.type === 'reload') restore(spots[shown] ?? 0)
 }
 
 export function go(path: string, replace = false) {
