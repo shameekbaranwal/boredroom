@@ -157,7 +157,7 @@ def test_a_skipped_game_gets_no_nudge_and_leaves_the_digest(push_app, s):
     s.commit()
     reminders.tick(s, CFG, evening, fake)
     body = next(p.body for ep, p in fake.sent if ep.endswith("-trent"))
-    assert body.endswith("1 still open: wordle.")
+    assert body.endswith("1 still open.")
 
 
 def test_games_resetting_close_together_share_a_push(push_app, s):
@@ -214,8 +214,8 @@ def test_the_evening_digest_is_the_days_news(push_app, s):
     got = {ep.rsplit("-", 1)[1]: p for ep, p in fake.sent}
     assert set(got) == {"trent", "judy"}  # mallory switched hers off
     assert (got["trent"].title, got["trent"].url) == ("soup · sunday so far", "/b/soup/meeting")
-    assert got["trent"].body == "judy leads the week on 1 win. you're yet to take one. 2 still open: wordle and krillion."
-    assert got["judy"].body == "you hold #1 this week on 1 win, the only one with any. 1 still open: wordle."
+    assert got["trent"].body == "judy leads the week on 1 win. you're yet to take one. 2 still open."
+    assert got["judy"].body == "you hold #1 this week on 1 win, the only one with any. 1 still open."
     assert reminders.tick(s, CFG, at + timedelta(minutes=5), fake) == 0  # once a day
 
 
@@ -225,12 +225,15 @@ def test_the_days_biggest_memo_leads_the_digest(push_app, s):
     board = s.scalar(select(Board))
     s.add(Memo(board_id=board.id, key="sweep:x", kind="sweep", day=at.date(), subjects=[people["judy"].id],
                facts={"on": "2026-11-01", "n": 4}, interest=80))
+    s.add(Memo(board_id=board.id, key="pb:x", kind="pb", day=at.date(), subjects=[people["trent"].id],
+               facts={}, interest=50))  # about trent, but one memo is all a digest carries
     s.commit()
     fake = Fake()
     reminders.tick(s, CFG, at, fake)
     got = {ep.rsplit("-", 1)[1]: p.body for ep, p in fake.sent}
     assert got["trent"].startswith("clean sweep: #1 on all 4 of judy's items. the board demands a recount.")
     assert got["judy"].startswith("clean sweep: #1 on all 4 of your items.")
+    assert "personal best" not in got["trent"]
 
 
 def test_a_quiet_day_means_no_digest(push_app, s):

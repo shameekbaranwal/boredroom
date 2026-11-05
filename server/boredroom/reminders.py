@@ -4,7 +4,7 @@ Two kinds, both for people with at least one device that takes pushes:
   reset   a game you switched the nudge on for (on your agenda), unfiled, an hour before
           it resets. Games resetting within half an hour of it come along in the same push.
   digest  each board's evening digest, at 20:00 your time, on unless you switch it off:
-          what's still open, what the others did, what resets next. Nothing open, no push.
+          one memo, where you stand on the week, how many games are open. No news, no push.
 
 Every push is written to push_log under a key ("reset:krillion:2026-11-01") before it's
 sent, and the key is unique per person: a crash mid-send loses a nudge, never doubles one.
@@ -189,25 +189,24 @@ def _standing(s: Session, m: Membership, now: datetime) -> str | None:
 
 def digest(s: Session, m: Membership, now: datetime) -> Push | None:
     """One board's evening digest for one member: the day's news, not a to-do list (the
-    reset nudges do that). The biggest memo of the day, where you stand on the week, a line
-    about you if there's one, then what's still open. None on a day with nothing to say."""
+    reset nudges do that). Kept to what fits a glance: one memo (the biggest of the day, else
+    one about you), where you stand on the week, and how many games are still open. None on a
+    day with nothing to say."""
     board, person = m.board, m.person
     memos.refresh(s, board, person, now)
     today = memos.local_day(person, now)
     rows, nick = memos._visible(s, board, select(Memo).where(Memo.board_id == board.id, Memo.day == today))
     rows.sort(key=lambda x: (-x.interest, x.id))
     lead = next((x for x in rows if x.interest >= NEWS and x.kind not in NOT_NEWS), None)
-    yours = next((x for x in rows if x is not lead and person.id in x.subjects and x.kind in ABOUT_YOU), None)
+    memo = lead or next((x for x in rows if person.id in x.subjects and x.kind in ABOUT_YOU), None)
     standing = _standing(s, m, now)
-    if not (lead or yours or standing):
+    if not (memo or standing):
         return None
     items = [i for i in reads.today(s, board, person, now)["items"] if not i["skipped"]
              and not (i["weekly"] and not i["filed"] and datetime.fromisoformat(i["resets_at"]) - now > timedelta(days=1))]
-    open_ = [i["name"].lower() for i in items if not i["filed"]]
-    tail = (f"{len(open_)} still open: {_and(open_[:3]) if len(open_) <= 3 else ', '.join(open_[:3]) + ' and more'}."
-            if open_ else "all filed today." if items else "")
-    line = lambda x: memos.text(x, nick, person.id).rstrip(".") + "."  # noqa: E731
-    body = " ".join(p for p in (lead and line(lead), standing, yours and line(yours), tail) if p)
+    open_ = sum(not i["filed"] for i in items)
+    tail = f"{open_} still open." if open_ else "all filed today." if items else ""
+    body = " ".join(p for p in (memo and memos.text(memo, nick, person.id).rstrip(".") + ".", standing, tail) if p)
     weekday = now.astimezone(ZoneInfo(person.tz)).strftime("%A").lower()
     return Push(f"{board.name} · {weekday} so far", body, f"/b/{board.slug}/meeting", tag=f"digest:{board.slug}")
 
