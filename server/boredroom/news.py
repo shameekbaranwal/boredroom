@@ -30,6 +30,9 @@ class Release:
 
 
 RELEASES: tuple[Release, ...] = (
+    Release("2026-11-05-1", "skip the check", (
+        "if you trust the clerk: in the \"you\" tab, on its \"everywhere\" sheet, set \"pastes\" to \"file at once\". a paste then goes straight into the minutes.",
+    )),
     Release("2026-11-04-4", "arrange your agenda", (
         "line up your games the way you play them: pick \"my order\" in the agenda's sort, then drag a game by the dots at its left.",
         "or arrange them all at once: in the \"you\" tab, on its \"agenda\" sheet, tap \"arrange\".",

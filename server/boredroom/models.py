@@ -50,7 +50,6 @@ class AuthToken(Base):
     person_id: Mapped[int] = mapped_column(ForeignKey("person.id", ondelete="CASCADE"), index=True)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     device: Mapped[str | None] = mapped_column(String(200))
-    scope: Mapped[str | None] = mapped_column(String(12))  # "shortcut": the phone shortcut's key, good only for filing
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

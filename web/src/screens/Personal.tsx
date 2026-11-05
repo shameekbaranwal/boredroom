@@ -98,7 +98,6 @@ export function YourFile({ onEditName, closeTo }: { onEditName: () => void; clos
         ))}
       </div>
     </div>
-    {!/android/i.test(navigator.userAgent) && <PhoneShortcut />}
 
     <div className="sec">this device</div>
     <div className="cell">
@@ -130,51 +129,6 @@ export function YourFile({ onEditName, closeTo }: { onEditName: () => void; clos
     <button className="go" onClick={() => go('/feedback')}><span className="k">send a note</span><span className="v">a bug, or an idea</span></button>
 
     <button className="go bad" onClick={() => go(closeTo)}><span className="k">wind up your account</span></button>
-  </>
-}
-
-/** The iPhone shortcut: web apps can't be in an iPhone's share sheet, so a Shortcut is,
- *  posting the share text to /shortcut with a key that only files. Shown once, here. */
-function PhoneShortcut() {
-  const { toast } = useApp()
-  const [st, setSt] = useState<{ set: boolean; used: string | null } | null>(null)
-  const [key, setKey] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-  useEffect(() => { api.shortcut().then(setSt).catch(() => {}) }, [])
-  const url = `${location.origin}/api/v1/shortcut`
-  const make = async () => {
-    setBusy(true)
-    try { setKey((await api.shortcutKey()).key); setSt({ set: true, used: null }) } catch (e) { toast((e as Error).message) } finally { setBusy(false) }
-  }
-  const off = async () => {
-    try { setSt(await api.shortcutOff().then(() => ({ set: false, used: null }))); setKey(null); toast('the shortcut key is retired') } catch (e) { toast((e as Error).message) }
-  }
-  const copy = async (t: string, what: string) => {
-    try { await navigator.clipboard.writeText(t); toast(`${what} copied`) } catch { toast("couldn't copy that. press and hold it to copy.") }
-  }
-  if (!st) return null
-  return <>
-    <div className="cell">
-      <span className="k">iphone shortcut<small className="muted">{st.set ? (st.used ? `on · last filed ${new Date(st.used).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : 'on · not used yet') : 'file from a game\'s share button, without opening boredroom'}</small></span>
-      {st.set && !key ? <span className="row-a"><button className="lnk" onClick={make} disabled={busy}>new key</button><button className="lnk" onClick={off}>turn off</button></span>
-        : !key && <button className="btn sm" onClick={make} disabled={busy}>set up</button>}
-    </div>
-    {key && (
-      <div className="card shortcut">
-        <b>your shortcut key, shown this once</b>
-        <button className="keyv keep" onClick={() => copy(key, 'key')}>{key}</button>
-        <small>it only files results. a new key retires this one.</small>
-        <ol>
-          <li>in the <b>shortcuts</b> app, tap <b>+</b>. name it <i>file to boredroom</i>.</li>
-          <li>add <b>get contents of url</b>. url: <button className="lnk keep" onClick={() => copy(url, 'url')}>{url}</button></li>
-          <li>tap the arrow on it: method <b>post</b>, request body <b>json</b>. add two text fields: <b>key</b> (paste your key) and <b>text</b> (pick <i>shortcut input</i>).</li>
-          <li>add <b>show notification</b>, with <i>contents of url</i>.</li>
-          <li>tap ⓘ: turn on <b>show in share sheet</b>, for text. if there's no input, <b>use clipboard</b>: then a tap on the shortcut files what you copied.</li>
-        </ol>
-        <small>then, in a game: share, <i>file to boredroom</i>. the notification says what the clerk filed.</small>
-        <div className="row-a"><button className="lnk" onClick={() => setKey(null)}>done</button></div>
-      </div>
-    )}
   </>
 }
 
