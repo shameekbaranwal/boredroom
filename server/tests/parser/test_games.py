@@ -15,6 +15,14 @@ CASES = {
         "Krillion #89 🦐\n440\n\n🏮🦑🦑🐟🦑🦑🏮\nhttps://krillion.io",
         dict(puzzle=89, metrics={"score": 440}, highlights=[], comment=""),
     )],
+    "krillion_geo": [(
+        "KRILLION Around the World #66\n◉ ≈ ◆ ◆ ≈ ◇ ×\n295/700 · 295 leagues travelled\n"
+        "How deep will your knowledge take you? https://krillion.to/en/geography?game=66",
+        dict(metrics={"score": 295}, highlights=["krillion"], comment=""),
+    ), (
+        "KRILLION Around the World #12\n· ≈ · ≈ · ◇ ≈\n150/700 · 150 leagues travelled",
+        dict(metrics={"score": 150}, highlights=[]),
+    )],
     "connections": [(
         "Connections\nPuzzle #1219\n🟦🟦🟦🟦\n🟨🟨🟨🟨\n🟩🟩🟩🟩\n🟪🟪🟪🟪",
         dict(puzzle=1219, outcome="solved", metrics={"mistakes": 0}, highlights=["flawless"]),
