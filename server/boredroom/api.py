@@ -7,14 +7,14 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from flask import Blueprint, current_app, g, jsonify, request
+from flask import Blueprint, Response, current_app, g, jsonify, request
 from sqlalchemy import func, select
 
 from . import admin, boards, claims, filing, invites, memos, names, news, people, push, reads, throttle
 from . import auth
 from .auth import auth_required, create_guest, valid_tz, USERNAME
-from .errors import fail
-from .models import Board, Feedback, Membership, Person, Result, utcnow
+from .errors import ApiError, fail
+from .models import Agenda, AuthToken, Board, Feedback, Membership, Person, Result, utcnow
 from .parser import REGISTRY
 
 api = Blueprint("api", __name__, url_prefix="/api/v1")
@@ -41,7 +41,7 @@ def me_json(p: Person) -> dict[str, Any]:
     live = [m for m in p.memberships if m.left_at is None]
     return {
         "username": p.username, "kind": p.kind, "tz": p.tz, "email": p.email, "agenda_sort": p.agenda_sort,
-        "reset_clock": p.reset_clock,
+        "reset_clock": p.reset_clock, "paste_check": p.paste_check,
         "boards": [{"slug": m.board.slug, "name": m.board.name, "nickname": m.nickname, "role": m.role}
                    for m in sorted(live, key=lambda m: m.board.name)],
         "news": news.card(p),  # the agenda's "what's new" card
@@ -204,6 +204,10 @@ def update_me():
         if not isinstance(b["reset_clock"], bool):
             fail(400, "reset_clock is true or false")
         g.person.reset_clock = b["reset_clock"]
+    if "paste_check" in b:  # a paste shows what the clerk read and waits for save, or files at once
+        if not isinstance(b["paste_check"], bool):
+            fail(400, "paste_check is true or false")
+        g.person.paste_check = b["paste_check"]
     if "agenda_sort" in b:  # how your agenda is ordered, on every device
         v = b["agenda_sort"]
         by, _, order = v.partition(":") if isinstance(v, str) else ("", "", "")
@@ -680,6 +684,83 @@ def paste_preview():
     sp.rollback()
     g.db.rollback()
     return jsonify(out)
+
+
+# -- the phone shortcut ----------------------------------------------------------
+# iPhones have no share target for web apps, so a Shortcut in the share sheet posts the
+# share text here with a key of its own. The key only files: it can't read or change
+# anything else, and making a new one retires the old.
+
+def _shortcut_key(s, person: Person) -> AuthToken | None:
+    return s.scalar(select(AuthToken).where(AuthToken.person_id == person.id, AuthToken.scope == "shortcut"))
+
+
+@api.get("/me/shortcut")
+@auth_required
+def shortcut_status():
+    k = _shortcut_key(g.db, g.person)
+    return jsonify({"set": k is not None, "used": k.last_seen.isoformat() if k and k.last_seen > k.created_at else None})
+
+
+@api.post("/me/shortcut")
+@auth_required
+def shortcut_new():
+    """A new shortcut key, shown this once; any old one stops working."""
+    old = _shortcut_key(g.db, g.person)
+    if old:
+        g.db.delete(old)
+    key = auth.issue_token(g.db, g.person, device="phone shortcut", scope="shortcut")
+    g.db.commit()
+    return jsonify({"key": key}), 201
+
+
+@api.delete("/me/shortcut")
+@auth_required
+def shortcut_off():
+    old = _shortcut_key(g.db, g.person)
+    if old:
+        g.db.delete(old)
+        g.db.commit()
+    return jsonify({"set": False})
+
+
+def _said(f: filing.Filing, person: Person, s) -> str:
+    """The filing in a line or two, for the shortcut's notification."""
+    name = lambda gid: REGISTRY[gid].name if gid in REGISTRY else gid
+    playing = set(s.scalars(select(Agenda.game_id).where(Agenda.person_id == person.id)))
+    lines = []
+    for e in f.events:
+        lines.append({
+            "filed": f"filed {name(e.game)} {e.puzzle}{' (late)' if e.late else ''}"
+                     + ("" if e.game in playing else ". it's not on your agenda yet: add it in the app"),
+            "merged": f"added the {', '.join(e.added)} to {name(e.game)} {e.puzzle}",
+            "duplicate": f"{name(e.game)} {e.puzzle} was already in the minutes",
+            "not_out_yet": f"{name(e.game)} {e.puzzle} isn't out yet",
+            "conflict": f"{name(e.game)} {e.puzzle} is already filed, with a different result. paste it in the app to pick one",
+        }.get(e.kind, f"{name(e.game)} {e.puzzle}"))
+    lines += [f"we can't read {u['name']} yet. the clerk has asked for a parser." for u in f.unknown]
+    return "\n".join(lines) or "nothing readable in that. share the result text the game gives you."
+
+
+@api.post("/shortcut")
+def shortcut_file():
+    """{key, text}, or the key as a bearer token: files the text at once and answers in
+    plain words (errors too), which the shortcut shows as a notification."""
+    try:
+        b = body()
+        key = b.get("key") if isinstance(b.get("key"), str) else auth.bearer()
+        row = auth.token_row(g.db, key.strip())
+        if row is None:
+            throttle.limit(g.db, f"shortcut:{throttle.caller()}", 20, 3600, "too many wrong keys from here. try again in an hour.")
+            fail(401, "that key doesn't work any more. make a new one in boredroom: you, everywhere, iphone shortcut.")
+        row.last_seen = utcnow()
+        g.person = row.person
+        f = filing.file_paste(g.db, g.person, _paste_text(), now=clock() or utcnow(), source="share")
+        said = _said(f, g.person, g.db)
+        g.db.commit()
+        return Response(said, 201, mimetype="text/plain")
+    except ApiError as e:
+        return Response(e.description, e.code, mimetype="text/plain")
 
 
 @api.get("/results")

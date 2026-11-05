@@ -26,9 +26,9 @@ def hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def issue_token(s: Session, person: Person, device: str | None = None) -> str:
+def issue_token(s: Session, person: Person, device: str | None = None, scope: str | None = None) -> str:
     token = secrets.token_urlsafe(32)
-    s.add(AuthToken(person_id=person.id, token_hash=hash_token(token), device=device))
+    s.add(AuthToken(person_id=person.id, token_hash=hash_token(token), device=device, scope=scope))
     return token
 
 
@@ -95,6 +95,8 @@ def auth_required(view):
         row = token_row(g.db, token)
         if row is None:
             fail(401, "that token isn't valid")
+        if row.scope is not None:  # a shortcut key only files results, at POST /shortcut
+            fail(403, "that key only files results")
         row.last_seen = utcnow()
         g.person, g.token = row.person, row
         return view(*args, **kwargs)

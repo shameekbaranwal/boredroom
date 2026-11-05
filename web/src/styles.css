@@ -538,6 +538,11 @@ body { padding-top: var(--net-h); }
 .invite-row .invite-words { font-size: 22px; }
 .invite-row .sub { white-space: normal; overflow-wrap: anywhere; }
 .invite-row > small { font-size: 12.5px; }
+.card.shortcut { margin: 4px 0 8px; }
+.card.shortcut ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.card.shortcut .lnk { font-size: 13px; word-break: break-all; text-align: left; }
+.keyv { font: 13px var(--f-num); color: var(--accent); background: transparent; border: 1px dashed var(--accent); padding: 6px 8px;
+  word-break: break-all; text-align: left; cursor: copy; }
 .guest-card .gbtn { justify-content: flex-start; max-width: 400px; }
 
 /* the invite page: claiming an imported seat sits among the replies */

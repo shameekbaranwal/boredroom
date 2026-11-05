@@ -361,7 +361,7 @@ function Peek({ slug, i, onSkip }: { slug: string; i: Item; onSkip?: () => void 
  *  Saving files it everywhere; the cards then say what happened. */
 export function Pasteboard({ board, shared, onFiled, back, onBackDone }:
   { board?: Board; shared?: string; onFiled: (games: string[]) => void; back?: { game: string; name: string } | null; onBackDone?: () => void }) {
-  const { games, refreshMe } = useApp()
+  const { me, games, refreshMe } = useApp()
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const [draft, setDraft] = useState<{ text: string; source: 'paste' | 'share'; read: Filing } | null>(null)
@@ -377,26 +377,31 @@ export function Pasteboard({ board, shared, onFiled, back, onBackDone }:
     if (!t.trim()) return
     setBusy(true); setErr(''); setOut(null); setAnswered({}); setHeld(null)
     try {
-      const r = await api.preview(t)
-      setDraft({ text: t, source, read: r }); setText('')
+      // filing at once (you, everywhere: pastes) skips the look; nothing readable still gets one
+      const r = me.paste_check ? await api.preview(t) : await api.paste(t, source)
       if (!r.events.length && !r.unknown.length) { setShake(true); navigator.vibrate?.([10, 40, 10]); setTimeout(() => setShake(false), 400) }
+      if (me.paste_check || (!r.events.length && !r.unknown.length)) { setDraft({ text: t, source, read: r }); setText(''); return }
+      setText(''); await filedRef.current(r)
     }
     catch (e) { if (e instanceof ApiError && e.away) { setHeld(hold(t, source)); setText('') } else setErr((e as Error).message) }
     finally { setBusy(false) }
-  }, [])
+  }, [me.paste_check])
+
+  const filed = async (f: Filing) => {
+    setOut(f); setDraft(null)
+    // a new game joins your agenda on this board, as "+ add a game" does
+    const add = board ? f.events.filter(e => e.kind !== 'not_out_yet' && !board.you.agenda.includes(e.game)).map(e => e.game) : []
+    for (const g of new Set(add)) await api.agenda(board!.slug, g, true).catch(() => {})
+    if (add.length) refreshMe()
+    onFiled(f.events.filter(e => e.kind === 'filed' || e.kind === 'merged').map(e => e.game))
+  }
+  const filedRef = useRef(filed)
+  filedRef.current = filed
 
   const save = async () => {
     if (!draft) return
     setBusy(true); setErr('')
-    try {
-      const f = await api.paste(draft.text, draft.source)
-      setOut(f); setDraft(null)
-      // a new game joins your agenda on this board, as "+ add a game" does
-      const add = board ? f.events.filter(e => e.kind !== 'not_out_yet' && !board.you.agenda.includes(e.game)).map(e => e.game) : []
-      for (const g of new Set(add)) await api.agenda(board!.slug, g, true).catch(() => {})
-      if (add.length) refreshMe()
-      onFiled(f.events.filter(e => e.kind === 'filed' || e.kind === 'merged').map(e => e.game))
-    } catch (e) {
+    try { await filed(await api.paste(draft.text, draft.source)) } catch (e) {
       if (e instanceof ApiError && e.away) { setHeld(hold(draft.text, draft.source)); setDraft(null) } else setErr((e as Error).message)
     } finally { setBusy(false) }
   }
