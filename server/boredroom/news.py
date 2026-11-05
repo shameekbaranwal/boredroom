@@ -30,6 +30,9 @@ class Release:
 
 
 RELEASES: tuple[Release, ...] = (
+    Release("2026-11-06", "krillion geo", (
+        "krillion's geography pack can be filed now. it isn't a daily, so it counts for the day you play it; share your link so the board plays the same game.",
+    )),
     Release("2026-11-05-1", "skip the check", (
         "if you trust the clerk: in the \"you\" tab, on its \"everywhere\" sheet, set \"pastes\" to \"file at once\". a paste then goes straight into the minutes.",
     )),
