@@ -53,6 +53,9 @@ CASES = {
     ), (
         "📍 PlayPinDrop Day #223\n🟢 🟢 🟢 🟠 🟡\n788 / 1000\n🔥 20 day streak\nhttps://playpindrop.app?r=4w25qerp",
         dict(metrics={"score": 788}, extras={"game_streak": 20}),
+    ), (
+        "📍 PlayPinDrop Day #249\n🟢 ⚫ 🟠 🟡 🟡\n483 / 1000\nhttps://playpindrop.app",
+        dict(metrics={"score": 483}, fields=[{"name": "rounds", "value": "🟢⚫🟠🟡🟡", "visibility": "detail"}]),
     )],
     "fermi": [(
         "Fermi · No. 78\n01  32.3×\n02  195,288,089×\n03  5.56×\n─────────\n56.4× score · top 90%\n<https://fermi.gg/s/daily>",

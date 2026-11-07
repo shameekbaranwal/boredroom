@@ -200,6 +200,8 @@ a { color: var(--accent); }
 .mr { display: flex; flex-direction: column; gap: 4px; }
 .mrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .who { display: flex; align-items: center; gap: 8px; font-weight: 700; min-width: 0; overflow: hidden; }
+.mrow .who { flex-wrap: wrap; row-gap: 4px; }  /* badges go to a second line before they squeeze the name */
+.mrow .who-l { flex: none; max-width: 100%; }
 .who.me { color: var(--accent); }
 .rn { font: 700 13px var(--f-num); color: var(--muted); min-width: 22px; }
 .mv { font: 700 14px var(--f-num); text-align: right; white-space: nowrap; }

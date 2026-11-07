@@ -18,7 +18,7 @@ class PinDrop(Game):
         r.puzzle = int(b.find(r"PlayPinDrop Day #(\d+)")[1])
         score = b.find(r"(\d[\d,]*)\s*/\s*1000")
         r.metric("score", number(score[1]) if score else None)
-        markers = b.find(r"^\s*(?:[🎯🟢🟡🟠🔴⚪️]\s*){5}$")
+        markers = b.find(r"^\s*(?:[🎯🟢🟡🟠🔴⚫⚪️]\s*){5}$")  # ⚫ is a round with no points
         if markers:
             r.detail("rounds", "".join(emoji_cells(markers[0])))
         streak = b.find(r"🔥\s*(\d+) day streak")
